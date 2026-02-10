@@ -56,8 +56,20 @@ export class GunService {
       localStorage: true,   // Enable localStorage for data persistence
       radisk: true,         // Enable radisk for better multi-tab sync
       axe: false,           // Disable logging to reduce console noise
-      retry: Infinity       // Keep retrying connections to peers
+      retry: Infinity,      // Keep retrying connections to peers
+      // Enable multicast for better peer discovery
+      multicast: true
     });
+
+    // Log peer connection status for debugging
+    if (typeof window !== 'undefined') {
+      (this.gun as any).on('hi', (peer: any) => {
+        console.log('[Gun] Connected to peer:', peer.url || 'local');
+      });
+      (this.gun as any).on('bye', (peer: any) => {
+        console.log('[Gun] Disconnected from peer:', peer.url || 'local');
+      });
+    }
 
     // Setup BroadcastChannel for cross-tab communication
     if (typeof BroadcastChannel !== 'undefined') {

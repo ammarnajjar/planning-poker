@@ -95,6 +95,30 @@ export class GunService {
         }
       };
     }
+
+    // Handle page unload/refresh to mark user as offline
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
+        const roomId = this.roomState().roomId;
+        if (roomId && this.currentUserId) {
+          // Mark user as offline by setting lastSeen to 0
+          // Use sendBeacon for reliability during page unload
+          const data = JSON.stringify({
+            roomId,
+            userId: this.currentUserId,
+            lastSeen: 0
+          });
+
+          // Try to update Gun immediately (may not complete)
+          this.gun
+            .get(`poker-room/${roomId}`)
+            .get('participants')
+            .get(this.currentUserId)
+            .get('lastSeen')
+            .put(0);
+        }
+      });
+    }
   }
 
   /**
@@ -115,9 +139,27 @@ export class GunService {
       clearInterval(this.cleanupInterval);
     }
 
-    // Generate new user ID for this session
-    this.currentUserId = this.generateUserId();
+    // Reuse existing user ID from localStorage if available for this room
+    // This prevents duplicate participants on page refresh
+    const storageKey = `planning-poker-userid-${roomId}`;
+    let storedUserId = localStorage.getItem(storageKey);
+
+    // Check if stored userId is recent (within last 24 hours)
+    // If too old, generate a new one to avoid issues with stale data
+    if (storedUserId) {
+      const timestamp = storedUserId.split('_')[1];
+      const age = Date.now() - parseInt(timestamp);
+      if (age > 24 * 60 * 60 * 1000) { // 24 hours
+        storedUserId = null;
+      }
+    }
+
+    // Use stored ID or generate new one
+    this.currentUserId = storedUserId || this.generateUserId();
     this.currentUserName = userName;
+
+    // Store the user ID for future refreshes
+    localStorage.setItem(storageKey, this.currentUserId);
 
     this.currentRoomNode = this.gun.get(`poker-room/${roomId}`);
 

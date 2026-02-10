@@ -1,0 +1,92 @@
+<mat-toolbar color="primary">
+  <mat-icon>casino</mat-icon>
+  <span class="toolbar-title">Planning Poker</span>
+</mat-toolbar>
+
+<div class="home-container">
+  <mat-card class="home-card">
+    <mat-card-header>
+      <mat-card-title>Welcome to Planning Poker</mat-card-title>
+      <mat-card-subtitle>Estimate your user stories with your team</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="form-container">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Your Name</mat-label>
+          <input
+            matInput
+            [(ngModel)]="userName"
+            placeholder="Enter your name"
+            (keyup.enter)="createRoom()"
+          >
+          <mat-icon matPrefix>person</mat-icon>
+        </mat-form-field>
+
+        @if (showJoinForm()) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Room ID</mat-label>
+            <input
+              matInput
+              [(ngModel)]="roomId"
+              placeholder="Enter room ID"
+              (keyup.enter)="joinRoom()"
+            >
+            <mat-icon matPrefix>meeting_room</mat-icon>
+          </mat-form-field>
+        }
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions class="actions">
+      @if (!showJoinForm()) {
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="createRoom()"
+          class="action-button"
+        >
+          <mat-icon>add</mat-icon>
+          Create New Room
+        </button>
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="toggleJoinForm()"
+          class="action-button"
+        >
+          <mat-icon>login</mat-icon>
+          Join Existing Room
+        </button>
+      } @else {
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="joinRoom()"
+          class="action-button"
+        >
+          <mat-icon>login</mat-icon>
+          Join Room
+        </button>
+        <button
+          mat-stroked-button
+          (click)="toggleJoinForm()"
+          class="action-button"
+        >
+          <mat-icon>arrow_back</mat-icon>
+          Back
+        </button>
+      }
+    </mat-card-actions>
+  </mat-card>
+
+  <div class="info-section">
+    <h3>How it works</h3>
+    <ul>
+      <li>Create a room and share the Room ID with your team</li>
+      <li>Everyone picks a card to vote on story complexity</li>
+      <li>Votes are hidden until revealed</li>
+      <li>Discuss and reach consensus</li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,120 @@
+<mat-toolbar color="primary" class="room-toolbar">
+  <button mat-icon-button (click)="leaveRoom()" matTooltip="Leave Room">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span class="toolbar-title">Planning Poker</span>
+  <span class="spacer"></span>
+  <button mat-icon-button (click)="copyRoomId()" matTooltip="Copy Room ID">
+    <mat-icon>content_copy</mat-icon>
+  </button>
+  <span class="room-id">{{ roomState().roomId }}</span>
+</mat-toolbar>
+
+<div class="room-container">
+  <!-- Participants Section -->
+  <div class="participants-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          Participants ({{ totalCount() }})
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ votedCount() }} / {{ totalCount() }} voted
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="participants-grid">
+          @for (participant of participants(); track participant.id) {
+            <div
+              class="participant-card"
+              [class.voted]="hasVoted(participant)"
+              [class.current-user]="participant.id === currentUserId"
+            >
+              <div class="participant-info">
+                <mat-icon class="participant-icon">person</mat-icon>
+                <span class="participant-name">{{ participant.name }}</span>
+                @if (participant.id === currentUserId) {
+                  <span class="you-badge">(You)</span>
+                }
+              </div>
+              <div class="participant-vote">
+                @if (hasVoted(participant)) {
+                  <div class="vote-badge" [class.revealed]="roomState().revealed">
+                    {{ getParticipantVoteDisplay(participant) }}
+                  </div>
+                } @else {
+                  <div class="vote-badge empty">-</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Voting Section -->
+  <div class="voting-section">
+    <!-- Results Card (shown when revealed) -->
+    @if (roomState().revealed && averageVote()) {
+      <mat-card class="results-card">
+        <mat-card-content>
+          <div class="results-content">
+            <mat-icon class="results-icon">bar_chart</mat-icon>
+            <div class="results-text">
+              <div class="results-label">Average</div>
+              <div class="results-value">{{ averageVote() }}</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Voting Cards -->
+    <mat-card class="voting-card">
+      <mat-card-header>
+        <mat-card-title>Choose Your Vote</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="cards-grid">
+          @for (value of cardValues; track value) {
+            <button
+              mat-raised-button
+              class="vote-card"
+              [class.selected]="isCardSelected(value)"
+              [disabled]="roomState().revealed"
+              (click)="vote(value)"
+            >
+              <span class="card-value">{{ value }}</span>
+            </button>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Controls -->
+    <mat-card class="controls-card">
+      <mat-card-content>
+        <div class="controls-container">
+          <button
+            mat-raised-button
+            color="accent"
+            (click)="toggleReveal()"
+            class="control-button"
+          >
+            <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
+            {{ roomState().revealed ? 'Hide Votes' : 'Reveal Votes' }}
+          </button>
+          <button
+            mat-raised-button
+            (click)="resetVotes()"
+            class="control-button"
+          >
+            <mat-icon>refresh</mat-icon>
+            Reset Votes
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

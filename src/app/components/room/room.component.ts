@@ -82,15 +82,24 @@ export class RoomComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Get user name from navigation state
+    // Get user name from navigation state or localStorage
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras.state || history.state;
-    const userName = state?.['userName'];
+    let userName = state?.['userName'];
 
+    // If no userName in state, try localStorage
+    if (!userName) {
+      userName = localStorage.getItem('planning-poker-username');
+    }
+
+    // If still no userName, redirect to home
     if (!userName) {
       this.router.navigate(['/']);
       return;
     }
+
+    // Store userName in localStorage for future refreshes
+    localStorage.setItem('planning-poker-username', userName);
 
     // Join room
     this.gunService.joinRoom(roomId, userName);

@@ -7,6 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { AdminPinDialogComponent } from '../admin-pin-dialog/admin-pin-dialog.component';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -28,12 +31,15 @@ export class HomeComponent {
   roomId = signal('');
   showJoinForm = signal(false);
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private dialog: MatDialog
+  ) {}
 
   /**
    * Create a new room with a random ID
    */
-  createRoom(): void {
+  async createRoom(): Promise<void> {
     const name = this.userName().trim();
     if (!name) {
       alert('Please enter your name');
@@ -41,12 +47,23 @@ export class HomeComponent {
     }
 
     // Prompt for admin PIN (optional but recommended)
-    const adminPin = prompt(
-      'Set an admin PIN (optional but recommended):\n\n' +
-      'This PIN will allow you to regain admin access if you return later.\n' +
-      'Leave empty to skip.',
-      ''
-    );
+    const dialogRef = this.dialog.open(AdminPinDialogComponent, {
+      width: '400px',
+      disableClose: false,
+      data: {
+        title: 'Set Admin PIN',
+        message: 'Set an admin PIN (optional but recommended). This PIN will allow you to regain admin access if you return later.',
+        mode: 'create',
+        pinRequired: false
+      }
+    });
+
+    const adminPin = await firstValueFrom(dialogRef.afterClosed());
+
+    // User can cancel or skip PIN
+    if (adminPin === null) {
+      return; // User cancelled
+    }
 
     const newRoomId = this.generateRoomId();
     this.navigateToRoom(newRoomId, name, adminPin || undefined);
@@ -55,7 +72,7 @@ export class HomeComponent {
   /**
    * Join an existing room
    */
-  joinRoom(): void {
+  async joinRoom(): Promise<void> {
     const name = this.userName().trim();
     const room = this.roomId().trim();
 
@@ -70,16 +87,35 @@ export class HomeComponent {
     }
 
     // Ask if user wants to join as admin
-    const joinAsAdmin = confirm('Do you want to join as admin? (You will need the admin PIN)');
+    const confirmDialogRef = this.dialog.open(AdminPinDialogComponent, {
+      width: '400px',
+      disableClose: false,
+      data: {
+        title: 'Join as Admin?',
+        message: 'Do you want to join as admin? You will need the admin PIN.',
+        mode: 'confirm'
+      }
+    });
+
+    const joinAsAdmin = await firstValueFrom(confirmDialogRef.afterClosed());
 
     let adminPin: string | undefined;
     if (joinAsAdmin) {
-      const pin = prompt('Enter admin PIN:');
-      if (!pin) {
-        alert('Admin PIN is required to join as admin');
-        return;
+      const pinDialogRef = this.dialog.open(AdminPinDialogComponent, {
+        width: '400px',
+        disableClose: true,
+        data: {
+          title: 'Enter Admin PIN',
+          message: 'Please enter the admin PIN to join as admin.',
+          mode: 'verify',
+          pinRequired: true
+        }
+      });
+
+      adminPin = await firstValueFrom(pinDialogRef.afterClosed());
+      if (!adminPin) {
+        return; // User cancelled
       }
-      adminPin = pin;
     }
 
     this.navigateToRoom(room, name, adminPin);

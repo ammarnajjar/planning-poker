@@ -84,10 +84,94 @@ export class SupabaseService {
   }
 
   /**
-   * Join a room and start syncing state
+   * Check if a room exists
+   * @param roomId Room ID to check
+   * @returns true if room exists, false otherwise
+   */
+  async roomExists(roomId: string): Promise<boolean> {
+    const { data } = await this.supabase
+      .from('rooms')
+      .select('id')
+      .eq('id', roomId)
+      .maybeSingle();
+
+    return !!data;
+  }
+
+  /**
+   * Create a new room with current user as admin
+   * @param roomId Room ID for the new room
+   * @param userName User's display name
+   * @param adminPin Optional admin PIN for persistent admin access
+   */
+  async createRoom(roomId: string, userName: string, adminPin?: string): Promise<void> {
+    // Clean up previous room
+    if (this.currentChannel) {
+      await this.supabase.removeChannel(this.currentChannel);
+      this.currentChannel = null;
+    }
+
+    // Clear intervals
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+
+    // Check if room already exists
+    const { data: existingRoom } = await this.supabase
+      .from('rooms')
+      .select('id')
+      .eq('id', roomId)
+      .maybeSingle();
+
+    if (existingRoom) {
+      throw new Error('Room already exists');
+    }
+
+    const userIdKey = `planning-poker-userid-${roomId}`;
+    const adminIdKey = `planning-poker-admin-${roomId}`;
+
+    // Generate new user ID
+    this.currentUserId = this.generateUserId();
+    this.currentUserName = userName;
+
+    // Update room state signal
+    this.roomState.update(state => ({
+      ...state,
+      roomId,
+      participants: {},
+      adminUserId: this.currentUserId,
+      revealed: false,
+      votingStarted: false,
+      adminParticipates: false
+    }));
+
+    // Create the room in database
+    await this.createRoomWithAdmin(roomId, adminPin);
+
+    // Store user ID and admin ID
+    localStorage.setItem(userIdKey, this.currentUserId);
+    if (adminPin) {
+      localStorage.setItem(adminIdKey, this.currentUserId);
+    }
+
+    // Add current user to participants
+    await this.addParticipant(roomId, userName);
+
+    // Subscribe to real-time updates
+    this.subscribeToRoom(roomId);
+
+    // Send heartbeat every 2 seconds
+    this.startHeartbeat(roomId);
+  }
+
+  /**
+   * Join an existing room
    * @param roomId Room ID to join
    * @param userName User's display name
-   * @param adminPin Optional admin PIN for room creation or admin access
+   * @param adminPin Optional admin PIN for admin access
    */
   async joinRoom(roomId: string, userName: string, adminPin?: string): Promise<void> {
     // Clean up previous room
@@ -104,11 +188,6 @@ export class SupabaseService {
       clearInterval(this.cleanupInterval);
     }
 
-    // Reuse existing user ID from localStorage if available for this room
-    // This prevents duplicate participants on page refresh
-    const userIdKey = `planning-poker-userid-${roomId}`;
-    const adminIdKey = `planning-poker-admin-${roomId}`;
-
     // Update room state signal
     this.roomState.update(state => ({
       ...state,
@@ -116,8 +195,17 @@ export class SupabaseService {
       participants: {} // Clear old participants
     }));
 
-    // Load existing room state first to know who the admin is
+    // Load existing room state first to check if room exists
     await this.loadRoomState(roomId);
+
+    // Check if room exists
+    if (!this.roomState().adminUserId) {
+      throw new Error('Room does not exist');
+    }
+
+    // Reuse existing user ID from localStorage if available for this room
+    const userIdKey = `planning-poker-userid-${roomId}`;
+    const adminIdKey = `planning-poker-admin-${roomId}`;
 
     let storedUserId = localStorage.getItem(userIdKey);
 
@@ -144,15 +232,8 @@ export class SupabaseService {
     // Store the user ID for future refreshes
     localStorage.setItem(userIdKey, this.currentUserId);
 
-    // If room doesn't exist, create it with current user as admin
-    if (!this.roomState().adminUserId) {
-      await this.createRoomWithAdmin(roomId, adminPin);
-      // Store admin ID permanently (no expiry) if PIN was set
-      if (adminPin) {
-        localStorage.setItem(adminIdKey, this.currentUserId);
-      }
-    } else if (adminPin) {
-      // Verify admin PIN if provided
+    // Verify admin PIN if provided
+    if (adminPin) {
       const isValidPin = await this.verifyAdminPin(roomId, adminPin);
       if (isValidPin && this.roomState().adminUserId) {
         // User provided correct PIN, become admin with their stored ID

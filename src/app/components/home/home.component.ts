@@ -3,12 +3,14 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { AdminPinDialogComponent } from '../admin-pin-dialog/admin-pin-dialog.component';
+import { SupabaseService } from '../../services/supabase.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -18,6 +20,7 @@ import { firstValueFrom } from 'rxjs';
     FormsModule,
     MatCardModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatInputModule,
     MatFormFieldModule,
     MatToolbarModule,
@@ -30,10 +33,13 @@ export class HomeComponent {
   userName = signal('');
   roomId = signal('');
   showJoinForm = signal(false);
+  joinAsAdmin = signal(false);
+  joinError = signal(false);
 
   constructor(
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private supabaseService: SupabaseService
   ) {}
 
   /**
@@ -66,7 +72,7 @@ export class HomeComponent {
     }
 
     const newRoomId = this.generateRoomId();
-    this.navigateToRoom(newRoomId, name, adminPin || undefined);
+    this.navigateToRoom(newRoomId, name, adminPin || undefined, true);
   }
 
   /**
@@ -75,6 +81,9 @@ export class HomeComponent {
   async joinRoom(): Promise<void> {
     const name = this.userName().trim();
     const room = this.roomId().trim();
+
+    // Clear previous error
+    this.joinError.set(false);
 
     if (!name) {
       alert('Please enter your name');
@@ -86,26 +95,39 @@ export class HomeComponent {
       return;
     }
 
-    // Ask for admin PIN (optional - leave empty to join as participant)
-    const dialogRef = this.dialog.open(AdminPinDialogComponent, {
-      width: '400px',
-      disableClose: false,
-      data: {
-        title: 'Join Room',
-        message: 'Enter the admin PIN if you want to join as admin, or leave empty to join as a participant.',
-        mode: 'join',
-        pinRequired: false
-      }
-    });
-
-    const adminPin = await firstValueFrom(dialogRef.afterClosed());
-
-    // User cancelled the dialog
-    if (adminPin === null) {
+    // Check if room exists before proceeding
+    const exists = await this.supabaseService.roomExists(room);
+    if (!exists) {
+      this.joinError.set(true);
       return;
     }
 
-    this.navigateToRoom(room, name, adminPin || undefined);
+    let adminPin: string | undefined = undefined;
+
+    // Only show PIN dialog if user wants to join as admin
+    if (this.joinAsAdmin()) {
+      const dialogRef = this.dialog.open(AdminPinDialogComponent, {
+        width: '400px',
+        disableClose: false,
+        data: {
+          title: 'Enter Admin PIN',
+          message: 'Enter the admin PIN to join as admin.',
+          mode: 'join',
+          pinRequired: true
+        }
+      });
+
+      const result = await firstValueFrom(dialogRef.afterClosed());
+
+      // User cancelled the dialog
+      if (result === null) {
+        return;
+      }
+
+      adminPin = result || undefined;
+    }
+
+    this.navigateToRoom(room, name, adminPin);
   }
 
   /**
@@ -113,14 +135,15 @@ export class HomeComponent {
    */
   toggleJoinForm(): void {
     this.showJoinForm.update(show => !show);
+    this.joinError.set(false); // Clear error when toggling form
   }
 
   /**
    * Navigate to room with state
    */
-  private navigateToRoom(roomId: string, userName: string, adminPin?: string): void {
+  private navigateToRoom(roomId: string, userName: string, adminPin?: string, isCreating: boolean = false): void {
     this.router.navigate(['/room', roomId], {
-      state: { userName, adminPin }
+      state: { userName, adminPin, isCreating }
     });
   }
 

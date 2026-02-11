@@ -97,11 +97,12 @@ The build artifacts will be stored in the `dist/` directory.
 2. Enter your name
 3. Click "Join Existing Room"
 4. Enter the Room ID shared by your team
-5. Click "Join Room"
-6. In the dialog:
-   - Enter the admin PIN if you're the room creator rejoining with admin rights
-   - Leave empty to join as a regular participant
-7. Click "OK" to join the room
+5. (Optional) Check "Join as admin (requires PIN)" if you want to join as admin
+6. Click "Join Room"
+7. If you checked the admin option, enter the admin PIN in the dialog
+8. You'll join the room if it exists, or see an error if the room doesn't exist
+
+**Note**: Rooms can only be created by clicking "Create New Room". You cannot create a room by trying to join a non-existent room ID.
 
 ### Voting
 

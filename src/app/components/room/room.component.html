@@ -29,6 +29,7 @@
               class="participant-card"
               [class.voted]="hasVoted(participant)"
               [class.current-user]="participant.id === currentUserId"
+              [class.admin]="participant.id === roomState().adminUserId"
             >
               <div class="participant-info">
                 <mat-icon class="participant-icon">person</mat-icon>
@@ -36,14 +37,30 @@
                 @if (participant.id === currentUserId) {
                   <span class="you-badge">(You)</span>
                 }
+                @if (participant.id === roomState().adminUserId) {
+                  <mat-icon class="admin-badge" matTooltip="Room Admin">admin_panel_settings</mat-icon>
+                }
               </div>
-              <div class="participant-vote">
-                @if (hasVoted(participant)) {
-                  <div class="vote-badge" [class.revealed]="roomState().revealed">
-                    {{ getParticipantVoteDisplay(participant) }}
-                  </div>
-                } @else {
-                  <div class="vote-badge empty">-</div>
+              <div class="participant-actions">
+                <div class="participant-vote">
+                  @if (hasVoted(participant)) {
+                    <div class="vote-badge" [class.revealed]="roomState().revealed">
+                      {{ getParticipantVoteDisplay(participant) }}
+                    </div>
+                  } @else {
+                    <div class="vote-badge empty">-</div>
+                  }
+                </div>
+                @if (isAdmin() && participant.id !== currentUserId) {
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    class="remove-button"
+                    (click)="removeParticipant(participant.id)"
+                    matTooltip="Remove participant"
+                  >
+                    <mat-icon>person_remove</mat-icon>
+                  </button>
                 }
               </div>
             </div>
@@ -92,29 +109,31 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Controls -->
-    <mat-card class="controls-card">
-      <mat-card-content>
-        <div class="controls-container">
-          <button
-            mat-raised-button
-            color="accent"
-            (click)="toggleReveal()"
-            class="control-button"
-          >
-            <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
-            {{ roomState().revealed ? 'Hide Votes' : 'Reveal Votes' }}
-          </button>
-          <button
-            mat-raised-button
-            (click)="resetVotes()"
-            class="control-button"
-          >
-            <mat-icon>refresh</mat-icon>
-            Reset Votes
-          </button>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <!-- Controls (Admin Only) -->
+    @if (isAdmin()) {
+      <mat-card class="controls-card">
+        <mat-card-content>
+          <div class="controls-container">
+            <button
+              mat-raised-button
+              color="accent"
+              (click)="toggleReveal()"
+              class="control-button"
+            >
+              <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
+              {{ roomState().revealed ? 'Hide Votes' : 'Reveal Votes' }}
+            </button>
+            <button
+              mat-raised-button
+              (click)="resetVotes()"
+              class="control-button"
+            >
+              <mat-icon>refresh</mat-icon>
+              Reset Votes
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
   </div>
 </div>

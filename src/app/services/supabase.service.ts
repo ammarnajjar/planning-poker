@@ -1,6 +1,7 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
+import { Subject } from 'rxjs';
 
 export interface Participant {
   id: string;
@@ -13,6 +14,7 @@ export interface RoomState {
   participants: Record<string, Participant>;
   revealed: boolean;
   roomId: string;
+  adminUserId: string;
 }
 
 @Injectable({
@@ -23,7 +25,8 @@ export class SupabaseService {
   private roomState: WritableSignal<RoomState> = signal<RoomState>({
     participants: {},
     revealed: false,
-    roomId: ''
+    roomId: '',
+    adminUserId: ''
   });
 
   // Public readonly signal
@@ -39,6 +42,10 @@ export class SupabaseService {
   // Heartbeat and cleanup intervals
   private heartbeatInterval?: any;
   private cleanupInterval?: any;
+
+  // Subject for when current user is removed
+  private userRemovedSubject = new Subject<void>();
+  public readonly onUserRemoved$ = this.userRemovedSubject.asObservable();
 
   constructor() {
     // Initialize Supabase client without auth persistence
@@ -121,6 +128,11 @@ export class SupabaseService {
     // Load existing room state
     await this.loadRoomState(roomId);
 
+    // If room doesn't exist, create it with current user as admin
+    if (!this.roomState().adminUserId) {
+      await this.createRoomWithAdmin(roomId);
+    }
+
     // Add current user to participants
     await this.addParticipant(roomId, userName);
 
@@ -163,24 +175,45 @@ export class SupabaseService {
       }));
     }
 
-    // Load revealed state (room might not exist yet, that's OK)
+    // Load revealed state and admin user (room might not exist yet, that's OK)
     const { data: rooms } = await this.supabase
       .from('rooms')
-      .select('revealed')
+      .select('revealed, admin_user_id')
       .eq('id', roomId);
 
     if (rooms && rooms.length > 0) {
       this.roomState.update(state => ({
         ...state,
-        revealed: rooms[0].revealed || false
+        revealed: rooms[0].revealed || false,
+        adminUserId: rooms[0].admin_user_id || ''
       }));
     } else {
       // Room doesn't exist yet, that's fine - it will be created when someone toggles reveal
       this.roomState.update(state => ({
         ...state,
-        revealed: false
+        revealed: false,
+        adminUserId: ''
       }));
     }
+  }
+
+  /**
+   * Create a new room with current user as admin
+   */
+  private async createRoomWithAdmin(roomId: string): Promise<void> {
+    await this.supabase
+      .from('rooms')
+      .insert({
+        id: roomId,
+        revealed: false,
+        admin_user_id: this.currentUserId
+      });
+
+    // Update local state
+    this.roomState.update(state => ({
+      ...state,
+      adminUserId: this.currentUserId
+    }));
   }
 
   /**
@@ -234,6 +267,13 @@ export class SupabaseService {
     if (eventType === 'DELETE') {
       // Remove participant from state
       const userId = oldData.user_id;
+
+      // Check if the removed user is the current user
+      if (userId === this.currentUserId) {
+        // Emit event that current user was removed
+        this.userRemovedSubject.next();
+      }
+
       this.roomState.update(state => {
         const newParticipants = { ...state.participants };
         delete newParticipants[userId];
@@ -355,7 +395,7 @@ export class SupabaseService {
   }
 
   /**
-   * Toggle reveal state
+   * Toggle reveal state (admin only)
    */
   async toggleReveal(): Promise<void> {
     const roomId = this.roomState().roomId;
@@ -366,14 +406,24 @@ export class SupabaseService {
     // Check if room exists first
     const { data: existingRooms } = await this.supabase
       .from('rooms')
-      .select('id')
+      .select('id, admin_user_id')
       .eq('id', roomId);
 
     if (!existingRooms || existingRooms.length === 0) {
-      // Create room if it doesn't exist
+      // Create room if it doesn't exist, set current user as admin
       await this.supabase
         .from('rooms')
-        .insert({ id: roomId, revealed: !currentRevealed });
+        .insert({
+          id: roomId,
+          revealed: !currentRevealed,
+          admin_user_id: this.currentUserId
+        });
+
+      // Update local state with admin
+      this.roomState.update(state => ({
+        ...state,
+        adminUserId: this.currentUserId
+      }));
     } else {
       // Update existing room
       await this.supabase
@@ -384,7 +434,7 @@ export class SupabaseService {
   }
 
   /**
-   * Reset all votes
+   * Reset all votes (admin only)
    */
   async resetVotes(): Promise<void> {
     const roomId = this.roomState().roomId;
@@ -404,10 +454,32 @@ export class SupabaseService {
   }
 
   /**
+   * Remove a participant from the room (admin only)
+   */
+  async removeParticipant(userId: string): Promise<void> {
+    const roomId = this.roomState().roomId;
+    if (!roomId) return;
+
+    // Delete the participant from the database
+    await this.supabase
+      .from('participants')
+      .delete()
+      .eq('room_id', roomId)
+      .eq('user_id', userId);
+  }
+
+  /**
    * Get current user ID
    */
   getCurrentUserId(): string {
     return this.currentUserId;
+  }
+
+  /**
+   * Check if current user is the room admin
+   */
+  isAdmin(): boolean {
+    return this.currentUserId === this.roomState().adminUserId;
   }
 
   /**
@@ -451,7 +523,8 @@ export class SupabaseService {
     this.roomState.set({
       participants: {},
       revealed: false,
-      roomId: ''
+      roomId: '',
+      adminUserId: ''
     });
 
     this.currentUserId = '';

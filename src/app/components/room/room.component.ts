@@ -68,6 +68,10 @@ export class RoomComponent implements OnInit, OnDestroy {
     return participant?.vote;
   });
 
+  isAdmin = computed(() => {
+    return this.currentUserId === this.roomState().adminUserId;
+  });
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -104,6 +108,13 @@ export class RoomComponent implements OnInit, OnDestroy {
     // Join room
     this.supabaseService.joinRoom(roomId, userName);
     this.currentUserId = this.supabaseService.getCurrentUserId();
+
+    // Subscribe to user removal events
+    this.supabaseService.onUserRemoved$.subscribe(() => {
+      // User was removed by admin, redirect to home
+      alert('You have been removed from the room by the admin.');
+      this.router.navigate(['/']);
+    });
   }
 
   ngOnDestroy(): void {
@@ -121,6 +132,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Toggle reveal state
    */
   toggleReveal(): void {
+    if (!this.isAdmin()) return;
     this.supabaseService.toggleReveal();
   }
 
@@ -128,7 +140,17 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Reset all votes
    */
   resetVotes(): void {
+    if (!this.isAdmin()) return;
     this.supabaseService.resetVotes();
+  }
+
+  /**
+   * Remove a participant from the room (admin only)
+   */
+  removeParticipant(userId: string): void {
+    if (!this.isAdmin()) return;
+    if (userId === this.currentUserId) return; // Can't remove yourself
+    this.supabaseService.removeParticipant(userId);
   }
 
   /**

@@ -26,6 +26,7 @@ Once your project is ready, go to the SQL Editor and run the following SQL:
 CREATE TABLE rooms (
   id TEXT PRIMARY KEY,
   revealed BOOLEAN DEFAULT false,
+  admin_user_id TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -204,6 +205,7 @@ If your team uses the app regularly and you want guaranteed uptime, consider upg
 ### `rooms` table
 - `id` (TEXT, PRIMARY KEY): Room identifier
 - `revealed` (BOOLEAN): Whether votes are revealed
+- `admin_user_id` (TEXT): User ID of the room admin/creator
 - `created_at` (TIMESTAMP): Creation timestamp
 - `updated_at` (TIMESTAMP): Last update timestamp
 

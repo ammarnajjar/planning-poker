@@ -12,6 +12,11 @@
   min-height: calc(100vh - 64px);
   padding: 24px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-image: url('/assets/home-background.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
 
   @media (max-width: 600px) {
     padding: 16px;
@@ -22,6 +27,9 @@
   width: 100%;
   max-width: 500px;
   margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
 
   mat-card-header {
     margin-bottom: 24px;
@@ -79,7 +87,9 @@
   border-radius: 8px;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
 
   h3 {
     margin-top: 0;

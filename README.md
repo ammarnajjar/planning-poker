@@ -1,20 +1,21 @@
 # Planning Poker
 
-A truly zero-cost, production-ready Planning Poker application built with Angular 17+ and Gun.js for decentralized peer-to-peer synchronization.
+A production-ready Planning Poker application built with Angular 17+ and Supabase for reliable real-time synchronization.
 
 ## Features
 
-- **Zero Cost**: No backend, no API keys, no quotas - fully peer-to-peer using Gun.js
-- **Real-Time Sync**: Decentralized state synchronization across all participants
+- **Free Tier Available**: Generous Supabase free tier (500MB database, 5GB bandwidth)
+- **Real-Time Sync**: Reliable cross-browser synchronization with PostgreSQL backing
 - **Modern Stack**: Angular 17+ with Standalone Components and Signals
 - **Responsive Design**: Mobile-first UI with Angular Material
 - **GitHub Pages**: Free static hosting with automated deployments
+- **Persistent Storage**: Data backed by PostgreSQL database
 
 ## Tech Stack
 
 - **Frontend**: Angular 17+ (Standalone Components)
 - **State Management**: Angular Signals
-- **Real-Time Sync**: Gun.js (P2P decentralized database)
+- **Real-Time Sync**: Supabase (PostgreSQL + Real-time subscriptions)
 - **UI Library**: Angular Material
 - **Styling**: SCSS
 - **Hosting**: GitHub Pages
@@ -40,11 +41,11 @@ cd planning-poker
 npm install
 ```
 
-3. Install Gun.js:
-```bash
-npm install gun
-npm install --save-dev @types/gun
-```
+3. **Set up Supabase** (required):
+   - Follow the detailed setup guide in [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
+   - Create a Supabase project
+   - Set up database tables
+   - Configure environment files with your API keys
 
 ### Development Server
 
@@ -141,7 +142,11 @@ planning-poker/
 │   │   │       ├── room.component.html
 │   │   │       └── room.component.scss
 │   │   ├── services/
-│   │   │   └── gun.service.ts
+│   │   │   └── supabase.service.ts
+│   │   ├── environments/
+│   │   │   ├── environment.ts (created from template)
+│   │   │   ├── environment.prod.ts (created from template)
+│   │   │   └── environment.template.ts
 │   │   ├── app.component.ts
 │   │   ├── app.config.ts
 │   │   └── app.routes.ts
@@ -159,14 +164,15 @@ planning-poker/
 
 ## Architecture
 
-### GunService
+### SupabaseService
 
-The `GunService` handles all Gun.js interactions and exposes Angular Signals for reactive state management:
+The `SupabaseService` handles all Supabase interactions and exposes Angular Signals for reactive state management:
 
 - **State Management**: Uses `WritableSignal<RoomState>` for reactive updates
-- **P2P Sync**: Connects to public Gun.js relay peers
+- **Real-Time Sync**: Connects to Supabase PostgreSQL with real-time subscriptions
 - **Heartbeat**: Sends periodic updates to show active participants
 - **Real-Time Updates**: Automatically syncs votes, participants, and reveal state
+- **Persistence**: Data stored in PostgreSQL database
 
 ### Components
 
@@ -183,32 +189,30 @@ The `GunService` handles all Gun.js interactions and exposes Angular Signals for
 - Average calculation using computed signals
 - Copy Room ID to clipboard
 
-## Gun.js Configuration
+## Supabase Configuration
 
-The application uses free public Gun.js relay peers for cross-browser and cross-machine synchronization:
-- `https://gun-manhattan.herokuapp.com/gun`
-- `https://relay.peer.ooo/gun`
-- `https://gun-us.herokuapp.com/gun`
-- `https://gunjs.herokuapp.com/gun`
+The application uses Supabase for reliable real-time synchronization across browsers and machines.
 
-Data is stored under the node key: `poker-room/<roomId>`
+### Database Tables
 
-### Synchronization Mechanisms
+- **rooms**: Stores room state (revealed status)
+- **participants**: Stores participant information (votes, names, lastSeen timestamps)
 
-The app uses two complementary sync mechanisms:
+### Real-Time Subscriptions
 
-1. **BroadcastChannel** (Same Browser, Different Tabs)
-   - Fast, reliable sync between tabs in the same browser
-   - Works offline and without relay peers
-   - Instant updates within the same browser instance
+The app subscribes to PostgreSQL changes using Supabase Realtime:
 
-2. **Gun.js Relay Peers** (Cross-Browser & Cross-Machine)
-   - Enables sync between different browsers
-   - Enables sync between different machines
-   - Requires at least one working relay peer
-   - Works across the internet
+- **Participant updates**: Detects when users join, vote, or leave
+- **Room updates**: Detects when votes are revealed or reset
+- **Automatic cleanup**: Stale participants (inactive >10 seconds) are removed
 
-**Note**: In local development, if relay peers are unavailable, sync will only work between tabs of the same browser. Once deployed to GitHub Pages and accessed from public URLs, relay peer connectivity typically improves.
+### Benefits over Gun.js
+
+- ✅ **Reliable**: No dependency on unreliable public relay servers
+- ✅ **Cross-browser sync**: Works reliably between different browsers
+- ✅ **Persistent storage**: PostgreSQL database with proper backups
+- ✅ **Scalable**: Handles many concurrent users
+- ✅ **Free tier**: Generous limits (500MB DB, 5GB bandwidth)
 
 ## State Management
 
@@ -243,13 +247,14 @@ MIT License - feel free to use this project for any purpose.
 
 ## Troubleshooting
 
-### Gun.js Connection Issues
+### Supabase Connection Issues
 
 If you experience sync issues:
-1. Check your internet connection
-2. Ensure the Gun.js relay peers are accessible
-3. Try refreshing the page
+1. Verify your Supabase API keys are correct in environment files
+2. Check that database tables exist (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md))
+3. Ensure Realtime is enabled for both tables
 4. Check browser console for errors
+5. Verify your Supabase project is not paused (free tier)
 
 ### Build Errors
 

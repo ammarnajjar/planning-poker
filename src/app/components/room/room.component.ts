@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { GunService, Participant } from '../../services/gun.service';
+import { SupabaseService, Participant } from '../../services/supabase.service';
 
 @Component({
   selector: 'app-room',
@@ -30,8 +30,8 @@ export class RoomComponent implements OnInit, OnDestroy {
   // Fibonacci sequence for voting
   readonly cardValues = ['0', '1', '2', '3', '5', '8', '13', '21', '?'];
 
-  // Room state from Gun service
-  roomState = this.gunService.state;
+  // Room state from Supabase service
+  roomState = this.supabaseService.state;
   currentUserId = '';
 
   // Computed values
@@ -40,7 +40,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   });
 
   votedCount = computed(() => {
-    return this.participants().filter(p => p.vote !== undefined && p.vote !== null).length;
+    return this.participants().filter((p: Participant) => p.vote !== undefined && p.vote !== null).length;
   });
 
   totalCount = computed(() => {
@@ -52,7 +52,7 @@ export class RoomComponent implements OnInit, OnDestroy {
 
     const participants = this.participants();
     const numericVotes = participants
-      .map(p => p.vote)
+      .map((p: Participant) => p.vote)
       .filter(v => v && v !== '?')
       .map(v => parseFloat(v!))
       .filter(v => !isNaN(v));
@@ -71,7 +71,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private gunService: GunService
+    private supabaseService: SupabaseService
   ) {}
 
   ngOnInit(): void {
@@ -102,33 +102,33 @@ export class RoomComponent implements OnInit, OnDestroy {
     localStorage.setItem('planning-poker-username', userName);
 
     // Join room
-    this.gunService.joinRoom(roomId, userName);
-    this.currentUserId = this.gunService.getCurrentUserId();
+    this.supabaseService.joinRoom(roomId, userName);
+    this.currentUserId = this.supabaseService.getCurrentUserId();
   }
 
   ngOnDestroy(): void {
-    this.gunService.leaveRoom();
+    this.supabaseService.leaveRoom();
   }
 
   /**
    * Vote for a card value
    */
   vote(value: string): void {
-    this.gunService.vote(value);
+    this.supabaseService.vote(value);
   }
 
   /**
    * Toggle reveal state
    */
   toggleReveal(): void {
-    this.gunService.toggleReveal();
+    this.supabaseService.toggleReveal();
   }
 
   /**
    * Reset all votes
    */
   resetVotes(): void {
-    this.gunService.resetVotes();
+    this.supabaseService.resetVotes();
   }
 
   /**

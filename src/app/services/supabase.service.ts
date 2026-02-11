@@ -83,8 +83,11 @@ export class SupabaseService {
 
   /**
    * Join a room and start syncing state
+   * @param roomId Room ID to join
+   * @param userName User's display name
+   * @param adminPin Optional admin PIN for room creation or admin access
    */
-  async joinRoom(roomId: string, userName: string): Promise<void> {
+  async joinRoom(roomId: string, userName: string, adminPin?: string): Promise<void> {
     // Clean up previous room
     if (this.currentChannel) {
       await this.supabase.removeChannel(this.currentChannel);
@@ -101,11 +104,14 @@ export class SupabaseService {
 
     // Reuse existing user ID from localStorage if available for this room
     // This prevents duplicate participants on page refresh
-    const storageKey = `planning-poker-userid-${roomId}`;
-    let storedUserId = localStorage.getItem(storageKey);
+    const userIdKey = `planning-poker-userid-${roomId}`;
+    const adminIdKey = `planning-poker-admin-${roomId}`;
 
-    // Check if stored userId is recent (within last 24 hours)
-    if (storedUserId) {
+    let storedUserId = localStorage.getItem(userIdKey);
+    const storedAdminId = localStorage.getItem(adminIdKey);
+
+    // For regular users, check if stored userId is recent (within last 24 hours)
+    if (storedUserId && !storedAdminId) {
       const timestamp = storedUserId.split('_')[1];
       const age = Date.now() - parseInt(timestamp);
       if (age > 24 * 60 * 60 * 1000) { // 24 hours
@@ -113,12 +119,17 @@ export class SupabaseService {
       }
     }
 
+    // If user has admin ID stored (no expiry), use that
+    if (storedAdminId) {
+      storedUserId = storedAdminId;
+    }
+
     // Use stored ID or generate new one
     this.currentUserId = storedUserId || this.generateUserId();
     this.currentUserName = userName;
 
     // Store the user ID for future refreshes
-    localStorage.setItem(storageKey, this.currentUserId);
+    localStorage.setItem(userIdKey, this.currentUserId);
 
     // Update room state signal
     this.roomState.update(state => ({
@@ -132,7 +143,22 @@ export class SupabaseService {
 
     // If room doesn't exist, create it with current user as admin
     if (!this.roomState().adminUserId) {
-      await this.createRoomWithAdmin(roomId);
+      await this.createRoomWithAdmin(roomId, adminPin);
+      // Store admin ID permanently (no expiry)
+      if (adminPin) {
+        localStorage.setItem(adminIdKey, this.currentUserId);
+      }
+    } else if (adminPin) {
+      // Verify admin PIN if provided
+      const isValidPin = await this.verifyAdminPin(roomId, adminPin);
+      if (isValidPin && this.roomState().adminUserId) {
+        // User provided correct PIN, store admin ID permanently
+        this.currentUserId = this.roomState().adminUserId;
+        localStorage.setItem(adminIdKey, this.currentUserId);
+        localStorage.setItem(userIdKey, this.currentUserId);
+      } else if (!isValidPin) {
+        throw new Error('Invalid admin PIN');
+      }
     }
 
     // Add current user to participants
@@ -204,14 +230,15 @@ export class SupabaseService {
   /**
    * Create a new room with current user as admin
    */
-  private async createRoomWithAdmin(roomId: string): Promise<void> {
+  private async createRoomWithAdmin(roomId: string, adminPin?: string): Promise<void> {
     await this.supabase
       .from('rooms')
       .insert({
         id: roomId,
         revealed: false,
         voting_started: false,
-        admin_user_id: this.currentUserId
+        admin_user_id: this.currentUserId,
+        admin_pin: adminPin || null
       });
 
     // Update local state
@@ -220,6 +247,23 @@ export class SupabaseService {
       votingStarted: false,
       adminUserId: this.currentUserId
     }));
+  }
+
+  /**
+   * Verify admin PIN for a room
+   */
+  private async verifyAdminPin(roomId: string, providedPin: string): Promise<boolean> {
+    const { data: rooms } = await this.supabase
+      .from('rooms')
+      .select('admin_pin')
+      .eq('id', roomId)
+      .single();
+
+    if (!rooms || !rooms.admin_pin) {
+      return false;
+    }
+
+    return rooms.admin_pin === providedPin;
   }
 
   /**

@@ -103,11 +103,24 @@ The build artifacts will be stored in the `dist/` directory.
 ### Admin Features
 
 The room creator has exclusive admin controls:
+- **Admin PIN Protection**: Set an optional PIN when creating a room for persistent admin access
+  - Admin ID persists permanently (no 24-hour expiry)
+  - Use PIN to regain admin access when returning to the room
+  - Regular participants still have 24-hour session expiry
 - **Start Voting**: Begin a new voting round (clears previous votes automatically)
 - **Reveal/Hide Votes**: Toggle vote visibility for all participants
 - **Reset Votes**: Clear all votes and return to initial state
 - **Remove Participants**: Remove any participant from the room (except yourself)
 - **Share Room**: Copy full room URL to share with team members
+
+### Rejoining as Admin
+
+To rejoin a room as admin after closing your browser:
+1. Go to the home page and click "Join Existing Room"
+2. Enter your name and the Room ID
+3. Click "Yes" when asked if you want to join as admin
+4. Enter the admin PIN you set when creating the room
+5. You'll regain full admin controls
 
 ## Deployment to GitHub Pages
 
@@ -283,10 +296,14 @@ MIT License - feel free to use this project for any purpose.
 
 ### Database Migration (Existing Installations)
 
-If you're updating from an earlier version, you need to add the `voting_started` column to your existing database:
+If you're updating from an earlier version, you need to add new columns to your existing database:
 
 ```sql
-ALTER TABLE rooms ADD COLUMN voting_started BOOLEAN DEFAULT false;
+-- Add voting_started column (if not already added)
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS voting_started BOOLEAN DEFAULT false;
+
+-- Add admin_pin column for persistent admin access
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS admin_pin TEXT;
 ```
 
 Run this in your Supabase SQL Editor (Settings → Database → SQL Editor).

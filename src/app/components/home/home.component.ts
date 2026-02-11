@@ -40,8 +40,16 @@ export class HomeComponent {
       return;
     }
 
+    // Prompt for admin PIN (optional but recommended)
+    const adminPin = prompt(
+      'Set an admin PIN (optional but recommended):\n\n' +
+      'This PIN will allow you to regain admin access if you return later.\n' +
+      'Leave empty to skip.',
+      ''
+    );
+
     const newRoomId = this.generateRoomId();
-    this.navigateToRoom(newRoomId, name);
+    this.navigateToRoom(newRoomId, name, adminPin || undefined);
   }
 
   /**
@@ -61,7 +69,20 @@ export class HomeComponent {
       return;
     }
 
-    this.navigateToRoom(room, name);
+    // Ask if user wants to join as admin
+    const joinAsAdmin = confirm('Do you want to join as admin? (You will need the admin PIN)');
+
+    let adminPin: string | undefined;
+    if (joinAsAdmin) {
+      const pin = prompt('Enter admin PIN:');
+      if (!pin) {
+        alert('Admin PIN is required to join as admin');
+        return;
+      }
+      adminPin = pin;
+    }
+
+    this.navigateToRoom(room, name, adminPin);
   }
 
   /**
@@ -74,9 +95,9 @@ export class HomeComponent {
   /**
    * Navigate to room with state
    */
-  private navigateToRoom(roomId: string, userName: string): void {
+  private navigateToRoom(roomId: string, userName: string, adminPin?: string): void {
     this.router.navigate(['/room', roomId], {
-      state: { userName }
+      state: { userName, adminPin }
     });
   }
 

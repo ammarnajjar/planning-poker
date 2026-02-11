@@ -28,6 +28,7 @@ CREATE TABLE rooms (
   revealed BOOLEAN DEFAULT false,
   voting_started BOOLEAN DEFAULT false,
   admin_user_id TEXT,
+  admin_pin TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -208,6 +209,7 @@ If your team uses the app regularly and you want guaranteed uptime, consider upg
 - `revealed` (BOOLEAN): Whether votes are revealed
 - `voting_started` (BOOLEAN): Whether voting has been started by admin
 - `admin_user_id` (TEXT): User ID of the room admin/creator
+- `admin_pin` (TEXT): PIN/password for admin access (optional but recommended)
 - `created_at` (TIMESTAMP): Creation timestamp
 - `updated_at` (TIMESTAMP): Last update timestamp
 

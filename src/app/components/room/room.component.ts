@@ -101,10 +101,11 @@ export class RoomComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Get user name from navigation state or localStorage
+    // Get user name and admin PIN from navigation state or localStorage
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras.state || history.state;
     let userName = state?.["userName"];
+    const adminPin = state?.["adminPin"];
 
     // If no userName in state, try localStorage
     if (!userName) {
@@ -120,8 +121,11 @@ export class RoomComponent implements OnInit, OnDestroy {
     // Store userName in localStorage for future refreshes
     localStorage.setItem("planning-poker-username", userName);
 
-    // Join room
-    this.supabaseService.joinRoom(roomId, userName);
+    // Join room with admin PIN if provided
+    this.supabaseService.joinRoom(roomId, userName, adminPin).catch((error) => {
+      alert(error.message || "Failed to join room");
+      this.router.navigate(["/"]);
+    });
     this.currentUserId = this.supabaseService.getCurrentUserId();
 
     // Subscribe to user removal events

@@ -188,6 +188,18 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Share room URL (copy full URL to clipboard)
+   */
+  shareRoom(): void {
+    const roomId = this.roomState().roomId;
+    const roomUrl = `${window.location.origin}/room/${roomId}`;
+    navigator.clipboard.writeText(roomUrl).then(() => {
+      // Could add a snackbar notification here
+      console.log("Room URL copied to clipboard");
+    });
+  }
+
+  /**
    * Leave room and go back to home
    */
   leaveRoom(): void {

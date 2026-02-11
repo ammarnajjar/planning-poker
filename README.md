@@ -4,12 +4,21 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
 
 ## Features
 
-- **Free Tier Available**: Generous Supabase free tier (500MB database, 5GB bandwidth)
-- **Real-Time Sync**: Reliable cross-browser synchronization with PostgreSQL backing
+- **Real-Time Sync**: Reliable cross-browser synchronization with Supabase PostgreSQL and real-time subscriptions
+- **Admin Controls**: Room creator has exclusive control over voting sessions
+  - Start Voting button to begin estimation rounds
+  - Reveal/Hide votes toggle
+  - Reset votes for new rounds
+  - Remove participants from room
+- **Visual Poker Table**: Interactive circular table with participants seated around it
+- **Share Room**: Copy room URL to clipboard for easy team sharing
+- **Custom Favicon & Background**: Expressive Planning Poker themed design
+- **PWA Support**: Web app manifest for installation on mobile devices
 - **Modern Stack**: Angular 17+ with Standalone Components and Signals
 - **Responsive Design**: Mobile-first UI with Angular Material
 - **GitHub Pages**: Free static hosting with automated deployments
 - **Persistent Storage**: Data backed by PostgreSQL database
+- **Free Tier Available**: Generous Supabase free tier (500MB database, 5GB bandwidth)
 
 ## Tech Stack
 
@@ -84,12 +93,21 @@ The build artifacts will be stored in the `dist/` directory.
 
 ### Voting
 
-1. Once in a room, select a card value (Fibonacci: 0, 1, 2, 3, 5, 8, 13, 21, ?)
-2. Your vote will be hidden from others until revealed
-3. Wait for all participants to vote
-4. Click "Reveal Votes" to show all votes
+1. The room creator (admin) starts by clicking **"Start Voting"**
+2. Once voting starts, all participants can select a card value (Fibonacci: 0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
+3. Votes are hidden from others until revealed
+4. Admin clicks **"Reveal Votes"** to show all votes with animated card flip
 5. View the average calculation (excluding "?" votes)
-6. Click "Reset Votes" to start a new round
+6. Admin clicks **"Reset Votes"** to start a new round (returns to "Start Voting" state)
+
+### Admin Features
+
+The room creator has exclusive admin controls:
+- **Start Voting**: Begin a new voting round (clears previous votes automatically)
+- **Reveal/Hide Votes**: Toggle vote visibility for all participants
+- **Reset Votes**: Clear all votes and return to initial state
+- **Remove Participants**: Remove any participant from the room (except yourself)
+- **Share Room**: Copy full room URL to share with team members
 
 ## Deployment to GitHub Pages
 
@@ -150,12 +168,21 @@ planning-poker/
 │   │   ├── app.component.ts
 │   │   ├── app.config.ts
 │   │   └── app.routes.ts
+│   ├── assets/
+│   │   └── home-background.svg
+│   ├── favicon.ico
+│   ├── favicon.svg
+│   ├── favicon-*.png
+│   ├── apple-touch-icon.png
+│   ├── manifest.json
 │   ├── index.html
 │   ├── main.ts
 │   └── styles.scss
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml
+├── SUPABASE_SETUP.md
+├── FAVICON.md
 ├── angular.json
 ├── package.json
 ├── tsconfig.json
@@ -182,12 +209,15 @@ The `SupabaseService` handles all Supabase interactions and exposes Angular Sign
 - Input validation for user name
 
 #### RoomComponent
-- Display participants and their voting status
-- Fibonacci voting cards (0, 1, 2, 3, 5, 8, 13, 21, ?)
-- Reveal/hide votes toggle
-- Reset votes functionality
+- Visual poker table with participants seated around it
+- Fibonacci voting cards (0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
+- Admin-only controls (Start Voting, Reveal/Hide, Reset, Remove Participants)
+- Vote state management (disabled until admin starts voting)
+- Animated vote reveal with card flip effect
 - Average calculation using computed signals
-- Copy Room ID to clipboard
+- Share room URL button (copies full URL to clipboard)
+- Copy Room ID button (copies just the ID)
+- Real-time participant updates around the table
 
 ## Supabase Configuration
 
@@ -195,7 +225,7 @@ The application uses Supabase for reliable real-time synchronization across brow
 
 ### Database Tables
 
-- **rooms**: Stores room state (revealed status)
+- **rooms**: Stores room state (revealed status, voting_started flag, admin_user_id)
 - **participants**: Stores participant information (votes, names, lastSeen timestamps)
 
 ### Real-Time Subscriptions
@@ -206,21 +236,22 @@ The app subscribes to PostgreSQL changes using Supabase Realtime:
 - **Room updates**: Detects when votes are revealed or reset
 - **Automatic cleanup**: Stale participants (inactive >10 seconds) are removed
 
-### Benefits over Gun.js
+### Benefits of Supabase
 
 - ✅ **Reliable**: No dependency on unreliable public relay servers
-- ✅ **Cross-browser sync**: Works reliably between different browsers
+- ✅ **Cross-browser sync**: Works reliably between different browsers and devices
 - ✅ **Persistent storage**: PostgreSQL database with proper backups
 - ✅ **Scalable**: Handles many concurrent users
+- ✅ **Admin features**: Database-backed admin controls and permissions
 - ✅ **Free tier**: Generous limits (500MB DB, 5GB bandwidth)
 
 ## State Management
 
 The application uses Angular Signals for reactive state management:
 
-- **Room State Signal**: Central state containing participants, votes, and reveal status
-- **Computed Signals**: Derived values like average vote, participant count, and voted count
-- **Automatic Reactivity**: UI updates automatically when Gun.js pushes state changes
+- **Room State Signal**: Central state containing participants, votes, reveal status, and voting_started flag
+- **Computed Signals**: Derived values like average vote, participant count, voted count, and admin status
+- **Automatic Reactivity**: UI updates automatically when Supabase pushes state changes via real-time subscriptions
 
 ## Mobile Support
 
@@ -229,6 +260,9 @@ The application is fully responsive with mobile-first design:
 - Responsive grid layouts
 - Mobile-optimized navigation
 - Adaptive typography and spacing
+- PWA support for installation on mobile devices
+- Apple touch icon for iOS home screen
+- Responsive poker table that scales on mobile devices
 
 ## Browser Support
 
@@ -247,14 +281,25 @@ MIT License - feel free to use this project for any purpose.
 
 ## Troubleshooting
 
+### Database Migration (Existing Installations)
+
+If you're updating from an earlier version, you need to add the `voting_started` column to your existing database:
+
+```sql
+ALTER TABLE rooms ADD COLUMN voting_started BOOLEAN DEFAULT false;
+```
+
+Run this in your Supabase SQL Editor (Settings → Database → SQL Editor).
+
 ### Supabase Connection Issues
 
 If you experience sync issues:
 1. Verify your Supabase API keys are correct in environment files
 2. Check that database tables exist (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md))
-3. Ensure Realtime is enabled for both tables
-4. Check browser console for errors
-5. Verify your Supabase project is not paused (free tier)
+3. Ensure the `voting_started` column exists in the `rooms` table
+4. Ensure Realtime is enabled for both tables
+5. Check browser console for errors
+6. Verify your Supabase project is not paused (free tier)
 
 ### Build Errors
 
@@ -272,17 +317,31 @@ If GitHub Pages deployment fails:
 3. Verify the base-href in package.json matches your repo name
 4. Check that the workflow has the correct permissions
 
+## Visual Design
+
+The application features custom Planning Poker themed graphics:
+- **Custom Favicon**: Poker card design with Fibonacci number "8" in Material Indigo
+- **Multiple Icon Sizes**: SVG, ICO, and PNG formats for all devices (16x16, 32x32, 180x180, 512x512)
+- **Background Design**: Expressive home page background with floating poker cards and Fibonacci numbers
+- **Poker Table Layout**: Visual circular table with participants seated around it
+- **Animated Reveals**: Card flip animation when votes are revealed
+- **Material Design**: Consistent color scheme using Material Indigo and purple gradient
+
+For more details on the favicon design, see [FAVICON.md](FAVICON.md).
+
 ## Future Enhancements
 
 Possible improvements:
-- Timer for voting rounds
-- Custom card values
+- Timer for voting rounds with countdown
+- Custom card values configuration
 - Room password protection
-- Vote history and statistics
-- Export results to CSV
-- Multiple voting rounds tracking
-- Spectator mode
-- Custom themes
+- Vote history and statistics tracking
+- Export results to CSV or PDF
+- Multiple voting rounds history
+- Spectator mode (observe without voting)
+- Custom themes and color schemes
+- Voice/video chat integration
+- Integration with Jira/Linear/GitHub Issues
 
 ## Support
 
@@ -293,4 +352,4 @@ For issues and questions:
 
 ---
 
-Built with ❤️ using Angular 17+ and Gun.js
+Built with ❤️ using Angular 17+ and Supabase

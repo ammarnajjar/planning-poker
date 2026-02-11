@@ -208,4 +208,13 @@ export class RoomComponent implements OnInit, OnDestroy {
   hasVoted(participant: Participant): boolean {
     return participant.vote !== undefined && participant.vote !== null;
   }
+
+  /**
+   * Get position around the table for a participant
+   */
+  getParticipantPosition(index: number): number {
+    const total = this.participants().length;
+    // Distribute participants evenly around the table
+    return Math.floor((index / total) * 12); // 12 positions around the table
+  }
 }

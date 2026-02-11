@@ -13,7 +13,7 @@
 <div class="room-container">
   <!-- Participants Section -->
   <div class="participants-section">
-    <mat-card>
+    <mat-card class="table-container">
       <mat-card-header>
         <mat-card-title>
           Participants ({{ totalCount() }})
@@ -23,48 +23,64 @@
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div class="participants-grid">
-          @for (participant of participants(); track participant.id) {
-            <div
-              class="participant-card"
-              [class.voted]="hasVoted(participant)"
-              [class.current-user]="participant.id === currentUserId"
-              [class.admin]="participant.id === roomState().adminUserId"
-            >
-              <div class="participant-info">
-                <mat-icon class="participant-icon">person</mat-icon>
-                <span class="participant-name">{{ participant.name }}</span>
-                @if (participant.id === currentUserId) {
-                  <span class="you-badge">(You)</span>
-                }
-                @if (participant.id === roomState().adminUserId) {
-                  <mat-icon class="admin-badge" matTooltip="Room Admin">admin_panel_settings</mat-icon>
-                }
-              </div>
-              <div class="participant-actions">
-                <div class="participant-vote">
-                  @if (hasVoted(participant)) {
-                    <div class="vote-badge" [class.revealed]="roomState().revealed">
-                      {{ getParticipantVoteDisplay(participant) }}
-                    </div>
-                  } @else {
-                    <div class="vote-badge empty">-</div>
-                  }
-                </div>
-                @if (isAdmin() && participant.id !== currentUserId) {
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    class="remove-button"
-                    (click)="removeParticipant(participant.id)"
-                    matTooltip="Remove participant"
-                  >
-                    <mat-icon>person_remove</mat-icon>
-                  </button>
-                }
-              </div>
+        <div class="poker-table">
+          <div class="table-surface">
+            <div class="table-info">
+              <mat-icon class="table-icon">groups</mat-icon>
+              <div class="table-text">Planning Poker</div>
             </div>
-          }
+          </div>
+          <div class="participants-around-table">
+            @for (participant of participants(); track participant.id; let idx = $index) {
+              <div
+                class="participant-seat"
+                [attr.data-position]="getParticipantPosition(idx)"
+                [class.voted]="hasVoted(participant)"
+                [class.current-user]="participant.id === currentUserId"
+                [class.admin]="participant.id === roomState().adminUserId"
+              >
+                @if (hasVoted(participant) && roomState().revealed) {
+                  <div class="revealed-vote-box" [class.unknown]="participant.vote === '?'">
+                    {{ participant.vote }}
+                  </div>
+                }
+                <div class="participant-info-wrapper">
+                  <div class="participant-avatar">
+                    <mat-icon class="avatar-icon">person</mat-icon>
+                    @if (hasVoted(participant) && !roomState().revealed) {
+                      <div class="vote-badge-overlay">
+                        {{ getParticipantVoteDisplay(participant) }}
+                      </div>
+                    }
+                  </div>
+                  <div class="participant-details">
+                    <div class="participant-name-row">
+                      <span class="participant-name">{{ participant.name }}</span>
+                      @if (participant.id === currentUserId) {
+                        <span class="you-badge">(You)</span>
+                      }
+                    </div>
+                    <div class="participant-badges">
+                      @if (participant.id === roomState().adminUserId) {
+                        <mat-icon class="admin-badge" matTooltip="Room Admin">admin_panel_settings</mat-icon>
+                      }
+                      @if (isAdmin() && participant.id !== currentUserId) {
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          class="remove-button-small"
+                          (click)="removeParticipant(participant.id)"
+                          matTooltip="Remove participant"
+                        >
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
         </div>
       </mat-card-content>
     </mat-card>

@@ -29,6 +29,7 @@ CREATE TABLE rooms (
   voting_started BOOLEAN DEFAULT false,
   admin_user_id TEXT,
   admin_pin TEXT,
+  admin_participates BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );

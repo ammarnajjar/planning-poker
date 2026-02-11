@@ -42,19 +42,22 @@
                 [class.current-user]="participant.id === currentUserId"
                 [class.admin]="participant.id === roomState().adminUserId"
               >
-                @if (hasVoted(participant) && roomState().revealed) {
-                  <div class="revealed-vote-box" [class.unknown]="participant.vote === '?'">
-                    {{ participant.vote }}
+                @if (participant.id !== roomState().adminUserId || roomState().adminParticipates) {
+                  <div class="estimation-card"
+                       [class.voted]="hasVoted(participant)"
+                       [class.revealed]="roomState().revealed && hasVoted(participant)"
+                       [class.unknown]="participant.vote === '?'">
+                    <div class="card-inner">
+                      <div class="card-front"></div>
+                      <div class="card-back">
+                        {{ participant.vote }}
+                      </div>
+                    </div>
                   </div>
                 }
                 <div class="participant-info-wrapper">
                   <div class="participant-avatar">
                     <mat-icon class="avatar-icon">person</mat-icon>
-                    @if (hasVoted(participant) && !roomState().revealed) {
-                      <div class="vote-badge-overlay">
-                        {{ getParticipantVoteDisplay(participant) }}
-                      </div>
-                    }
                   </div>
                   <div class="participant-details">
                     <div class="participant-name-row">
@@ -118,7 +121,7 @@
               mat-raised-button
               class="vote-card"
               [class.selected]="isCardSelected(value)"
-              [disabled]="roomState().revealed || !roomState().votingStarted"
+              [disabled]="roomState().revealed || !roomState().votingStarted || (isAdmin() && !roomState().adminParticipates)"
               (click)="vote(value)"
             >
               <span class="card-value">{{ value }}</span>
@@ -132,6 +135,15 @@
     @if (isAdmin()) {
       <mat-card class="controls-card">
         <mat-card-content>
+          <div class="admin-participation-toggle">
+            <mat-checkbox
+              [checked]="roomState().adminParticipates"
+              (change)="toggleAdminParticipation()"
+              color="primary"
+            >
+              I want to participate in voting
+            </mat-checkbox>
+          </div>
           <div class="controls-container">
             @if (!roomState().votingStarted) {
               <button

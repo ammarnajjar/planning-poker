@@ -16,6 +16,7 @@ export interface RoomState {
   votingStarted: boolean;
   roomId: string;
   adminUserId: string;
+  adminParticipates: boolean;
 }
 
 @Injectable({
@@ -28,7 +29,8 @@ export class SupabaseService {
     revealed: false,
     votingStarted: false,
     roomId: '',
-    adminUserId: ''
+    adminUserId: '',
+    adminParticipates: false
   });
 
   // Public readonly signal
@@ -204,10 +206,10 @@ export class SupabaseService {
       }));
     }
 
-    // Load revealed state, voting_started, and admin user (room might not exist yet, that's OK)
+    // Load revealed state, voting_started, admin user, and admin_participates (room might not exist yet, that's OK)
     const { data: rooms } = await this.supabase
       .from('rooms')
-      .select('revealed, voting_started, admin_user_id')
+      .select('revealed, voting_started, admin_user_id, admin_participates')
       .eq('id', roomId);
 
     if (rooms && rooms.length > 0) {
@@ -215,7 +217,8 @@ export class SupabaseService {
         ...state,
         revealed: rooms[0].revealed || false,
         votingStarted: rooms[0].voting_started || false,
-        adminUserId: rooms[0].admin_user_id || ''
+        adminUserId: rooms[0].admin_user_id || '',
+        adminParticipates: rooms[0].admin_participates || false
       }));
     } else {
       // Room doesn't exist yet, that's fine - it will be created when someone toggles reveal
@@ -223,7 +226,8 @@ export class SupabaseService {
         ...state,
         revealed: false,
         votingStarted: false,
-        adminUserId: ''
+        adminUserId: '',
+        adminParticipates: false
       }));
     }
   }
@@ -239,14 +243,16 @@ export class SupabaseService {
         revealed: false,
         voting_started: false,
         admin_user_id: this.currentUserId,
-        admin_pin: adminPin || null
+        admin_pin: adminPin || null,
+        admin_participates: false
       });
 
     // Update local state
     this.roomState.update(state => ({
       ...state,
       votingStarted: false,
-      adminUserId: this.currentUserId
+      adminUserId: this.currentUserId,
+      adminParticipates: false
     }));
   }
 
@@ -305,6 +311,9 @@ export class SupabaseService {
             }
             if (typeof payload.new.voting_started === 'boolean') {
               updates.votingStarted = payload.new.voting_started;
+            }
+            if (typeof payload.new.admin_participates === 'boolean') {
+              updates.adminParticipates = payload.new.admin_participates;
             }
             if (Object.keys(updates).length > 0) {
               this.roomState.update(state => ({
@@ -537,6 +546,31 @@ export class SupabaseService {
   }
 
   /**
+   * Toggle admin participation in voting
+   */
+  async toggleAdminParticipation(): Promise<void> {
+    const roomId = this.roomState().roomId;
+    if (!roomId) return;
+
+    const newValue = !this.roomState().adminParticipates;
+
+    // Update in database
+    await this.supabase
+      .from('rooms')
+      .update({ admin_participates: newValue })
+      .eq('id', roomId);
+
+    // If admin is no longer participating, clear their vote
+    if (!newValue) {
+      await this.supabase
+        .from('participants')
+        .update({ vote: null })
+        .eq('room_id', roomId)
+        .eq('user_id', this.currentUserId);
+    }
+  }
+
+  /**
    * Remove a participant from the room (admin only)
    */
   async removeParticipant(userId: string): Promise<void> {
@@ -608,7 +642,8 @@ export class SupabaseService {
       revealed: false,
       votingStarted: false,
       roomId: '',
-      adminUserId: ''
+      adminUserId: '',
+      adminParticipates: false
     });
 
     this.currentUserId = '';

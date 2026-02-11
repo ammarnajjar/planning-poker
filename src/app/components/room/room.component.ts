@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, computed, OnDestroy, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
+import { MatCheckboxModule } from "@angular/material/checkbox";
 import { MatChipsModule } from "@angular/material/chips";
 import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
@@ -17,6 +18,7 @@ import { Participant, SupabaseService } from "../../services/supabase.service";
     CommonModule,
     MatCardModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatToolbarModule,
     MatIconModule,
     MatChipsModule,
@@ -175,6 +177,14 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Toggle admin participation in voting
+   */
+  toggleAdminParticipation(): void {
+    if (!this.isAdmin()) return;
+    this.supabaseService.toggleAdminParticipation();
+  }
+
+  /**
    * Remove a participant from the room (admin only)
    */
   removeParticipant(userId: string): void {
@@ -217,7 +227,12 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Check if a card is selected
    */
   isCardSelected(value: string): boolean {
-    return this.myVote() === value;
+    const currentVote = this.myVote();
+    // If no vote yet, default to "?" being selected
+    if (currentVote === undefined || currentVote === null) {
+      return value === "?";
+    }
+    return currentVote === value;
   }
 
   /**

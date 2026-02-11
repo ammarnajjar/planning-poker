@@ -310,6 +310,9 @@ ALTER TABLE rooms ADD COLUMN IF NOT EXISTS voting_started BOOLEAN DEFAULT false;
 
 -- Add admin_pin column for persistent admin access
 ALTER TABLE rooms ADD COLUMN IF NOT EXISTS admin_pin TEXT;
+
+-- Add admin_participates column to control admin voting participation
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS admin_participates BOOLEAN DEFAULT false;
 ```
 
 Run this in your Supabase SQL Editor (Settings → Database → SQL Editor).

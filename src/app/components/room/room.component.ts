@@ -93,7 +93,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     private supabaseService: SupabaseService,
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     // Get room ID from route
     const roomId = this.route.snapshot.paramMap.get("id");
     if (!roomId) {
@@ -121,12 +121,15 @@ export class RoomComponent implements OnInit, OnDestroy {
     // Store userName in localStorage for future refreshes
     localStorage.setItem("planning-poker-username", userName);
 
-    // Join room with admin PIN if provided
-    this.supabaseService.joinRoom(roomId, userName, adminPin).catch((error) => {
+    // Join room with admin PIN if provided - await to ensure currentUserId is set
+    try {
+      await this.supabaseService.joinRoom(roomId, userName, adminPin);
+      this.currentUserId = this.supabaseService.getCurrentUserId();
+    } catch (error: any) {
       alert(error.message || "Failed to join room");
       this.router.navigate(["/"]);
-    });
-    this.currentUserId = this.supabaseService.getCurrentUserId();
+      return;
+    }
 
     // Subscribe to user removal events
     this.supabaseService.onUserRemoved$.subscribe(() => {

@@ -178,5 +178,200 @@ describe('SupabaseService', () => {
       expect(state.adminParticipates).toBe(false);
       expect(state.participants).toEqual({});
     });
+
+    it('should provide readonly state signal', () => {
+      // Act
+      const state = service.state();
+
+      // Assert - state() should return RoomState object
+      expect(state).toBeDefined();
+      expect(typeof state).toBe('object');
+    });
+
+    it('should have correct state structure', () => {
+      // Act
+      const state = service.state();
+
+      // Assert - verify all required properties exist
+      expect(state).toHaveProperty('roomId');
+      expect(state).toHaveProperty('adminUserId');
+      expect(state).toHaveProperty('revealed');
+      expect(state).toHaveProperty('votingStarted');
+      expect(state).toHaveProperty('adminParticipates');
+      expect(state).toHaveProperty('participants');
+    });
+  });
+
+  describe('Room ID Validation', () => {
+    it('should query database with correct room ID', async () => {
+      // Arrange
+      const roomId = 'ABC12345';
+      const selectMock = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: { id: roomId } })
+        })
+      });
+      mockSupabase.from.mockReturnValue({
+        select: selectMock
+      });
+
+      // Act
+      await service.roomExists(roomId);
+
+      // Assert
+      expect(mockSupabase.from).toHaveBeenCalledWith('rooms');
+      expect(selectMock).toHaveBeenCalledWith('id');
+    });
+
+    it('should handle special characters in room ID', async () => {
+      // Arrange
+      const roomId = 'TEST-123';
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null })
+          })
+        })
+      });
+
+      // Act
+      const result = await service.roomExists(roomId);
+
+      // Assert
+      expect(result).toBe(false);
+    });
+
+    it('should handle empty room ID', async () => {
+      // Arrange
+      const roomId = '';
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null })
+          })
+        })
+      });
+
+      // Act
+      const result = await service.roomExists(roomId);
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('Error Scenarios', () => {
+    it('should handle network errors in roomExists', async () => {
+      // Arrange
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockRejectedValue(new Error('Network error'))
+          })
+        })
+      });
+
+      // Act & Assert
+      await expect(service.roomExists('TEST123')).rejects.toThrow('Network error');
+    });
+
+    it('should handle timeout errors in roomExists', async () => {
+      // Arrange
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockRejectedValue(new Error('Request timeout'))
+          })
+        })
+      });
+
+      // Act & Assert
+      await expect(service.roomExists('TEST123')).rejects.toThrow('Request timeout');
+    });
+
+    it('should handle database connection errors in createRoom', async () => {
+      // Arrange
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockRejectedValue(new Error('Connection failed'))
+          })
+        })
+      });
+
+      // Act & Assert
+      await expect(service.createRoom('TEST123', 'User')).rejects.toThrow('Connection failed');
+    });
+
+    it('should handle database connection errors in joinRoom', async () => {
+      // Arrange
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockRejectedValue(new Error('Connection failed'))
+          })
+        })
+      });
+
+      // Act & Assert
+      // joinRoom calls loadRoomState which will fail with Connection failed
+      await expect(service.joinRoom('TEST123', 'User')).rejects.toThrow();
+    });
+  });
+
+  describe('Boolean Conversion', () => {
+    it('should convert truthy database response to true', async () => {
+      // Arrange
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'TEST' } })
+          })
+        })
+      });
+
+      // Act
+      const result = await service.roomExists('TEST');
+
+      // Assert
+      expect(result).toBe(true);
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should convert null database response to false', async () => {
+      // Arrange
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null })
+          })
+        })
+      });
+
+      // Act
+      const result = await service.roomExists('TEST');
+
+      // Assert
+      expect(result).toBe(false);
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should convert undefined database response to false', async () => {
+      // Arrange
+      mockSupabase.from.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: undefined })
+          })
+        })
+      });
+
+      // Act
+      const result = await service.roomExists('TEST');
+
+      // Assert
+      expect(result).toBe(false);
+      expect(typeof result).toBe('boolean');
+    });
   });
 });

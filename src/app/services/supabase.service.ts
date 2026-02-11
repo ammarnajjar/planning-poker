@@ -13,6 +13,7 @@ export interface Participant {
 export interface RoomState {
   participants: Record<string, Participant>;
   revealed: boolean;
+  votingStarted: boolean;
   roomId: string;
   adminUserId: string;
 }
@@ -25,6 +26,7 @@ export class SupabaseService {
   private roomState: WritableSignal<RoomState> = signal<RoomState>({
     participants: {},
     revealed: false,
+    votingStarted: false,
     roomId: '',
     adminUserId: ''
   });
@@ -175,16 +177,17 @@ export class SupabaseService {
       }));
     }
 
-    // Load revealed state and admin user (room might not exist yet, that's OK)
+    // Load revealed state, voting_started, and admin user (room might not exist yet, that's OK)
     const { data: rooms } = await this.supabase
       .from('rooms')
-      .select('revealed, admin_user_id')
+      .select('revealed, voting_started, admin_user_id')
       .eq('id', roomId);
 
     if (rooms && rooms.length > 0) {
       this.roomState.update(state => ({
         ...state,
         revealed: rooms[0].revealed || false,
+        votingStarted: rooms[0].voting_started || false,
         adminUserId: rooms[0].admin_user_id || ''
       }));
     } else {
@@ -192,6 +195,7 @@ export class SupabaseService {
       this.roomState.update(state => ({
         ...state,
         revealed: false,
+        votingStarted: false,
         adminUserId: ''
       }));
     }
@@ -206,12 +210,14 @@ export class SupabaseService {
       .insert({
         id: roomId,
         revealed: false,
+        voting_started: false,
         admin_user_id: this.currentUserId
       });
 
     // Update local state
     this.roomState.update(state => ({
       ...state,
+      votingStarted: false,
       adminUserId: this.currentUserId
     }));
   }
@@ -237,7 +243,7 @@ export class SupabaseService {
           this.handleParticipantChange(payload);
         }
       )
-      // Listen to room changes (revealed state)
+      // Listen to room changes (revealed state and voting_started)
       .on(
         'postgres_changes',
         {
@@ -247,11 +253,20 @@ export class SupabaseService {
           filter: `id=eq.${roomId}`
         },
         (payload: any) => {
-          if (payload.new && typeof payload.new.revealed === 'boolean') {
-            this.roomState.update(state => ({
-              ...state,
-              revealed: payload.new.revealed
-            }));
+          if (payload.new) {
+            const updates: Partial<RoomState> = {};
+            if (typeof payload.new.revealed === 'boolean') {
+              updates.revealed = payload.new.revealed;
+            }
+            if (typeof payload.new.voting_started === 'boolean') {
+              updates.votingStarted = payload.new.voting_started;
+            }
+            if (Object.keys(updates).length > 0) {
+              this.roomState.update(state => ({
+                ...state,
+                ...updates
+              }));
+            }
           }
         }
       )
@@ -416,12 +431,14 @@ export class SupabaseService {
         .insert({
           id: roomId,
           revealed: !currentRevealed,
+          voting_started: false,
           admin_user_id: this.currentUserId
         });
 
       // Update local state with admin
       this.roomState.update(state => ({
         ...state,
+        votingStarted: false,
         adminUserId: this.currentUserId
       }));
     } else {
@@ -446,10 +463,31 @@ export class SupabaseService {
       .update({ vote: null })
       .eq('room_id', roomId);
 
-    // Set revealed to false
+    // Set revealed to false and voting_started to false
     await this.supabase
       .from('rooms')
-      .update({ revealed: false })
+      .update({ revealed: false, voting_started: false })
+      .eq('id', roomId);
+  }
+
+  /**
+   * Start voting session (admin only)
+   * Resets all votes and enables voting
+   */
+  async startVoting(): Promise<void> {
+    const roomId = this.roomState().roomId;
+    if (!roomId) return;
+
+    // Clear all votes for this room
+    await this.supabase
+      .from('participants')
+      .update({ vote: null })
+      .eq('room_id', roomId);
+
+    // Set voting_started to true and revealed to false
+    await this.supabase
+      .from('rooms')
+      .update({ voting_started: true, revealed: false })
       .eq('id', roomId);
   }
 
@@ -523,6 +561,7 @@ export class SupabaseService {
     this.roomState.set({
       participants: {},
       revealed: false,
+      votingStarted: false,
       roomId: '',
       adminUserId: ''
     });

@@ -160,6 +160,14 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Start voting session (admin only)
+   */
+  startVoting(): void {
+    if (!this.isAdmin()) return;
+    this.supabaseService.startVoting();
+  }
+
+  /**
    * Remove a participant from the room (admin only)
    */
   removeParticipant(userId: string): void {

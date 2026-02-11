@@ -115,7 +115,7 @@
               mat-raised-button
               class="vote-card"
               [class.selected]="isCardSelected(value)"
-              [disabled]="roomState().revealed"
+              [disabled]="roomState().revealed || !roomState().votingStarted"
               (click)="vote(value)"
             >
               <span class="card-value">{{ value }}</span>
@@ -130,23 +130,35 @@
       <mat-card class="controls-card">
         <mat-card-content>
           <div class="controls-container">
-            <button
-              mat-raised-button
-              color="accent"
-              (click)="toggleReveal()"
-              class="control-button"
-            >
-              <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
-              {{ roomState().revealed ? 'Hide Votes' : 'Reveal Votes' }}
-            </button>
-            <button
-              mat-raised-button
-              (click)="resetVotes()"
-              class="control-button"
-            >
-              <mat-icon>refresh</mat-icon>
-              Reset Votes
-            </button>
+            @if (!roomState().votingStarted) {
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="startVoting()"
+                class="control-button control-button-full"
+              >
+                <mat-icon>play_arrow</mat-icon>
+                Start Voting
+              </button>
+            } @else {
+              <button
+                mat-raised-button
+                color="accent"
+                (click)="toggleReveal()"
+                class="control-button"
+              >
+                <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
+                {{ roomState().revealed ? 'Hide Votes' : 'Reveal Votes' }}
+              </button>
+              <button
+                mat-raised-button
+                (click)="resetVotes()"
+                class="control-button"
+              >
+                <mat-icon>refresh</mat-icon>
+                Reset Votes
+              </button>
+            }
           </div>
         </mat-card-content>
       </mat-card>

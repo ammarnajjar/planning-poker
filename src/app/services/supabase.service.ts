@@ -565,6 +565,12 @@ export class SupabaseService {
 
     if (!roomId) return;
 
+    // Update local state immediately for better UX
+    this.roomState.update(state => ({
+      ...state,
+      revealed: !currentRevealed
+    }));
+
     // Check if room exists first
     const { data: existingRooms } = await this.supabase
       .from('rooms')
@@ -604,6 +610,16 @@ export class SupabaseService {
     const roomId = this.roomState().roomId;
     if (!roomId) return;
 
+    // Update local state immediately for better UX
+    this.roomState.update(state => ({
+      ...state,
+      revealed: false,
+      votingStarted: false,
+      participants: Object.fromEntries(
+        Object.entries(state.participants).map(([id, p]) => [id, { ...p, vote: undefined }])
+      )
+    }));
+
     // Clear all votes for this room
     await this.supabase
       .from('participants')
@@ -624,6 +640,13 @@ export class SupabaseService {
   async startVoting(): Promise<void> {
     const roomId = this.roomState().roomId;
     if (!roomId) return;
+
+    // Update local state immediately for better UX
+    this.roomState.update(state => ({
+      ...state,
+      votingStarted: true,
+      revealed: false
+    }));
 
     // Clear all votes for this room
     await this.supabase
@@ -647,6 +670,12 @@ export class SupabaseService {
 
     const newValue = !this.roomState().adminParticipates;
 
+    // Update local state immediately for better UX
+    this.roomState.update(state => ({
+      ...state,
+      adminParticipates: newValue
+    }));
+
     // Update in database
     await this.supabase
       .from('rooms')
@@ -655,6 +684,18 @@ export class SupabaseService {
 
     // If admin is no longer participating, clear their vote
     if (!newValue) {
+      // Clear vote in local state
+      this.roomState.update(state => ({
+        ...state,
+        participants: {
+          ...state.participants,
+          [this.currentUserId]: {
+            ...state.participants[this.currentUserId],
+            vote: undefined
+          }
+        }
+      }));
+
       await this.supabase
         .from('participants')
         .update({ vote: null })

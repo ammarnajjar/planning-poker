@@ -5,12 +5,19 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
 ## Features
 
 - **Real-Time Sync**: Reliable cross-browser synchronization with Supabase PostgreSQL and real-time subscriptions
+- **Visual Estimation Cards**: Each participant has a visual estimation card with 3D flip animation
+  - Face-down cards with diagonal stripe pattern
+  - Cards turn green when participant votes
+  - Animated card flip reveals votes when admin triggers reveal
+  - Orange border for "?" (unknown) votes
 - **Admin Controls**: Room creator has exclusive control over voting sessions
+  - Optional admin participation toggle - choose to vote or just facilitate
   - Start Voting button to begin estimation rounds
-  - Reveal/Hide votes toggle
+  - Reveal/Hide votes toggle with animated card flip
   - Reset votes for new rounds
   - Remove participants from room
 - **Visual Poker Table**: Interactive circular table with participants seated around it
+- **Smart Defaults**: "?" card pre-selected for participants who haven't voted
 - **Share Room**: Copy room URL to clipboard for easy team sharing
 - **Custom Favicon & Background**: Expressive Planning Poker themed design
 - **PWA Support**: Web app manifest for installation on mobile devices
@@ -81,7 +88,8 @@ The build artifacts will be stored in the `dist/` directory.
 1. Go to the home page
 2. Enter your name
 3. Click "Create New Room"
-4. Share the generated Room ID with your team
+4. Optionally set an admin PIN (recommended for persistent admin access)
+5. Share the generated Room ID with your team
 
 ### Joining a Room
 
@@ -97,22 +105,32 @@ The build artifacts will be stored in the `dist/` directory.
 
 ### Voting
 
-1. The room creator (admin) starts by clicking **"Start Voting"**
-2. Once voting starts, all participants can select a card value (Fibonacci: 0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
-3. Votes are hidden from others until revealed
-4. Admin clicks **"Reveal Votes"** to show all votes with animated card flip
-5. View the average calculation (excluding "?" votes)
-6. Admin clicks **"Reset Votes"** to start a new round (returns to "Start Voting" state)
+1. **Admin setup** (optional): Check "I want to participate in voting" if admin wants to vote
+   - Unchecked (default): Admin facilitates without voting
+   - Checked: Admin participates like regular participants
+2. The room creator (admin) starts by clicking **"Start Voting"**
+3. **Participants see visual cards**: Each participant (except non-participating admin) has a face-down estimation card next to their avatar
+4. Once voting starts, all participants can select a card value (Fibonacci: 0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
+   - "?" is pre-selected by default for those who haven't voted
+5. **Visual feedback**: Estimation cards turn green when participant submits their vote
+6. Votes are hidden from others until revealed
+7. Admin clicks **"Reveal Votes"** to trigger animated 3D card flip revealing all votes
+8. View the average calculation (excluding "?" votes)
+9. Admin clicks **"Reset Votes"** to start a new round (returns to "Start Voting" state)
 
 ### Admin Features
 
 The room creator has exclusive admin controls:
+- **Admin Participation Toggle**: Choose whether to participate in voting
+  - Unchecked (default): No estimation card shown, voting disabled for admin
+  - Checked: Admin votes like regular participants with their vote counting in average
+  - Can be toggled at any time
 - **Admin PIN Protection**: Set an optional PIN when creating a room for persistent admin access
   - Admin ID persists permanently (no 24-hour expiry)
   - Use PIN to regain admin access when returning to the room
   - Regular participants still have 24-hour session expiry
 - **Start Voting**: Begin a new voting round (clears previous votes automatically)
-- **Reveal/Hide Votes**: Toggle vote visibility for all participants
+- **Reveal/Hide Votes**: Toggle vote visibility with animated 3D card flip for all participants
 - **Reset Votes**: Clear all votes and return to initial state
 - **Remove Participants**: Remove any participant from the room (except yourself)
 - **Share Room**: Copy full room URL to share with team members
@@ -224,19 +242,30 @@ The `SupabaseService` handles all Supabase interactions and exposes Angular Sign
 
 #### HomeComponent
 - Create new rooms with random alphanumeric IDs
+- Admin PIN setup dialog for room creators
 - Join existing rooms by entering a Room ID
+- Admin PIN verification for rejoining as admin
 - Input validation for user name
 
 #### RoomComponent
 - Visual poker table with participants seated around it
+- **Visual estimation cards** next to each participant:
+  - Face-down cards with diagonal stripe pattern (gray)
+  - Turn green when participant votes
+  - Animate with 3D flip when votes are revealed
+  - Orange border for "?" (unknown) votes
 - Fibonacci voting cards (0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
-- Admin-only controls (Start Voting, Reveal/Hide, Reset, Remove Participants)
+  - "?" pre-selected by default for participants who haven't voted
+- Admin-only controls:
+  - **Participation toggle**: Checkbox to enable/disable admin voting
+  - Start Voting, Reveal/Hide, Reset, Remove Participants
 - Vote state management (disabled until admin starts voting)
-- Animated vote reveal with card flip effect
+- Animated vote reveal with 3D card flip effect
 - Average calculation using computed signals
 - Share room URL button (copies full URL to clipboard)
 - Copy Room ID button (copies just the ID)
 - Real-time participant updates around the table
+- Fully responsive with mobile optimization
 
 ## Supabase Configuration
 
@@ -244,7 +273,7 @@ The application uses Supabase for reliable real-time synchronization across brow
 
 ### Database Tables
 
-- **rooms**: Stores room state (revealed status, voting_started flag, admin_user_id)
+- **rooms**: Stores room state (revealed status, voting_started flag, admin_user_id, admin_pin, admin_participates)
 - **participants**: Stores participant information (votes, names, lastSeen timestamps)
 
 ### Real-Time Subscriptions
@@ -252,7 +281,7 @@ The application uses Supabase for reliable real-time synchronization across brow
 The app subscribes to PostgreSQL changes using Supabase Realtime:
 
 - **Participant updates**: Detects when users join, vote, or leave
-- **Room updates**: Detects when votes are revealed or reset
+- **Room updates**: Detects when votes are revealed, reset, or admin participation changes
 - **Automatic cleanup**: Stale participants (inactive >10 seconds) are removed
 
 ### Benefits of Supabase
@@ -268,17 +297,20 @@ The app subscribes to PostgreSQL changes using Supabase Realtime:
 
 The application uses Angular Signals for reactive state management:
 
-- **Room State Signal**: Central state containing participants, votes, reveal status, and voting_started flag
+- **Room State Signal**: Central state containing participants, votes, reveal status, voting_started flag, and admin_participates flag
 - **Computed Signals**: Derived values like average vote, participant count, voted count, and admin status
 - **Automatic Reactivity**: UI updates automatically when Supabase pushes state changes via real-time subscriptions
+- **3D Animations**: CSS transforms with perspective for card flip animations
 
 ## Mobile Support
 
 The application is fully responsive with mobile-first design:
-- Touch-friendly voting cards
-- Responsive grid layouts
+- Touch-friendly voting cards (72px height on mobile)
+- Responsive estimation cards (50×70px desktop, 40×56px mobile)
+- Responsive grid layouts (4-column card grid on mobile)
 - Mobile-optimized navigation
 - Adaptive typography and spacing
+- Compact table layout (350px height on mobile)
 - PWA support for installation on mobile devices
 - Apple touch icon for iOS home screen
 - Responsive poker table that scales on mobile devices
@@ -322,7 +354,8 @@ Run this in your Supabase SQL Editor (Settings → Database → SQL Editor).
 If you experience sync issues:
 1. Verify your Supabase API keys are correct in environment files
 2. Check that database tables exist (see [SUPABASE_SETUP.md](SUPABASE_SETUP.md))
-3. Ensure the `voting_started` column exists in the `rooms` table
+3. Ensure all required columns exist in the `rooms` table:
+   - `voting_started`, `admin_pin`, `admin_participates`
 4. Ensure Realtime is enabled for both tables
 5. Check browser console for errors
 6. Verify your Supabase project is not paused (free tier)
@@ -350,8 +383,10 @@ The application features custom Planning Poker themed graphics:
 - **Multiple Icon Sizes**: SVG, ICO, and PNG formats for all devices (16x16, 32x32, 180x180, 512x512)
 - **Background Design**: Expressive home page background with floating poker cards and Fibonacci numbers
 - **Poker Table Layout**: Visual circular table with participants seated around it
-- **Animated Reveals**: Card flip animation when votes are revealed
-- **Material Design**: Consistent color scheme using Material Indigo and purple gradient
+- **Estimation Cards**: Face-down cards with diagonal stripe pattern, 3D flip animation
+- **Animated Reveals**: 3D card flip animation (0.6s) with perspective transforms when votes are revealed
+- **Material Design**: Consistent color scheme using Material Indigo, green for votes, orange for unknown
+- **Visual Feedback**: Color changes indicate voting status (gray → green → revealed)
 
 For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 

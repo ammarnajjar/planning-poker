@@ -41,10 +41,18 @@ export class SupabaseService {
   private cleanupInterval?: any;
 
   constructor() {
-    // Initialize Supabase client
+    // Initialize Supabase client without auth persistence
+    // We don't use Supabase Auth, so disable it to avoid lock conflicts
     this.supabase = createClient(
       environment.supabaseUrl,
-      environment.supabaseAnonKey
+      environment.supabaseAnonKey,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      }
     );
 
     // Handle page unload/refresh to mark user as offline
@@ -52,10 +60,10 @@ export class SupabaseService {
       window.addEventListener('beforeunload', () => {
         const roomId = this.roomState().roomId;
         if (roomId && this.currentUserId) {
-          // Mark user as offline by setting lastSeen to 0
+          // Mark user as offline by setting last_seen to 0
           this.supabase
             .from('participants')
-            .update({ lastSeen: 0 })
+            .update({ last_seen: 0 })
             .eq('room_id', roomId)
             .eq('user_id', this.currentUserId)
             .then();
@@ -138,13 +146,13 @@ export class SupabaseService {
       const activeParticipants: Record<string, Participant> = {};
 
       participants.forEach((p: any) => {
-        // Only include active participants (lastSeen within 10 seconds)
-        if (p.lastSeen && now - p.lastSeen <= 10000) {
+        // Only include active participants (last_seen within 10 seconds)
+        if (p.last_seen && now - p.last_seen <= 10000) {
           activeParticipants[p.user_id] = {
             id: p.user_id,
             name: p.name,
             vote: p.vote,
-            lastSeen: p.lastSeen
+            lastSeen: p.last_seen
           };
         }
       });
@@ -155,17 +163,22 @@ export class SupabaseService {
       }));
     }
 
-    // Load revealed state
-    const { data: room } = await this.supabase
+    // Load revealed state (room might not exist yet, that's OK)
+    const { data: rooms } = await this.supabase
       .from('rooms')
       .select('revealed')
-      .eq('id', roomId)
-      .single();
+      .eq('id', roomId);
 
-    if (room) {
+    if (rooms && rooms.length > 0) {
       this.roomState.update(state => ({
         ...state,
-        revealed: room.revealed || false
+        revealed: rooms[0].revealed || false
+      }));
+    } else {
+      // Room doesn't exist yet, that's fine - it will be created when someone toggles reveal
+      this.roomState.update(state => ({
+        ...state,
+        revealed: false
       }));
     }
   }
@@ -234,9 +247,9 @@ export class SupabaseService {
       const participant = newData;
 
       // Check if participant is stale or marked as offline
-      const isStale = !participant.lastSeen ||
-                      participant.lastSeen === 0 ||
-                      now - participant.lastSeen > 10000;
+      const isStale = !participant.last_seen ||
+                      participant.last_seen === 0 ||
+                      now - participant.last_seen > 10000;
 
       if (isStale) {
         // Remove from state
@@ -254,7 +267,7 @@ export class SupabaseService {
         if (existing &&
             existing.name === participant.name &&
             existing.vote === participant.vote &&
-            existing.lastSeen === participant.lastSeen) {
+            existing.lastSeen === participant.last_seen) {
           return state; // No change
         }
 
@@ -266,7 +279,7 @@ export class SupabaseService {
               id: participant.user_id,
               name: participant.name,
               vote: participant.vote,
-              lastSeen: participant.lastSeen
+              lastSeen: participant.last_seen
             }
           }
         };
@@ -282,7 +295,7 @@ export class SupabaseService {
       room_id: roomId,
       user_id: this.currentUserId,
       name: userName,
-      lastSeen: Date.now(),
+      last_seen: Date.now(),
       vote: null
     };
 
@@ -300,7 +313,7 @@ export class SupabaseService {
     const sendHeartbeat = async () => {
       await this.supabase
         .from('participants')
-        .update({ lastSeen: Date.now() })
+        .update({ last_seen: Date.now() })
         .eq('room_id', roomId)
         .eq('user_id', this.currentUserId);
     };
@@ -350,14 +363,13 @@ export class SupabaseService {
 
     if (!roomId) return;
 
-    // Ensure room exists first
-    const { data: existingRoom } = await this.supabase
+    // Check if room exists first
+    const { data: existingRooms } = await this.supabase
       .from('rooms')
       .select('id')
-      .eq('id', roomId)
-      .single();
+      .eq('id', roomId);
 
-    if (!existingRoom) {
+    if (!existingRooms || existingRooms.length === 0) {
       // Create room if it doesn't exist
       await this.supabase
         .from('rooms')
@@ -424,7 +436,7 @@ export class SupabaseService {
       // Mark user as offline
       await this.supabase
         .from('participants')
-        .update({ lastSeen: 0 })
+        .update({ last_seen: 0 })
         .eq('room_id', roomId)
         .eq('user_id', this.currentUserId);
     }

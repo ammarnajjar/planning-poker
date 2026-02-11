@@ -36,7 +36,7 @@ CREATE TABLE participants (
   user_id TEXT NOT NULL,
   name TEXT NOT NULL,
   vote TEXT,
-  lastSeen BIGINT NOT NULL,
+  last_seen BIGINT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   PRIMARY KEY (room_id, user_id)
@@ -64,14 +64,14 @@ ALTER PUBLICATION supabase_realtime ADD TABLE participants;
 
 -- Create indexes for better query performance
 CREATE INDEX idx_participants_room_id ON participants(room_id);
-CREATE INDEX idx_participants_lastseen ON participants(lastSeen);
+CREATE INDEX idx_participants_last_seen ON participants(last_seen);
 
 -- Create a function to automatically clean up old participants (older than 1 hour)
 CREATE OR REPLACE FUNCTION cleanup_old_participants()
 RETURNS void AS $$
 BEGIN
   DELETE FROM participants
-  WHERE lastSeen < (EXTRACT(EPOCH FROM NOW()) * 1000 - 3600000);
+  WHERE last_seen < (EXTRACT(EPOCH FROM NOW()) * 1000 - 3600000);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -212,7 +212,7 @@ If your team uses the app regularly and you want guaranteed uptime, consider upg
 - `user_id` (TEXT, PRIMARY KEY): Unique user identifier
 - `name` (TEXT): User's display name
 - `vote` (TEXT): User's vote (nullable)
-- `lastSeen` (BIGINT): Unix timestamp in milliseconds
+- `last_seen` (BIGINT): Unix timestamp in milliseconds
 - `created_at` (TIMESTAMP): Creation timestamp
 - `updated_at` (TIMESTAMP): Last update timestamp
 

@@ -108,20 +108,14 @@ export class SupabaseService {
     const adminIdKey = `planning-poker-admin-${roomId}`;
 
     let storedUserId = localStorage.getItem(userIdKey);
-    const storedAdminId = localStorage.getItem(adminIdKey);
 
     // For regular users, check if stored userId is recent (within last 24 hours)
-    if (storedUserId && !storedAdminId) {
+    if (storedUserId) {
       const timestamp = storedUserId.split('_')[1];
       const age = Date.now() - parseInt(timestamp);
       if (age > 24 * 60 * 60 * 1000) { // 24 hours
         storedUserId = null;
       }
-    }
-
-    // If user has admin ID stored (no expiry), use that
-    if (storedAdminId) {
-      storedUserId = storedAdminId;
     }
 
     // Use stored ID or generate new one
@@ -144,7 +138,7 @@ export class SupabaseService {
     // If room doesn't exist, create it with current user as admin
     if (!this.roomState().adminUserId) {
       await this.createRoomWithAdmin(roomId, adminPin);
-      // Store admin ID permanently (no expiry)
+      // Store admin ID permanently (no expiry) if PIN was set
       if (adminPin) {
         localStorage.setItem(adminIdKey, this.currentUserId);
       }
@@ -152,13 +146,16 @@ export class SupabaseService {
       // Verify admin PIN if provided
       const isValidPin = await this.verifyAdminPin(roomId, adminPin);
       if (isValidPin && this.roomState().adminUserId) {
-        // User provided correct PIN, store admin ID permanently
+        // User provided correct PIN, become admin with their stored ID
         this.currentUserId = this.roomState().adminUserId;
         localStorage.setItem(adminIdKey, this.currentUserId);
         localStorage.setItem(userIdKey, this.currentUserId);
       } else if (!isValidPin) {
         throw new Error('Invalid admin PIN');
       }
+    } else {
+      // Joining without PIN - clear any stored admin ID to prevent auto-login
+      localStorage.removeItem(adminIdKey);
     }
 
     // Add current user to participants

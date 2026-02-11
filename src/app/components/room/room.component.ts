@@ -1,17 +1,17 @@
-import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { SupabaseService, Participant } from '../../services/supabase.service';
+import { CommonModule } from "@angular/common";
+import { Component, computed, OnDestroy, OnInit } from "@angular/core";
+import { MatButtonModule } from "@angular/material/button";
+import { MatCardModule } from "@angular/material/card";
+import { MatChipsModule } from "@angular/material/chips";
+import { MatDividerModule } from "@angular/material/divider";
+import { MatIconModule } from "@angular/material/icon";
+import { MatToolbarModule } from "@angular/material/toolbar";
+import { MatTooltipModule } from "@angular/material/tooltip";
+import { ActivatedRoute, Router } from "@angular/router";
+import { Participant, SupabaseService } from "../../services/supabase.service";
 
 @Component({
-  selector: 'app-room',
+  selector: "app-room",
   standalone: true,
   imports: [
     CommonModule,
@@ -21,18 +21,31 @@ import { SupabaseService, Participant } from '../../services/supabase.service';
     MatIconModule,
     MatChipsModule,
     MatDividerModule,
-    MatTooltipModule
+    MatTooltipModule,
   ],
-  templateUrl: './room.component.html',
-  styleUrls: ['./room.component.scss']
+  templateUrl: "./room.component.html",
+  styleUrls: ["./room.component.scss"],
 })
 export class RoomComponent implements OnInit, OnDestroy {
-  // Fibonacci sequence for voting
-  readonly cardValues = ['0', '1', '2', '3', '5', '8', '13', '21', '?'];
+  // Extended Fibonacci sequence for voting
+  readonly cardValues = [
+    "0",
+    "1",
+    "2",
+    "3",
+    "5",
+    "8",
+    "13",
+    "20",
+    "35",
+    "50",
+    "100",
+    "?",
+  ];
 
   // Room state from Supabase service
   roomState = this.supabaseService.state;
-  currentUserId = '';
+  currentUserId = "";
 
   // Computed values
   participants = computed(() => {
@@ -40,7 +53,9 @@ export class RoomComponent implements OnInit, OnDestroy {
   });
 
   votedCount = computed(() => {
-    return this.participants().filter((p: Participant) => p.vote !== undefined && p.vote !== null).length;
+    return this.participants().filter(
+      (p: Participant) => p.vote !== undefined && p.vote !== null,
+    ).length;
   });
 
   totalCount = computed(() => {
@@ -53,7 +68,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     const participants = this.participants();
     const numericVotes = participants
       .map((p: Participant) => p.vote)
-      .filter(v => v && v !== '?')
+      .filter(v => v && v !== "?")
       .map(v => parseFloat(v!))
       .filter(v => !isNaN(v));
 
@@ -75,35 +90,35 @@ export class RoomComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
   ) {}
 
   ngOnInit(): void {
     // Get room ID from route
-    const roomId = this.route.snapshot.paramMap.get('id');
+    const roomId = this.route.snapshot.paramMap.get("id");
     if (!roomId) {
-      this.router.navigate(['/']);
+      this.router.navigate(["/"]);
       return;
     }
 
     // Get user name from navigation state or localStorage
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras.state || history.state;
-    let userName = state?.['userName'];
+    let userName = state?.["userName"];
 
     // If no userName in state, try localStorage
     if (!userName) {
-      userName = localStorage.getItem('planning-poker-username');
+      userName = localStorage.getItem("planning-poker-username");
     }
 
     // If still no userName, redirect to home
     if (!userName) {
-      this.router.navigate(['/']);
+      this.router.navigate(["/"]);
       return;
     }
 
     // Store userName in localStorage for future refreshes
-    localStorage.setItem('planning-poker-username', userName);
+    localStorage.setItem("planning-poker-username", userName);
 
     // Join room
     this.supabaseService.joinRoom(roomId, userName);
@@ -112,8 +127,8 @@ export class RoomComponent implements OnInit, OnDestroy {
     // Subscribe to user removal events
     this.supabaseService.onUserRemoved$.subscribe(() => {
       // User was removed by admin, redirect to home
-      alert('You have been removed from the room by the admin.');
-      this.router.navigate(['/']);
+      alert("You have been removed from the room by the admin.");
+      this.router.navigate(["/"]);
     });
   }
 
@@ -160,7 +175,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     const roomId = this.roomState().roomId;
     navigator.clipboard.writeText(roomId).then(() => {
       // Could add a snackbar notification here
-      console.log('Room ID copied to clipboard');
+      console.log("Room ID copied to clipboard");
     });
   }
 
@@ -168,7 +183,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Leave room and go back to home
    */
   leaveRoom(): void {
-    this.router.navigate(['/']);
+    this.router.navigate(["/"]);
   }
 
   /**
@@ -182,8 +197,8 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Get display value for a participant's vote
    */
   getParticipantVoteDisplay(participant: Participant): string {
-    if (!participant.vote) return '';
-    if (!this.roomState().revealed) return '✓';
+    if (!participant.vote) return "";
+    if (!this.roomState().revealed) return "✓";
     return participant.vote;
   }
 

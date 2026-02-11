@@ -10,6 +10,11 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
   - Cards turn green when participant votes
   - Animated card flip reveals votes when admin triggers reveal
   - Orange border for "?" (unknown) votes
+- **Room Management**: Secure and validated room creation and joining
+  - Only admins can create rooms
+  - Room existence validation before joining
+  - Inline error messages for failed joins (no disruptive popups)
+  - Optional "join as admin" checkbox to streamline the joining process
 - **Admin Controls**: Room creator has exclusive control over voting sessions
   - Optional admin participation toggle - choose to vote or just facilitate
   - Start Voting button to begin estimation rounds
@@ -141,11 +146,12 @@ The room creator has exclusive admin controls:
 To rejoin a room as admin after closing your browser:
 1. Go to the home page and click "Join Existing Room"
 2. Enter your name and the Room ID
-3. Click "Join Room"
-4. In the dialog, enter the admin PIN you set when creating the room
-5. Click "OK" to join as admin with full admin controls
+3. **Check the "Join as admin (requires PIN)" checkbox**
+4. Click "Join Room"
+5. In the dialog, enter the admin PIN you set when creating the room
+6. Click "OK" to join as admin with full admin controls
 
-**Note**: If you leave the PIN field empty, you'll join as a regular participant instead.
+**Note**: If you don't check the admin checkbox, you'll join as a regular participant and won't be prompted for a PIN.
 
 ## Deployment to GitHub Pages
 
@@ -193,10 +199,13 @@ planning-poker/
 │   │   │   │   ├── home.component.ts
 │   │   │   │   ├── home.component.html
 │   │   │   │   └── home.component.scss
-│   │   │   └── room/
-│   │   │       ├── room.component.ts
-│   │   │       ├── room.component.html
-│   │   │       └── room.component.scss
+│   │   │   ├── room/
+│   │   │   │   ├── room.component.ts
+│   │   │   │   ├── room.component.html
+│   │   │   │   └── room.component.scss
+│   │   │   └── admin-pin-dialog/
+│   │   │       ├── admin-pin-dialog.component.ts
+│   │   │       └── admin-pin-dialog.component.html
 │   │   ├── services/
 │   │   │   └── supabase.service.ts
 │   │   ├── environments/
@@ -234,19 +243,24 @@ planning-poker/
 The `SupabaseService` handles all Supabase interactions and exposes Angular Signals for reactive state management:
 
 - **State Management**: Uses `WritableSignal<RoomState>` for reactive updates
+- **Room Operations**: Separate `createRoom()` and `joinRoom()` methods with validation
+- **Room Validation**: `roomExists()` method to check room availability before joining
 - **Real-Time Sync**: Connects to Supabase PostgreSQL with real-time subscriptions
-- **Heartbeat**: Sends periodic updates to show active participants
+- **Heartbeat**: Sends periodic updates (every 2 seconds) to show active participants
 - **Real-Time Updates**: Automatically syncs votes, participants, and reveal state
-- **Persistence**: Data stored in PostgreSQL database
+- **Persistence**: Data stored in PostgreSQL database with proper cleanup
 
 ### Components
 
 #### HomeComponent
-- Create new rooms with random alphanumeric IDs
-- Admin PIN setup dialog for room creators
+- Create new rooms with random alphanumeric IDs (8 characters)
+- Admin PIN setup dialog for room creators (optional but recommended)
 - Join existing rooms by entering a Room ID
+- Room existence validation before navigation
+- Inline error messages for invalid room IDs
+- "Join as admin" checkbox to skip PIN dialog for regular participants
 - Admin PIN verification for rejoining as admin
-- Input validation for user name
+- Input validation for user name and room ID
 
 #### RoomComponent
 - Visual poker table with participants seated around it
@@ -302,6 +316,18 @@ The application uses Angular Signals for reactive state management:
 - **Computed Signals**: Derived values like average vote, participant count, voted count, and admin status
 - **Automatic Reactivity**: UI updates automatically when Supabase pushes state changes via real-time subscriptions
 - **3D Animations**: CSS transforms with perspective for card flip animations
+- **Local State**: Form state (userName, roomId, joinAsAdmin, joinError) managed with signals for reactive UI updates
+
+## Key Technical Decisions
+
+- **Why Supabase**: Reliable real-time sync without peer-to-peer complexity, persistent storage, and generous free tier
+- **Why Angular Signals**: Modern reactive programming with better performance than RxJS for simple state management
+- **Why Standalone Components**: Simpler dependency injection, better tree-shaking, and modern Angular architecture
+- **Why Material Design**: Battle-tested component library with excellent accessibility and mobile support
+- **Why GitHub Pages**: Free hosting, automatic deployments, and HTTPS by default
+- **Why No Authentication**: Reduces friction for quick team sessions, no account signup required
+- **Why Room Validation**: Prevents navigation to non-existent rooms, better UX with inline errors
+- **Why Separate Create/Join**: Clear separation of concerns, better security model for room creation
 
 ## Mobile Support
 
@@ -322,6 +348,29 @@ The application is fully responsive with mobile-first design:
 - Firefox (latest)
 - Safari (latest)
 - Mobile browsers (iOS Safari, Chrome Mobile)
+
+## User Experience
+
+The application prioritizes user experience with thoughtful design decisions:
+
+- **No Disruptive Popups**: Validation errors appear inline where users are working
+- **Immediate Feedback**: Room validation happens before navigation, preventing unnecessary page loads
+- **Smart Forms**: Error messages clear automatically when users correct their input
+- **Optional Complexity**: Advanced features (admin PIN, admin participation) are optional and clearly labeled
+- **Progressive Enhancement**: Users can join as regular participants without dealing with admin features
+- **Visual Hierarchy**: Important actions (Create/Join) are prominently displayed with clear CTAs
+- **Error Recovery**: Users stay in context when errors occur, making it easy to correct mistakes
+
+## Security & Privacy
+
+- **Room Isolation**: Each room is completely isolated with unique IDs
+- **Admin Protection**: Optional PIN protection for admin access with permanent admin ID persistence
+- **Session Management**: Regular participants have 24-hour session expiry, admins can persist indefinitely with PIN
+- **No Account Required**: No user registration or personal data collection
+- **Client-Side State**: User preferences stored locally in browser
+- **Secure Communication**: All data transmitted over HTTPS
+- **Data Cleanup**: Stale participants automatically removed after 10 seconds of inactivity
+- **Room Validation**: Prevents unauthorized room creation attempts
 
 ## Contributing
 

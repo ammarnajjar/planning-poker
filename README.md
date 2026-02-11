@@ -90,6 +90,10 @@ The build artifacts will be stored in the `dist/` directory.
 3. Click "Join Existing Room"
 4. Enter the Room ID shared by your team
 5. Click "Join Room"
+6. In the dialog:
+   - Enter the admin PIN if you're the room creator rejoining with admin rights
+   - Leave empty to join as a regular participant
+7. Click "OK" to join the room
 
 ### Voting
 
@@ -118,9 +122,11 @@ The room creator has exclusive admin controls:
 To rejoin a room as admin after closing your browser:
 1. Go to the home page and click "Join Existing Room"
 2. Enter your name and the Room ID
-3. Click "Yes" when asked if you want to join as admin
-4. Enter the admin PIN you set when creating the room
-5. You'll regain full admin controls
+3. Click "Join Room"
+4. In the dialog, enter the admin PIN you set when creating the room
+5. Click "OK" to join as admin with full admin controls
+
+**Note**: If you leave the PIN field empty, you'll join as a regular participant instead.
 
 ## Deployment to GitHub Pages
 

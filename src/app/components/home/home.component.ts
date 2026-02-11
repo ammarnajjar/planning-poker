@@ -141,7 +141,7 @@ export class HomeComponent {
   /**
    * Navigate to room with state
    */
-  private navigateToRoom(roomId: string, userName: string, adminPin?: string, isCreating: boolean = false): void {
+  private navigateToRoom(roomId: string, userName: string, adminPin?: string, isCreating = false): void {
     this.router.navigate(['/room', roomId], {
       state: { userName, adminPin, isCreating }
     });

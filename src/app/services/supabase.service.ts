@@ -44,8 +44,8 @@ export class SupabaseService {
   private currentChannel: RealtimeChannel | null = null;
 
   // Heartbeat and cleanup intervals
-  private heartbeatInterval?: any;
-  private cleanupInterval?: any;
+  private heartbeatInterval?: ReturnType<typeof setInterval>;
+  private cleanupInterval?: ReturnType<typeof setInterval>;
 
   // Subject for when current user is removed
   private userRemovedSubject = new Subject<void>();
@@ -269,7 +269,7 @@ export class SupabaseService {
       const now = Date.now();
       const activeParticipants: Record<string, Participant> = {};
 
-      participants.forEach((p: any) => {
+      participants.forEach((p: { user_id: string; name: string; vote: string; last_seen: number }) => {
         // Only include active participants (last_seen within 10 seconds)
         if (p.last_seen && now - p.last_seen <= 10000) {
           activeParticipants[p.user_id] = {
@@ -364,37 +364,45 @@ export class SupabaseService {
     // Listen to participant changes
     this.currentChannel
       .on(
-        'postgres_changes',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
           table: 'participants',
           filter: `room_id=eq.${roomId}`
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (payload: any) => {
-          this.handleParticipantChange(payload);
+          this.handleParticipantChange(payload as {
+            new: { user_id: string; name: string; vote: string; last_seen: number } | null;
+            old: { user_id: string; name: string; vote: string; last_seen: number } | null;
+            eventType: string;
+          });
         }
       )
       // Listen to room changes (revealed state and voting_started)
       .on(
-        'postgres_changes',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        'postgres_changes' as any,
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'rooms',
           filter: `id=eq.${roomId}`
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (payload: any) => {
           if (payload.new) {
             const updates: Partial<RoomState> = {};
-            if (typeof payload.new.revealed === 'boolean') {
-              updates.revealed = payload.new.revealed;
+            if (typeof payload.new['revealed'] === 'boolean') {
+              updates.revealed = payload.new['revealed'];
             }
-            if (typeof payload.new.voting_started === 'boolean') {
-              updates.votingStarted = payload.new.voting_started;
+            if (typeof payload.new['voting_started'] === 'boolean') {
+              updates.votingStarted = payload.new['voting_started'];
             }
-            if (typeof payload.new.admin_participates === 'boolean') {
-              updates.adminParticipates = payload.new.admin_participates;
+            if (typeof payload.new['admin_participates'] === 'boolean') {
+              updates.adminParticipates = payload.new['admin_participates'];
             }
             if (Object.keys(updates).length > 0) {
               this.roomState.update(state => ({
@@ -411,10 +419,14 @@ export class SupabaseService {
   /**
    * Handle participant change events
    */
-  private handleParticipantChange(payload: any): void {
+  private handleParticipantChange(payload: {
+    new: { user_id: string; name: string; vote: string; last_seen: number } | null;
+    old: { user_id: string; name: string; vote: string; last_seen: number } | null;
+    eventType: string;
+  }): void {
     const { eventType, new: newData, old: oldData } = payload;
 
-    if (eventType === 'DELETE') {
+    if (eventType === 'DELETE' && oldData) {
       // Remove participant from state
       const userId = oldData.user_id;
 

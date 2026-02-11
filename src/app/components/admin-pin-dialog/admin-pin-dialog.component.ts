@@ -39,7 +39,7 @@ export interface AdminPinDialogData {
             [required]="data.pinRequired !== false"
             placeholder="Enter PIN"
             (keyup.enter)="onSubmit()"
-            autofocus
+           
           >
           @if (data.mode === 'create') {
             <mat-hint>Leave empty to skip (not recommended)</mat-hint>

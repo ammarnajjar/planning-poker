@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { signal } from '@angular/core';
 
 /**
@@ -188,7 +188,6 @@ describe('HomeComponent Logic', () => {
 
   describe('Navigation State Logic', () => {
     it('should create navigation state for room creation', () => {
-      const roomId = 'NEWROOM1';
       const userName = 'Admin User';
       const adminPin = '1234';
       const isCreating = true;
@@ -205,7 +204,6 @@ describe('HomeComponent Logic', () => {
     });
 
     it('should create navigation state for room joining without admin', () => {
-      const roomId = 'TEST123';
       const userName = 'Participant';
       const isCreating = false;
 
@@ -221,7 +219,6 @@ describe('HomeComponent Logic', () => {
     });
 
     it('should create navigation state for room joining with admin', () => {
-      const roomId = 'TEST123';
       const userName = 'Admin';
       const adminPin = '1234';
       const isCreating = false;
@@ -298,14 +295,12 @@ describe('HomeComponent Logic', () => {
 
   describe('PIN Dialog Logic', () => {
     it('should determine PIN requirement for creation', () => {
-      const mode = 'create';
       const pinRequired = false; // Optional for creation
 
       expect(pinRequired).toBe(false);
     });
 
     it('should determine PIN requirement for admin join', () => {
-      const mode = 'join';
       const joinAsAdmin = true;
       const pinRequired = joinAsAdmin; // Required when joining as admin
 
@@ -313,7 +308,6 @@ describe('HomeComponent Logic', () => {
     });
 
     it('should determine PIN requirement for regular join', () => {
-      const mode = 'join';
       const joinAsAdmin = false;
       const pinRequired = joinAsAdmin; // Not required for regular join
 

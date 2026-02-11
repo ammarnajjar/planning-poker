@@ -19,6 +19,7 @@ describe('SupabaseService', () => {
     service = new SupabaseService();
 
     // Replace the supabase client with our mock
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (service as any).supabase = mockSupabase;
   });
 
@@ -144,6 +145,7 @@ describe('SupabaseService', () => {
   describe('getCurrentUserId', () => {
     it('should return the current user ID', () => {
       // Arrange
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any).currentUserId = 'user123';
 
       // Act
@@ -155,6 +157,7 @@ describe('SupabaseService', () => {
 
     it('should return empty string when no user ID is set', () => {
       // Arrange
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any).currentUserId = '';
 
       // Act

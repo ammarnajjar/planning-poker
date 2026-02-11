@@ -86,39 +86,26 @@ export class HomeComponent {
       return;
     }
 
-    // Ask if user wants to join as admin
-    const confirmDialogRef = this.dialog.open(AdminPinDialogComponent, {
+    // Ask for admin PIN (optional - leave empty to join as participant)
+    const dialogRef = this.dialog.open(AdminPinDialogComponent, {
       width: '400px',
       disableClose: false,
       data: {
-        title: 'Join as Admin?',
-        message: 'Do you want to join as admin? You will need the admin PIN.',
-        mode: 'confirm'
+        title: 'Join Room',
+        message: 'Enter the admin PIN if you want to join as admin, or leave empty to join as a participant.',
+        mode: 'join',
+        pinRequired: false
       }
     });
 
-    const joinAsAdmin = await firstValueFrom(confirmDialogRef.afterClosed());
+    const adminPin = await firstValueFrom(dialogRef.afterClosed());
 
-    let adminPin: string | undefined;
-    if (joinAsAdmin) {
-      const pinDialogRef = this.dialog.open(AdminPinDialogComponent, {
-        width: '400px',
-        disableClose: true,
-        data: {
-          title: 'Enter Admin PIN',
-          message: 'Please enter the admin PIN to join as admin.',
-          mode: 'verify',
-          pinRequired: true
-        }
-      });
-
-      adminPin = await firstValueFrom(pinDialogRef.afterClosed());
-      if (!adminPin) {
-        return; // User cancelled
-      }
+    // User cancelled the dialog
+    if (adminPin === null) {
+      return;
     }
 
-    this.navigateToRoom(room, name, adminPin);
+    this.navigateToRoom(room, name, adminPin || undefined);
   }
 
   /**

@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 export interface AdminPinDialogData {
   title: string;
   message: string;
-  mode: 'create' | 'verify' | 'confirm';
+  mode: 'create' | 'verify' | 'confirm' | 'join';
   pinRequired?: boolean;
 }
 
@@ -43,6 +43,9 @@ export interface AdminPinDialogData {
           >
           @if (data.mode === 'create') {
             <mat-hint>Leave empty to skip (not recommended)</mat-hint>
+          }
+          @if (data.mode === 'join') {
+            <mat-hint>Leave empty to join as participant</mat-hint>
           }
         </mat-form-field>
       }

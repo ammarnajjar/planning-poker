@@ -137,6 +137,48 @@ export class RoomComponent implements OnInit, OnDestroy {
     return this.roomState().adminParticipates;
   });
 
+  // Get candidates for min and max voters
+  getMinMaxCandidates = computed(() => {
+    if (!this.roomState().revealed) return { minCandidates: [], maxCandidates: [] };
+
+    const participatingUsers = this.participants().filter((p: Participant) => {
+      const adminId = this.roomState().adminUserId;
+      const adminParticipates = this.roomState().adminParticipates;
+      // Exclude non-participating admin
+      if (p.id === adminId && !adminParticipates) return false;
+      return true;
+    });
+
+    const numericVotes = participatingUsers
+      .map((p: Participant) => ({
+        participant: p,
+        numericVote: p.vote && p.vote !== "?" ? parseFloat(p.vote) : null,
+      }))
+      .filter((v) => v.numericVote !== null && !isNaN(v.numericVote!));
+
+    if (numericVotes.length === 0) return { minCandidates: [], maxCandidates: [] };
+
+    const minVote = Math.min(...numericVotes.map((v) => v.numericVote!));
+    const maxVote = Math.max(...numericVotes.map((v) => v.numericVote!));
+
+    // If all votes are the same, return empty arrays
+    if (minVote === maxVote) return { minCandidates: [], maxCandidates: [] };
+
+    const minCandidates = numericVotes
+      .filter((v) => v.numericVote === minVote)
+      .map((v) => v.participant.id);
+    const maxCandidates = numericVotes
+      .filter((v) => v.numericVote === maxVote)
+      .map((v) => v.participant.id);
+
+    return { minCandidates, maxCandidates };
+  });
+
+  canStartDiscussion = computed(() => {
+    const { minCandidates, maxCandidates } = this.getMinMaxCandidates();
+    return this.roomState().revealed && (minCandidates.length > 0 || maxCandidates.length > 0);
+  });
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -240,6 +282,46 @@ export class RoomComponent implements OnInit, OnDestroy {
   toggleAdminParticipation(): void {
     if (!this.isAdmin()) return;
     this.supabaseService.toggleAdminParticipation();
+  }
+
+  /**
+   * Toggle discussion mode to highlight min/max voters
+   */
+  toggleDiscussion(): void {
+    if (!this.isAdmin()) return;
+
+    if (!this.roomState().discussionActive) {
+      // Entering discussion mode - randomly select one from each group
+      const { minCandidates, maxCandidates } = this.getMinMaxCandidates();
+
+      const selectedMinVoter = minCandidates.length > 0
+        ? minCandidates[Math.floor(Math.random() * minCandidates.length)]
+        : null;
+      const selectedMaxVoter = maxCandidates.length > 0
+        ? maxCandidates[Math.floor(Math.random() * maxCandidates.length)]
+        : null;
+
+      this.supabaseService.toggleDiscussion(selectedMinVoter, selectedMaxVoter);
+    } else {
+      // Exiting discussion mode
+      this.supabaseService.toggleDiscussion(null, null);
+    }
+  }
+
+  /**
+   * Check if participant is a min voter in discussion mode
+   */
+  isMinVoter(participantId: string): boolean {
+    if (!this.roomState().discussionActive) return false;
+    return this.roomState().discussionMinVoter === participantId;
+  }
+
+  /**
+   * Check if participant is a max voter in discussion mode
+   */
+  isMaxVoter(participantId: string): boolean {
+    if (!this.roomState().discussionActive) return false;
+    return this.roomState().discussionMaxVoter === participantId;
   }
 
   /**

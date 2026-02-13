@@ -35,6 +35,14 @@
             <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
             {{ roomState().revealed ? 'Hide' : 'Reveal' }}
           </button>
+          @if (canStartDiscussion()) {
+            <button mat-raised-button
+                    [color]="roomState().discussionActive ? 'warn' : 'primary'"
+                    (click)="toggleDiscussion()">
+              <mat-icon>{{ roomState().discussionActive ? 'stop_circle' : 'forum' }}</mat-icon>
+              {{ roomState().discussionActive ? 'End Discussion' : 'Discuss' }}
+            </button>
+          }
           <button mat-raised-button (click)="resetVotes()">
             <mat-icon>refresh</mat-icon>
             Reset
@@ -62,7 +70,10 @@
              [class.voted]="hasVoted(participant)"
              [class.revealed]="roomState().revealed"
              [class.is-you]="participant.id === currentUserId"
-             [class.non-participating-admin]="participant.id === roomState().adminUserId && !roomState().adminParticipates">
+             [class.non-participating-admin]="participant.id === roomState().adminUserId && !roomState().adminParticipates"
+             [class.discussion-min]="isMinVoter(participant.id)"
+             [class.discussion-max]="isMaxVoter(participant.id)"
+             [class.discussion-dimmed]="roomState().discussionActive && !isMinVoter(participant.id) && !isMaxVoter(participant.id)">
 
           <div class="card-flip">
             <div class="card-front">
@@ -78,6 +89,13 @@
               <div class="vote-number" [class.warning]="participant.vote === '?' || !participant.vote">{{ participant.vote || '?' }}</div>
             </div>
           </div>
+
+          @if (isMinVoter(participant.id)) {
+            <div class="discussion-badge discussion-badge-min">LOW</div>
+          }
+          @if (isMaxVoter(participant.id)) {
+            <div class="discussion-badge discussion-badge-max">HIGH</div>
+          }
 
           <div class="participant-name">
             {{ participant.name }}
@@ -106,7 +124,14 @@
 
         <div class="table-center">
           <div class="table-info">
-            @if (roomState().votingStarted) {
+            @if (roomState().discussionActive) {
+              <div class="discussion-title">Discussion Mode</div>
+              <div class="discussion-subtitle">
+                <span class="discussion-indicator-min">LOW</span>
+                vs
+                <span class="discussion-indicator-max">HIGH</span>
+              </div>
+            } @else if (roomState().votingStarted) {
               <div class="vote-count">{{ votedCount() }}/{{ totalCount() }}</div>
               <div class="vote-label">voted</div>
             } @else {
@@ -125,7 +150,10 @@
                [class.voted]="hasVoted(participant)"
                [class.revealed]="roomState().revealed"
                [class.is-you]="participant.id === currentUserId"
-               [class.non-participating-admin]="participant.id === roomState().adminUserId && !roomState().adminParticipates">
+               [class.non-participating-admin]="participant.id === roomState().adminUserId && !roomState().adminParticipates"
+               [class.discussion-min]="isMinVoter(participant.id)"
+               [class.discussion-max]="isMaxVoter(participant.id)"
+               [class.discussion-dimmed]="roomState().discussionActive && !isMinVoter(participant.id) && !isMaxVoter(participant.id)">
 
             <div class="card-flip">
               <div class="card-front">
@@ -141,6 +169,13 @@
                 <div class="vote-number" [class.warning]="participant.vote === '?' || !participant.vote">{{ participant.vote || '?' }}</div>
               </div>
             </div>
+
+            @if (isMinVoter(participant.id)) {
+              <div class="discussion-badge discussion-badge-min">LOW</div>
+            }
+            @if (isMaxVoter(participant.id)) {
+              <div class="discussion-badge discussion-badge-max">HIGH</div>
+            }
 
             <div class="participant-name">
               {{ participant.name }}

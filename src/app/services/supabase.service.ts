@@ -17,6 +17,9 @@ export interface RoomState {
   roomId: string;
   adminUserId: string;
   adminParticipates: boolean;
+  discussionActive: boolean;
+  discussionMinVoter: string | null;
+  discussionMaxVoter: string | null;
 }
 
 @Injectable({
@@ -30,7 +33,10 @@ export class SupabaseService {
     votingStarted: false,
     roomId: '',
     adminUserId: '',
-    adminParticipates: false
+    adminParticipates: false,
+    discussionActive: false,
+    discussionMinVoter: null,
+    discussionMaxVoter: null
   });
 
   // Public readonly signal
@@ -145,7 +151,10 @@ export class SupabaseService {
       adminUserId: this.currentUserId,
       revealed: false,
       votingStarted: false,
-      adminParticipates: false
+      adminParticipates: false,
+      discussionActive: false,
+      discussionMinVoter: null,
+      discussionMaxVoter: null
     }));
 
     // Create the room in database
@@ -287,10 +296,10 @@ export class SupabaseService {
       }));
     }
 
-    // Load revealed state, voting_started, admin user, and admin_participates (room might not exist yet, that's OK)
+    // Load revealed state, voting_started, admin user, admin_participates, and discussion fields (room might not exist yet, that's OK)
     const { data: rooms } = await this.supabase
       .from('rooms')
-      .select('revealed, voting_started, admin_user_id, admin_participates')
+      .select('revealed, voting_started, admin_user_id, admin_participates, discussion_active, discussion_min_voter, discussion_max_voter')
       .eq('id', roomId);
 
     if (rooms && rooms.length > 0) {
@@ -299,7 +308,10 @@ export class SupabaseService {
         revealed: rooms[0].revealed || false,
         votingStarted: rooms[0].voting_started || false,
         adminUserId: rooms[0].admin_user_id || '',
-        adminParticipates: rooms[0].admin_participates || false
+        adminParticipates: rooms[0].admin_participates || false,
+        discussionActive: rooms[0].discussion_active || false,
+        discussionMinVoter: rooms[0].discussion_min_voter || null,
+        discussionMaxVoter: rooms[0].discussion_max_voter || null
       }));
     } else {
       // Room doesn't exist yet, that's fine - it will be created when someone toggles reveal
@@ -308,7 +320,10 @@ export class SupabaseService {
         revealed: false,
         votingStarted: false,
         adminUserId: '',
-        adminParticipates: false
+        adminParticipates: false,
+        discussionActive: false,
+        discussionMinVoter: null,
+        discussionMaxVoter: null
       }));
     }
   }
@@ -325,7 +340,10 @@ export class SupabaseService {
         voting_started: false,
         admin_user_id: this.currentUserId,
         admin_pin: adminPin || null,
-        admin_participates: false
+        admin_participates: false,
+        discussion_active: false,
+        discussion_min_voter: null,
+        discussion_max_voter: null
       });
 
     // Update local state
@@ -333,7 +351,10 @@ export class SupabaseService {
       ...state,
       votingStarted: false,
       adminUserId: this.currentUserId,
-      adminParticipates: false
+      adminParticipates: false,
+      discussionActive: false,
+      discussionMinVoter: null,
+      discussionMaxVoter: null
     }));
   }
 
@@ -403,6 +424,15 @@ export class SupabaseService {
             }
             if (typeof payload.new['admin_participates'] === 'boolean') {
               updates.adminParticipates = payload.new['admin_participates'];
+            }
+            if (typeof payload.new['discussion_active'] === 'boolean') {
+              updates.discussionActive = payload.new['discussion_active'];
+            }
+            if (payload.new['discussion_min_voter'] !== undefined) {
+              updates.discussionMinVoter = payload.new['discussion_min_voter'];
+            }
+            if (payload.new['discussion_max_voter'] !== undefined) {
+              updates.discussionMaxVoter = payload.new['discussion_max_voter'];
             }
             if (Object.keys(updates).length > 0) {
               this.roomState.update(state => ({
@@ -615,6 +645,9 @@ export class SupabaseService {
       ...state,
       revealed: false,
       votingStarted: false,
+      discussionActive: false,
+      discussionMinVoter: null,
+      discussionMaxVoter: null,
       participants: Object.fromEntries(
         Object.entries(state.participants).map(([id, p]) => [id, { ...p, vote: undefined }])
       )
@@ -626,10 +659,16 @@ export class SupabaseService {
       .update({ vote: null })
       .eq('room_id', roomId);
 
-    // Set revealed to false and voting_started to false
+    // Set revealed to false, voting_started to false, and clear discussion
     await this.supabase
       .from('rooms')
-      .update({ revealed: false, voting_started: false })
+      .update({
+        revealed: false,
+        voting_started: false,
+        discussion_active: false,
+        discussion_min_voter: null,
+        discussion_max_voter: null
+      })
       .eq('id', roomId);
   }
 
@@ -720,6 +759,34 @@ export class SupabaseService {
   }
 
   /**
+   * Toggle discussion mode (admin only)
+   */
+  async toggleDiscussion(minVoterId: string | null, maxVoterId: string | null): Promise<void> {
+    const roomId = this.roomState().roomId;
+    if (!roomId) return;
+
+    const newValue = !this.roomState().discussionActive;
+
+    // Update local state immediately for better UX
+    this.roomState.update(state => ({
+      ...state,
+      discussionActive: newValue,
+      discussionMinVoter: newValue ? minVoterId : null,
+      discussionMaxVoter: newValue ? maxVoterId : null
+    }));
+
+    // Update in database
+    await this.supabase
+      .from('rooms')
+      .update({
+        discussion_active: newValue,
+        discussion_min_voter: newValue ? minVoterId : null,
+        discussion_max_voter: newValue ? maxVoterId : null
+      })
+      .eq('id', roomId);
+  }
+
+  /**
    * Get current user ID
    */
   getCurrentUserId(): string {
@@ -777,7 +844,10 @@ export class SupabaseService {
       votingStarted: false,
       roomId: '',
       adminUserId: '',
-      adminParticipates: false
+      adminParticipates: false,
+      discussionActive: false,
+      discussionMinVoter: null,
+      discussionMaxVoter: null
     });
 
     this.currentUserId = '';

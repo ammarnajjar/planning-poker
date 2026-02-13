@@ -106,9 +106,13 @@
         <div class="vote-cards-grid">
           @for (value of cardValues; track value) {
             <div class="vote-card-large"
+                 role="button"
+                 tabindex="0"
                  [class.selected]="isCardSelected(value)"
                  [class.disabled]="!roomState().votingStarted"
-                 (click)="vote(value)">
+                 (click)="vote(value)"
+                 (keyup.enter)="vote(value)"
+                 (keyup.space)="vote(value)">
               <span class="card-value-large">{{ value }}</span>
             </div>
           }
@@ -124,9 +128,13 @@
                (touchstart)="onTouchStart($event)"
                (touchend)="onTouchEnd($event)">
             <div class="vote-card-large"
+                 role="button"
+                 tabindex="0"
                  [class.selected]="isCardSelected(cardValues[currentCardIndex])"
                  [class.disabled]="!roomState().votingStarted"
-                 (click)="vote(cardValues[currentCardIndex])">
+                 (click)="vote(cardValues[currentCardIndex])"
+                 (keyup.enter)="vote(cardValues[currentCardIndex])"
+                 (keyup.space)="vote(cardValues[currentCardIndex])">
               <span class="card-value-large">{{ cardValues[currentCardIndex] }}</span>
             </div>
           </div>
@@ -140,8 +148,12 @@
         <div class="card-indicators">
           @for (value of cardValues; track value; let i = $index) {
             <div class="indicator-dot"
+                 role="button"
+                 tabindex="0"
                  [class.active]="i === currentCardIndex"
-                 (click)="goToCard(i)"></div>
+                 (click)="goToCard(i)"
+                 (keyup.enter)="goToCard(i)"
+                 (keyup.space)="goToCard(i)"></div>
           }
         </div>
 

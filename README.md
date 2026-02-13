@@ -20,10 +20,25 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
   - Start Voting button to begin estimation rounds
   - Reveal/Hide votes toggle with animated card flip
   - Reset votes for new rounds
-  - Remove participants from room
-- **Visual Poker Table**: Interactive circular table with participants seated around it
+  - Remove participants from room (hover-activated button)
+  - Discussion mode to highlight min/max voters for focused conversations
+- **Desktop Poker Table**: Immersive poker table layout for desktop and tablets
+  - Realistic green felt texture with wooden border
+  - Participants positioned in an ellipse around the table
+  - Decorative card suit symbols (♠♣♥♦)
+  - Dynamic center display showing vote count or discussion mode
+- **Discussion Mode**: Facilitate estimate discussions with automatic voter selection
+  - Randomly selects one participant with lowest and highest estimates
+  - Visual highlighting with animated pulsing and gradient backgrounds
+  - "LOW" and "HIGH" badges on selected participants
+  - Dim non-selected participants to focus attention
+- **Tinder-Style Voting (Mobile)**: Swipeable card interface for mobile devices
+  - Touch-friendly carousel navigation
+  - Swipe left/right to browse voting cards
+  - Visual indicator dots showing current card position
 - **Smart Defaults**: "?" card pre-selected for participants who haven't voted
 - **Share Room**: Copy room URL to clipboard for easy team sharing
+- **Accessibility**: Full keyboard navigation support with ARIA attributes
 - **Custom Favicon & Background**: Expressive Planning Poker themed design
 - **PWA Support**: Web app manifest for installation on mobile devices
 - **Modern Stack**: Angular 17+ with Standalone Components and Signals
@@ -137,8 +152,15 @@ The room creator has exclusive admin controls:
   - Regular participants still have 24-hour session expiry
 - **Start Voting**: Begin a new voting round (clears previous votes automatically)
 - **Reveal/Hide Votes**: Toggle vote visibility with animated 3D card flip for all participants
+- **Discussion Mode**: Facilitate focused discussions
+  - Automatically selects one min and one max voter randomly
+  - Visual highlighting with pulsing animations and badges
+  - Click "Discuss" button when votes are revealed and estimates differ
+  - Click "End Discussion" to exit discussion mode
 - **Reset Votes**: Clear all votes and return to initial state
 - **Remove Participants**: Remove any participant from the room (except yourself)
+  - Hover over participant card to reveal remove button
+  - Removed participants are silently redirected to home page
 - **Share Room**: Copy full room URL to share with team members
 
 ### Rejoining as Admin
@@ -263,24 +285,40 @@ The `SupabaseService` handles all Supabase interactions and exposes Angular Sign
 - Input validation for user name and room ID
 
 #### RoomComponent
-- Visual poker table with participants seated around it
+- **Desktop Poker Table** (768px+):
+  - Realistic green felt table with wooden border and decorative suits
+  - Participants positioned dynamically in an ellipse around the table
+  - Center display showing vote count, voting status, or discussion mode
+- **Mobile Grid Layout** (< 768px):
+  - Simple grid of participant cards
+  - Touch-optimized spacing and sizing
 - **Visual estimation cards** next to each participant:
   - Face-down cards with diagonal stripe pattern (gray)
   - Turn green when participant votes
   - Animate with 3D flip when votes are revealed
   - Orange border for "?" (unknown) votes
-- Fibonacci voting cards (0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
+- **Voting Interface**:
+  - Desktop: Grid view showing all Fibonacci cards (0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
+  - Mobile: Tinder-style carousel with swipe gestures and navigation dots
   - "?" pre-selected by default for participants who haven't voted
+  - Keyboard accessible (Enter/Space key support)
 - Admin-only controls:
   - **Participation toggle**: Checkbox to enable/disable admin voting
-  - Start Voting, Reveal/Hide, Reset, Remove Participants
+  - Start Voting, Reveal/Hide, Discuss (when applicable), Reset
+  - Remove participants (hover-activated button on participant cards)
+- **Discussion Mode**:
+  - Highlights one min and one max voter with pulsing animations
+  - Blue gradient for LOW estimates, red/orange for HIGH estimates
+  - "LOW" and "HIGH" badges on selected participants
+  - Dims non-selected participants with grayscale filter
+  - Shows "Discussion Mode" in center of poker table
 - Vote state management (disabled until admin starts voting)
 - Animated vote reveal with 3D card flip effect
-- Average calculation using computed signals
+- Average calculation using computed signals (excludes non-participating admin)
 - Share room URL button (copies full URL to clipboard)
 - Copy Room ID button (copies just the ID)
 - Real-time participant updates around the table
-- Fully responsive with mobile optimization
+- Fully responsive with mobile-first design and desktop optimizations
 
 ## Supabase Configuration
 
@@ -288,7 +326,7 @@ The application uses Supabase for reliable real-time synchronization across brow
 
 ### Database Tables
 
-- **rooms**: Stores room state (revealed status, voting_started flag, admin_user_id, admin_pin, admin_participates)
+- **rooms**: Stores room state (revealed status, voting_started flag, admin_user_id, admin_pin, admin_participates, discussion_active, discussion_min_voter, discussion_max_voter)
 - **participants**: Stores participant information (votes, names, lastSeen timestamps)
 
 ### Real-Time Subscriptions
@@ -332,15 +370,22 @@ The application uses Angular Signals for reactive state management:
 ## Mobile Support
 
 The application is fully responsive with mobile-first design:
-- Touch-friendly voting cards (72px height on mobile)
-- Responsive estimation cards (50×70px desktop, 40×56px mobile)
-- Responsive grid layouts (4-column card grid on mobile)
-- Mobile-optimized navigation
-- Adaptive typography and spacing
-- Compact table layout (350px height on mobile)
+- **Tinder-Style Voting**: Swipeable card carousel with touch gestures
+  - Swipe left/right to browse Fibonacci cards
+  - Visual indicator dots showing current position
+  - Large, touch-friendly voting cards (170×240px)
+- **Mobile Grid Layout**: Simple grid of participant cards (< 768px)
+- **Desktop Enhancements** (768px+):
+  - Immersive poker table layout with participants positioned around table
+  - Grid view showing all voting cards simultaneously
+  - Hover effects and larger click targets
+  - No-scroll layout optimized for desktop viewports
+- Touch-friendly voting interface
+- Responsive estimation cards (70×70px desktop, 60×60px mobile)
+- Mobile-optimized navigation and spacing
 - PWA support for installation on mobile devices
 - Apple touch icon for iOS home screen
-- Responsive poker table that scales on mobile devices
+- Adaptive typography and animations
 
 ## Browser Support
 
@@ -395,6 +440,11 @@ ALTER TABLE rooms ADD COLUMN IF NOT EXISTS admin_pin TEXT;
 
 -- Add admin_participates column to control admin voting participation
 ALTER TABLE rooms ADD COLUMN IF NOT EXISTS admin_participates BOOLEAN DEFAULT false;
+
+-- Add discussion mode columns (v1.1.0+)
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS discussion_active BOOLEAN DEFAULT false;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS discussion_min_voter TEXT;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS discussion_max_voter TEXT;
 ```
 
 Run this in your Supabase SQL Editor (Settings → Database → SQL Editor).
@@ -432,13 +482,39 @@ The application features custom Planning Poker themed graphics:
 - **Custom Favicon**: Poker card design with Fibonacci number "8" in Material Indigo
 - **Multiple Icon Sizes**: SVG, ICO, and PNG formats for all devices (16x16, 32x32, 180x180, 512x512)
 - **Background Design**: Expressive home page background with floating poker cards and Fibonacci numbers
-- **Poker Table Layout**: Visual circular table with participants seated around it
+- **Desktop Poker Table**: Realistic green felt table with wooden border
+  - Crosshatch felt texture pattern
+  - Dashed betting circle in center
+  - Decorative card suits (♠♣♥♦) positioned around table
+  - Inset shadows and lighting effects for depth
+  - Participants dynamically positioned in ellipse around table
 - **Estimation Cards**: Face-down cards with diagonal stripe pattern, 3D flip animation
+- **Discussion Mode Highlighting**:
+  - Blue gradient and pulsing animation for LOW voters
+  - Red/orange gradient and pulsing animation for HIGH voters
+  - "LOW" and "HIGH" badges with bounce-in animation
+  - Grayscale dimming for non-selected participants
 - **Animated Reveals**: 3D card flip animation (0.6s) with perspective transforms when votes are revealed
 - **Material Design**: Consistent color scheme using Material Indigo, green for votes, orange for unknown
 - **Visual Feedback**: Color changes indicate voting status (gray → green → revealed)
+- **Hover Effects**: Remove button appears on participant card hover (admins only)
 
 For more details on the favicon design, see [FAVICON.md](FAVICON.md).
+
+## Recent Updates
+
+### v1.1.0 (February 13, 2026)
+- ✨ Admin participant removal with hover-activated button
+- ✨ Discussion mode to highlight min/max voters for focused conversations
+- ✨ Desktop poker table layout with realistic felt texture and wooden border
+- ✨ Tinder-style swipeable voting cards for mobile devices
+- ♿ Full keyboard navigation support with ARIA attributes
+- 🐛 Fixed UI flash on page refresh for admin controls
+- 🐛 Fixed share URL to include base href path for production deployments
+- 🐛 Fixed participant counting to exclude non-participating admins
+- 📱 Optimized no-scroll desktop layout for better UX
+
+See [RELEASE_NOTES_v1.1.0.md](RELEASE_NOTES_v1.1.0.md) for complete details.
 
 ## Future Enhancements
 
@@ -453,6 +529,7 @@ Possible improvements:
 - Custom themes and color schemes
 - Voice/video chat integration
 - Integration with Jira/Linear/GitHub Issues
+- Re-roll discussion participants without exiting discussion mode
 
 ## Support
 

@@ -717,6 +717,51 @@
   }
 }
 
+// Remove participant button
+.remove-participant-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  min-width: 24px !important;
+  background: #f44336;
+  color: white;
+  z-index: 11;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+  }
+
+  &:hover {
+    background: #d32f2f;
+    transform: scale(1.1);
+  }
+
+  @media (min-width: 768px) {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+}
+
+.participant-card:hover .remove-participant-btn {
+  opacity: 1;
+}
+
 @keyframes badgeBounce {
   0% {
     transform: translateX(-50%) translateY(-20px) scale(0);

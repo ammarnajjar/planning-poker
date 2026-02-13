@@ -97,6 +97,12 @@
             <div class="discussion-badge discussion-badge-max">HIGH</div>
           }
 
+          @if (isAdmin() && participant.id !== currentUserId) {
+            <button mat-icon-button class="remove-participant-btn" (click)="removeParticipant(participant.id)" matTooltip="Remove participant">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+
           <div class="participant-name">
             {{ participant.name }}
             @if (participant.id === currentUserId) {
@@ -175,6 +181,12 @@
             }
             @if (isMaxVoter(participant.id)) {
               <div class="discussion-badge discussion-badge-max">HIGH</div>
+            }
+
+            @if (isAdmin() && participant.id !== currentUserId) {
+              <button mat-icon-button class="remove-participant-btn" (click)="removeParticipant(participant.id)" matTooltip="Remove participant">
+                <mat-icon>close</mat-icon>
+              </button>
             }
 
             <div class="participant-name">

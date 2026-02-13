@@ -227,8 +227,7 @@ export class RoomComponent implements OnInit, OnDestroy {
 
     // Subscribe to user removal events
     this.supabaseService.onUserRemoved$.subscribe(() => {
-      // User was removed by admin, redirect to home
-      alert("You have been removed from the room by the admin.");
+      // User was removed by admin, redirect to home silently
       this.router.navigate(["/"]);
     });
   }

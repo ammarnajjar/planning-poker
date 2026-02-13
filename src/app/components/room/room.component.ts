@@ -49,6 +49,13 @@ export class RoomComponent implements OnInit, OnDestroy {
   roomState = this.supabaseService.state;
   currentUserId = "";
 
+  // Tinder-style card navigation
+  currentCardIndex = 5; // Start at "5" (index 4 in cardValues)
+
+  // Touch swipe tracking
+  private touchStartX = 0;
+  private touchEndX = 0;
+
   // Computed values
   participants = computed(() => {
     return Object.values(this.roomState().participants);
@@ -85,8 +92,33 @@ export class RoomComponent implements OnInit, OnDestroy {
     return participant?.vote;
   });
 
+  // Sync carousel index with selected vote
+  private syncCarouselWithVote(): void {
+    const vote = this.myVote();
+    if (vote) {
+      const index = this.cardValues.indexOf(vote);
+      if (index !== -1) {
+        this.currentCardIndex = index;
+      }
+    }
+  }
+
   isAdmin = computed(() => {
-    return this.currentUserId === this.roomState().adminUserId;
+    const adminId = this.roomState().adminUserId;
+    // Only show admin controls if adminUserId is set and matches current user
+    return adminId !== "" && this.currentUserId === adminId;
+  });
+
+  shouldShowVotingCards = computed(() => {
+    const adminId = this.roomState().adminUserId;
+    // Wait until room is loaded (adminUserId is set) to prevent flash
+    if (adminId === "") return false;
+
+    // If not admin, show voting cards
+    if (!this.isAdmin()) return true;
+
+    // If admin, only show if they want to participate
+    return this.roomState().adminParticipates;
   });
 
   constructor(
@@ -132,6 +164,9 @@ export class RoomComponent implements OnInit, OnDestroy {
     }
     this.currentUserId = this.supabaseService.getCurrentUserId();
 
+    // Sync carousel with current vote
+    this.syncCarouselWithVote();
+
     // Subscribe to user removal events
     this.supabaseService.onUserRemoved$.subscribe(() => {
       // User was removed by admin, redirect to home
@@ -148,7 +183,15 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Vote for a card value
    */
   vote(value: string): void {
+    // Only allow voting if session has started
+    if (!this.roomState().votingStarted) return;
     this.supabaseService.vote(value);
+
+    // Update carousel to show the selected card
+    const index = this.cardValues.indexOf(value);
+    if (index !== -1) {
+      this.currentCardIndex = index;
+    }
   }
 
   /**
@@ -259,5 +302,63 @@ export class RoomComponent implements OnInit, OnDestroy {
     const total = this.participants().length;
     // Distribute participants evenly around the table
     return Math.floor((index / total) * 12); // 12 positions around the table
+  }
+
+  /**
+   * Navigate to previous card
+   */
+  previousCard(): void {
+    if (this.currentCardIndex > 0) {
+      this.currentCardIndex--;
+    }
+  }
+
+  /**
+   * Navigate to next card
+   */
+  nextCard(): void {
+    if (this.currentCardIndex < this.cardValues.length - 1) {
+      this.currentCardIndex++;
+    }
+  }
+
+  /**
+   * Go to specific card index
+   */
+  goToCard(index: number): void {
+    this.currentCardIndex = index;
+  }
+
+  /**
+   * Handle touch start for swipe gestures
+   */
+  onTouchStart(event: TouchEvent): void {
+    this.touchStartX = event.changedTouches[0].screenX;
+  }
+
+  /**
+   * Handle touch end for swipe gestures
+   */
+  onTouchEnd(event: TouchEvent): void {
+    this.touchEndX = event.changedTouches[0].screenX;
+    this.handleSwipe();
+  }
+
+  /**
+   * Detect swipe direction and navigate cards
+   */
+  private handleSwipe(): void {
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    const diff = this.touchStartX - this.touchEndX;
+
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        // Swiped left - go to next card
+        this.nextCard();
+      } else {
+        // Swiped right - go to previous card
+        this.previousCard();
+      }
+    }
   }
 }

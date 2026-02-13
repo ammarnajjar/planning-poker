@@ -6,11 +6,11 @@
   .toolbar-title {
     margin-left: 12px;
     font-size: 20px;
-    font-weight: 500
+    font-weight: 500;
   }
 
   .spacer {
-    flex: 1
+    flex: 1;
   }
 
   .room-id {
@@ -18,657 +18,496 @@
     font-size: 16px;
     font-weight: 600;
     letter-spacing: 2px;
-    margin-left: 8px
+    margin-left: 8px;
   }
 }
 
 .room-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
+  gap: 16px;
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
   background: #f5f5f5;
-  align-items: center;
-  overflow: hidden;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+  overflow-x: hidden;
 
-  @media (max-width: 768px) {
-    padding: 12px;
-    gap: 12px;
-    overflow-y: auto;
+  // Desktop: wider layout
+  @media (min-width: 768px) {
+    max-width: 900px;
+    padding: 24px;
+    gap: 24px;
   }
 
-  @media (max-width: 600px) {
-    padding: 8px;
-    gap: 8px;
-    overflow-y: auto;
+  @media (min-width: 1024px) {
+    max-width: 1200px;
+  }
+}
+
+// Voting Section - Tinder Style
+.voting-section {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  // Desktop: more padding
+  @media (min-width: 768px) {
+    padding: 24px;
+  }
+}
+
+.vote-status {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.card-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  .nav-button {
+    flex-shrink: 0;
+    color: #3f51b5;
+
+    &:disabled {
+      opacity: 0.3;
+    }
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  // Desktop: hide carousel, show grid instead
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.card-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+}
+
+// Desktop: Grid view for all cards
+.vote-cards-grid {
+  display: none;
+
+  @media (min-width: 768px) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 20px;
+  }
+}
+
+.vote-card-large {
+  width: 170px;
+  height: 240px;
+  background: white;
+  border: 3px solid #e0e0e0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.selected {
+    background: #3f51b5;
+    border-color: #3f51b5;
+    box-shadow: 0 8px 24px rgba(63, 81, 181, 0.3);
+
+    .card-value-large {
+      color: white;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+
+    &:active {
+      transform: none;
+    }
+  }
+
+  // Desktop grid: smaller cards
+  @media (min-width: 768px) {
+    width: 100%;
+    height: 85px;
+    border-width: 2px;
+
+    &:hover:not(.disabled) {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active:not(.disabled) {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.card-value-large {
+  font-size: 64px;
+  font-weight: 700;
+  color: #3f51b5;
+  transition: color 0.3s ease;
+
+  // Desktop grid: smaller text
+  @media (min-width: 768px) {
+    font-size: 32px;
+  }
+}
+
+.card-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+
+  // Desktop: hide indicators when showing grid
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.active {
+    background: #3f51b5;
+    transform: scale(1.3);
+  }
+
+  &:hover {
+    background: #bdbdbd;
+  }
+}
+
+.current-selection {
+  text-align: center;
+  font-size: 16px;
+  color: #424242;
+
+  strong {
+    color: #3f51b5;
+    font-size: 20px;
   }
 }
 
 // Participants Section
 .participants-section {
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-
-  mat-card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  mat-card-header {
-    margin-bottom: 8px;
-    flex-shrink: 0;
-  }
-
-  mat-card-content {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 12px !important;
-  }
-
-  @media (max-width: 600px) {
-    mat-card-header {
-      margin-bottom: 8px;
-    }
-    ::ng-deep mat-card-title {
-      font-size: 18px;
-    }
-    ::ng-deep mat-card-subtitle {
-      font-size: 12px;
-    }
-  }
-}
-
-.table-container {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 768px) {
-    min-height: 450px;
-  }
-
-  @media (max-width: 600px) {
-    min-height: 350px;
-  }
-}
-
-.poker-table {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  min-height: 300px;
-  max-height: 600px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  @media (max-width: 768px) {
-    height: 450px;
-    min-height: 450px;
-    max-height: none;
-  }
-
-  @media (max-width: 600px) {
-    height: 350px;
-    min-height: 350px;
-    max-height: none;
-  }
-}
-
-.table-surface {
-  width: 400px;
-  height: 280px;
-  background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
-  border-radius: 140px;
-  box-shadow:
-    inset 0 0 60px rgba(0, 0, 0, 0.3),
-    0 12px 32px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 12px solid #1b5e20;
-
-  @media (max-width: 768px) {
-    width: 320px;
-    height: 220px;
-    border-width: 10px;
-    border-radius: 110px;
-  }
-
-  @media (max-width: 600px) {
-    width: 240px;
-    height: 160px;
-    border-width: 8px;
-    border-radius: 80px;
-  }
-}
-
-.table-info {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.6);
-
-  .table-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    margin-bottom: 8px;
-  }
-
-  .table-text {
-    font-size: 16px;
-    font-weight: 500;
-  }
-
-  @media (max-width: 600px) {
-    .table-icon {
-      font-size: 36px;
-      width: 36px;
-      height: 36px;
-    }
-    .table-text {
-      font-size: 12px;
-    }
-  }
-}
-
-.participants-around-table {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0
-}
-
-.participant-seat {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.3s ease;
-
-  // Position participants around the table (12 positions like a clock)
-  // Participants positioned at table edge, vote boxes will extend outward
-  &[data-position="0"] { top: 8%; left: 50%; transform: translate(-50%, 0); }
-  &[data-position="1"] { top: 12%; left: 73%; transform: translate(-50%, 0); }
-  &[data-position="2"] { top: 30%; left: 88%; transform: translate(-50%, 0); }
-  &[data-position="3"] { top: 50%; left: 92%; transform: translate(-50%, -50%); }
-  &[data-position="4"] { top: 70%; left: 88%; transform: translate(-50%, -100%); }
-  &[data-position="5"] { top: 88%; left: 73%; transform: translate(-50%, -100%); }
-  &[data-position="6"] { top: 92%; left: 50%; transform: translate(-50%, -100%); }
-  &[data-position="7"] { top: 88%; left: 27%; transform: translate(-50%, -100%); }
-  &[data-position="8"] { top: 70%; left: 12%; transform: translate(-50%, -100%); }
-  &[data-position="9"] { top: 50%; left: 8%; transform: translate(-50%, -50%); }
-  &[data-position="10"] { top: 30%; left: 12%; transform: translate(-50%, 0); }
-  &[data-position="11"] { top: 12%; left: 27%; transform: translate(-50%, 0); }
-
-  &.current-user {
-    .participant-avatar {
-      border-color: #2196f3;
-      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
-    }
-  }
-
-  &.admin {
-    .participant-avatar::after {
-      content: '';
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 24px;
-      height: 24px;
-      background: #ff9800;
-      border-radius: 50%;
-      border: 2px solid white;
-    }
-  }
-}
-
-.participant-avatar {
-  width: 64px;
-  height: 64px;
   background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid #e0e0e0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  position: relative;
-  transition: all 0.3s ease;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  @media (max-width: 600px) {
-    width: 48px;
-    height: 48px;
-  }
-
-  .avatar-icon {
-    font-size: 36px;
-    width: 36px;
-    height: 36px;
-    color: #757575;
-
-    @media (max-width: 600px) {
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
-    }
-  }
-
-  .voted & {
-    border-color: #4caf50;
-    background: #e8f5e9;
+  // Desktop: more padding
+  @media (min-width: 768px) {
+    padding: 24px;
   }
 }
 
-.estimation-card {
-  width: 50px;
-  height: 70px;
-  perspective: 1000px;
-  order: 1;
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #424242;
+}
 
-  .card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
+.participant-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+
+  // Desktop: more columns
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 16px;
   }
 
-  .card-front,
-  .card-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  .card-front {
-    background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
-    border: 3px solid #9e9e9e;
-
-    &::before {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.3) 10px, rgba(255, 255, 255, 0.3) 20px);
-      border-radius: 8px;
-    }
-  }
-
-  .card-back {
-    background: white;
-    border: 3px solid #4caf50;
-    color: #2e7d32;
-    font-size: 28px;
-    transform: rotateY(180deg);
-  }
-
-  &.voted:not(.revealed) .card-front {
-    background: linear-gradient(135deg, #a5d6a7, #66bb6a);
-    border-color: #4caf50;
-  }
-
-  &.revealed .card-inner {
-    transform: rotateY(180deg);
-  }
-
-  &.unknown .card-back {
-    border-color: #ff9800;
-    color: #e65100;
-  }
-
-  @media (max-width: 600px) {
-    width: 40px;
-    height: 56px;
-
-    .card-front, .card-back {
-      border-radius: 6px;
-      border-width: 2px;
-    }
-
-    .card-front::before {
-      border-radius: 6px;
-    }
-
-    .card-back {
-      font-size: 22px;
-    }
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 20px;
   }
 }
 
-.participant-info-wrapper {
+.participant-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  order: 2;
-}
 
-.participant-seat {
-  // Card on outer side by position
-  &[data-position="0"],
-  &[data-position="1"],
-  &[data-position="2"],
-  &[data-position="10"],
-  &[data-position="11"] {
-    flex-direction: column;
-    .estimation-card {
-      order: 1;
+  &.is-you {
+    .participant-name {
+      color: #2196f3;
+      font-weight: 600;
     }
   }
 
-  &[data-position="3"] {
-    flex-direction: row-reverse;
-    .estimation-card {
-      order: 1;
-    }
-  }
+  &.non-participating-admin {
+    opacity: 0.5;
 
-  &[data-position="4"],
-  &[data-position="5"],
-  &[data-position="6"],
-  &[data-position="7"],
-  &[data-position="8"] {
-    flex-direction: column-reverse;
-    .estimation-card {
-      order: 1;
-    }
-  }
-
-  &[data-position="9"] {
-    flex-direction: row;
-    .estimation-card {
-      order: 1;
-    }
-  }
-}
-
-.participant-details {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  background: white;
-  padding: 6px 12px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  min-width: 100px;
-  max-width: 140px;
-
-  @media (max-width: 600px) {
-    min-width: 80px;
-    max-width: 100px;
-    padding: 4px 8px;
-  }
-}
-
-.participant-name-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.participant-name {
-  font-weight: 500;
-  font-size: 13px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100px;
-
-  @media (max-width: 600px) {
-    font-size: 11px;
-    max-width: 70px;
-  }
-}
-
-.you-badge {
-  font-size: 10px;
-  color: #2196f3;
-  font-weight: 600;
-}
-
-.participant-badges {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: center
-}
-
-.admin-badge {
-  color: #ff9800;
-  font-size: 16px;
-  width: 16px;
-  height: 16px
-}
-
-.remove-button-small {
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  background: rgba(244, 67, 54, 0.1);
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(244, 67, 54, 0.2);
-    transform: scale(1.1);
-  }
-
-  mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-    line-height: 16px;
-    color: #f44336;
-  }
-}
-
-// Voting Section
-.voting-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  flex-shrink: 0;
-
-  mat-card {
-    mat-card-header {
-      margin-bottom: 8px;
+    .card-flip {
+      pointer-events: none;
     }
 
-    mat-card-content {
-      padding: 12px !important;
+    .card-front {
+      background: #e0e0e0 !important;
+      border-color: #bdbdbd !important;
+
+      mat-icon {
+        color: #757575 !important;
+      }
     }
-  }
 
-  @media (max-width: 768px) {
-    gap: 12px;
-  }
+    .card-back {
+      background: #e0e0e0 !important;
+      border-color: #bdbdbd !important;
 
-  @media (max-width: 600px) {
-    gap: 8px;
-
-    mat-card-header {
-      margin-bottom: 8px;
-
-      ::ng-deep mat-card-title {
-        font-size: 16px;
+      .vote-number {
+        color: #757575 !important;
       }
     }
   }
 }
 
-.results-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-
-  mat-card-content {
-    padding: 16px !important;
-  }
+.card-flip {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  perspective: 1000px;
 }
 
-.results-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
-  .results-icon {
-    font-size: 36px;
-    width: 36px;
-    height: 36px;
-  }
-
-  .results-text {
-    .results-label {
-      font-size: 13px;
-      opacity: 0.9;
-      margin-bottom: 2px;
-    }
-
-    .results-value {
-      font-size: 28px;
-      font-weight: 600;
-    }
-  }
-}
-
-.voting-card {
-  mat-card-content {
-    padding: 12px !important;
-  }
-}
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-  gap: 10px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 10px;
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-}
-
-.vote-card {
-  aspect-ratio: 2/3;
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  min-height: 80px;
+  transition: transform 0.6s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
 
-  @media (max-width: 768px) {
-    font-size: 18px;
-    min-height: 80px;
-    border-width: 2px;
-    border-radius: 8px;
+.card-front {
+  background: #f5f5f5;
+  border: 3px solid #e0e0e0;
+
+  .avatar-circle {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #9e9e9e;
+    }
   }
 
-  @media (max-width: 600px) {
-    font-size: 16px;
-    min-height: 70px;
-    border-radius: 6px;
-  }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-    border-color: #3f51b5;
-  }
-
-  &.selected {
-    background: #3f51b5;
-    color: white;
-    border-color: #3f51b5;
-    transform: translateY(-3px);
-    box-shadow: 0 3px 10px rgba(63, 81, 181, 0.5);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .card-value {
+  .voted-check {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    color: #4caf50;
     font-size: 24px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+  }
+}
+
+.card-back {
+  background: #3f51b5;
+  border: 3px solid #3f51b5;
+  transform: rotateY(180deg);
+
+  .vote-number {
+    font-size: 32px;
     font-weight: 700;
+    color: white;
+
+    &.warning {
+      color: #ff9800;
+    }
+  }
+
+  &.warning {
+    background: #fff3e0;
+    border-color: #ff9800;
+
+    .vote-number {
+      color: #ff9800;
+    }
   }
 }
 
-.controls-card {
-  mat-card-content {
-    padding: 12px !important;
+.participant-card.voted:not(.revealed) .card-front {
+  border-color: #4caf50;
+  background: #e8f5e9;
+}
+
+.participant-card.revealed {
+  .card-front {
+    transform: rotateY(180deg);
+  }
+
+  .card-back {
+    transform: rotateY(0deg);
   }
 }
 
-.admin-participation-toggle {
-  margin-bottom: 8px;
-  padding: 6px 8px;
-  background: rgba(63, 81, 181, 0.05);
-  border-radius: 8px;
+.participant-name {
+  text-align: center;
+  font-size: 12px;
+  color: #616161;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .you-badge {
+    display: block;
+    font-size: 10px;
+    color: #2196f3;
+  }
+
+  .admin-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #ff9800;
+    vertical-align: middle;
+  }
 }
 
-.controls-container {
+// Admin Controls
+.admin-controls {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 12px;
+
+  // Desktop: more padding
+  @media (min-width: 768px) {
+    padding: 24px;
+  }
+}
+
+.control-buttons {
+  display: flex;
+  gap: 8px;
   flex-wrap: wrap;
 
-  @media (max-width: 600px) {
-    flex-direction: column;
+  button {
+    flex: 1;
+    min-width: 120px;
+
+    mat-icon {
+      margin-right: 4px;
+    }
   }
 }
 
-.control-button {
-  flex: 1;
-  min-width: 160px;
-  height: 40px;
+.average-display {
+  text-align: center;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  mat-icon {
-    margin-right: 8px;
+  strong {
+    font-size: 24px;
+    display: block;
+    margin-top: 4px;
   }
 
-  @media (max-width: 768px) {
-    height: 60px;
-  }
+  // Desktop: more padding
+  @media (min-width: 768px) {
+    padding: 16px 24px;
+    font-size: 18px;
 
-  @media (max-width: 600px) {
-    width: 100%;
-    height: 72px;
-    font-size: 17px;
+    strong {
+      font-size: 28px;
+    }
   }
 }
 
-.control-button-full {
-  width: 100%;
-  flex: none;
+// Mobile Optimizations
+@media (max-width: 600px) {
+  .room-container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .voting-section {
+    padding: 12px;
+  }
+
+  .vote-card-large {
+    width: 150px;
+    height: 210px;
+  }
+
+  .card-value-large {
+    font-size: 56px;
+  }
+
+  .participant-cards {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+  }
+
+  .card-carousel {
+    margin-bottom: 8px;
+  }
+
+  .card-container {
+    min-height: 210px;
+  }
 }

@@ -14,169 +14,140 @@
 </mat-toolbar>
 
 <div class="room-container">
-  <!-- Participants Section -->
+  <!-- Admin Controls (shown first for admin) -->
+  @if (isAdmin()) {
+    <div class="admin-controls">
+      <mat-checkbox
+        [checked]="roomState().adminParticipates"
+        (change)="toggleAdminParticipation()"
+        color="primary">
+        I want to participate
+      </mat-checkbox>
+
+      <div class="control-buttons">
+        @if (!roomState().votingStarted) {
+          <button mat-raised-button color="primary" (click)="startVoting()">
+            <mat-icon>play_arrow</mat-icon>
+            Start Voting
+          </button>
+        } @else {
+          <button mat-raised-button color="accent" (click)="toggleReveal()">
+            <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
+            {{ roomState().revealed ? 'Hide' : 'Reveal' }}
+          </button>
+          <button mat-raised-button (click)="resetVotes()">
+            <mat-icon>refresh</mat-icon>
+            Reset
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Average Display (shown for all users when revealed) -->
+  @if (roomState().revealed && averageVote()) {
+    <div class="average-display">
+      Average: <strong>{{ averageVote() }}</strong>
+    </div>
+  }
+
+  <!-- Participants - Compact Cards (shown first for all users) -->
   <div class="participants-section">
-    <mat-card class="table-container">
-      <mat-card-header>
-        <mat-card-title>
-          Participants ({{ totalCount() }})
-        </mat-card-title>
-        <mat-card-subtitle>
-          {{ votedCount() }} / {{ totalCount() }} voted
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="poker-table">
-          <div class="table-surface">
-            <div class="table-info">
-              <mat-icon class="table-icon">groups</mat-icon>
-              <div class="table-text">Planning Poker</div>
+    <h3 class="section-title">Participants</h3>
+    <div class="participant-cards">
+      @for (participant of participants(); track participant.id) {
+        <div class="participant-card"
+             [class.voted]="hasVoted(participant)"
+             [class.revealed]="roomState().revealed"
+             [class.is-you]="participant.id === currentUserId"
+             [class.non-participating-admin]="participant.id === roomState().adminUserId && !roomState().adminParticipates">
+
+          <div class="card-flip">
+            <div class="card-front">
+              <div class="avatar-circle">
+                <mat-icon>person</mat-icon>
+              </div>
+              @if (hasVoted(participant) && !roomState().revealed) {
+                <mat-icon class="voted-check">check_circle</mat-icon>
+              }
+            </div>
+
+            <div class="card-back" [class.warning]="participant.vote === '?' || !participant.vote">
+              <div class="vote-number" [class.warning]="participant.vote === '?' || !participant.vote">{{ participant.vote || '?' }}</div>
             </div>
           </div>
-          <div class="participants-around-table">
-            @for (participant of participants(); track participant.id; let idx = $index) {
-              <div
-                class="participant-seat"
-                [attr.data-position]="getParticipantPosition(idx)"
-                [class.voted]="hasVoted(participant)"
-                [class.current-user]="participant.id === currentUserId"
-                [class.admin]="participant.id === roomState().adminUserId"
-              >
-                @if (participant.id !== roomState().adminUserId || roomState().adminParticipates) {
-                  <div class="estimation-card"
-                       [class.voted]="hasVoted(participant)"
-                       [class.revealed]="roomState().revealed && hasVoted(participant)"
-                       [class.unknown]="participant.vote === '?'">
-                    <div class="card-inner">
-                      <div class="card-front"></div>
-                      <div class="card-back">
-                        {{ participant.vote }}
-                      </div>
-                    </div>
-                  </div>
-                }
-                <div class="participant-info-wrapper">
-                  <div class="participant-avatar">
-                    <mat-icon class="avatar-icon">person</mat-icon>
-                  </div>
-                  <div class="participant-details">
-                    <div class="participant-name-row">
-                      <span class="participant-name">{{ participant.name }}</span>
-                      @if (participant.id === currentUserId) {
-                        <span class="you-badge">(You)</span>
-                      }
-                    </div>
-                    <div class="participant-badges">
-                      @if (participant.id === roomState().adminUserId) {
-                        <mat-icon class="admin-badge" matTooltip="Room Admin">admin_panel_settings</mat-icon>
-                      }
-                      @if (isAdmin() && participant.id !== currentUserId) {
-                        <button
-                          mat-icon-button
-                          color="warn"
-                          class="remove-button-small"
-                          (click)="removeParticipant(participant.id)"
-                          matTooltip="Remove participant"
-                        >
-                          <mat-icon>close</mat-icon>
-                        </button>
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
+
+          <div class="participant-name">
+            {{ participant.name }}
+            @if (participant.id === currentUserId) {
+              <span class="you-badge">(You)</span>
+            }
+            @if (participant.id === roomState().adminUserId) {
+              <mat-icon class="admin-icon">star</mat-icon>
             }
           </div>
         </div>
-      </mat-card-content>
-    </mat-card>
+      }
+    </div>
   </div>
 
-  <!-- Voting Section -->
-  <div class="voting-section">
-    <!-- Results Card (shown when revealed) -->
-    @if (roomState().revealed && averageVote()) {
-      <mat-card class="results-card">
-        <mat-card-content>
-          <div class="results-content">
-            <mat-icon class="results-icon">bar_chart</mat-icon>
-            <div class="results-text">
-              <div class="results-label">Average</div>
-              <div class="results-value">{{ averageVote() }}</div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    }
-
-    <!-- Voting Cards -->
-    <mat-card class="voting-card">
-      <mat-card-header>
-        <mat-card-title>Choose Your Vote</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="cards-grid">
-          @for (value of cardValues; track value) {
-            <button
-              mat-raised-button
-              class="vote-card"
-              [class.selected]="isCardSelected(value)"
-              [disabled]="roomState().revealed || !roomState().votingStarted || (isAdmin() && !roomState().adminParticipates)"
-              (click)="vote(value)"
-            >
-              <span class="card-value">{{ value }}</span>
-            </button>
+  <!-- Voting Section - Tinder Style (for non-admin or admin who participates) -->
+  @if (shouldShowVotingCards()) {
+    <div class="voting-section">
+        <div class="vote-status">
+          @if (roomState().votingStarted) {
+            {{ votedCount() }}/{{ totalCount() }} voted
+          } @else {
+            Waiting for voting to start...
           }
         </div>
-      </mat-card-content>
-    </mat-card>
 
-    <!-- Controls (Admin Only) -->
-    @if (isAdmin()) {
-      <mat-card class="controls-card">
-        <mat-card-content>
-          <div class="admin-participation-toggle">
-            <mat-checkbox
-              [checked]="roomState().adminParticipates"
-              (change)="toggleAdminParticipation()"
-              color="primary"
-            >
-              I want to participate in voting
-            </mat-checkbox>
+        <!-- Desktop: Grid of all cards -->
+        <div class="vote-cards-grid">
+          @for (value of cardValues; track value) {
+            <div class="vote-card-large"
+                 [class.selected]="isCardSelected(value)"
+                 [class.disabled]="!roomState().votingStarted"
+                 (click)="vote(value)">
+              <span class="card-value-large">{{ value }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Mobile: Swipeable Card -->
+        <div class="card-carousel">
+          <button mat-icon-button class="nav-button prev" (click)="previousCard()" [disabled]="currentCardIndex === 0">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+
+          <div class="card-container"
+               (touchstart)="onTouchStart($event)"
+               (touchend)="onTouchEnd($event)">
+            <div class="vote-card-large"
+                 [class.selected]="isCardSelected(cardValues[currentCardIndex])"
+                 [class.disabled]="!roomState().votingStarted"
+                 (click)="vote(cardValues[currentCardIndex])">
+              <span class="card-value-large">{{ cardValues[currentCardIndex] }}</span>
+            </div>
           </div>
-          <div class="controls-container">
-            @if (!roomState().votingStarted) {
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="startVoting()"
-                class="control-button control-button-full"
-              >
-                <mat-icon>play_arrow</mat-icon>
-                Start Voting
-              </button>
-            } @else {
-              <button
-                mat-raised-button
-                color="accent"
-                (click)="toggleReveal()"
-                class="control-button"
-              >
-                <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
-                {{ roomState().revealed ? 'Hide Votes' : 'Reveal Votes' }}
-              </button>
-              <button
-                mat-raised-button
-                (click)="resetVotes()"
-                class="control-button"
-              >
-                <mat-icon>refresh</mat-icon>
-                Reset Votes
-              </button>
-            }
-          </div>
-        </mat-card-content>
-      </mat-card>
-    }
-  </div>
+
+          <button mat-icon-button class="nav-button next" (click)="nextCard()" [disabled]="currentCardIndex === cardValues.length - 1">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+
+        <!-- Card Indicator Dots -->
+        <div class="card-indicators">
+          @for (value of cardValues; track value; let i = $index) {
+            <div class="indicator-dot"
+                 [class.active]="i === currentCardIndex"
+                 (click)="goToCard(i)"></div>
+          }
+        </div>
+
+        <div class="current-selection">
+          Your vote: <strong>{{ myVote() || '?' }}</strong>
+        </div>
+      </div>
+  }
 </div>

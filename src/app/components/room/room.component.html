@@ -51,10 +51,12 @@
     </div>
   }
 
-  <!-- Participants - Compact Cards (shown first for all users) -->
+  <!-- Participants Section -->
   <div class="participants-section">
-    <h3 class="section-title">Participants</h3>
-    <div class="participant-cards">
+    <h3 class="section-title">Participants ({{ totalCount() }})</h3>
+
+    <!-- Mobile: Simple Grid Layout -->
+    <div class="participant-cards-mobile">
       @for (participant of participants(); track participant.id) {
         <div class="participant-card"
              [class.voted]="hasVoted(participant)"
@@ -88,6 +90,70 @@
           </div>
         </div>
       }
+    </div>
+
+    <!-- Tablet/Desktop: Poker Table Layout -->
+    <div class="poker-table-container">
+      <!-- Poker Table -->
+      <div class="poker-table">
+        <!-- Decorative card suits -->
+        <div class="table-decorations">
+          <div class="suit-decoration suit-top">♠</div>
+          <div class="suit-decoration suit-bottom">♣</div>
+          <div class="suit-decoration suit-left">♥</div>
+          <div class="suit-decoration suit-right">♦</div>
+        </div>
+
+        <div class="table-center">
+          <div class="table-info">
+            @if (roomState().votingStarted) {
+              <div class="vote-count">{{ votedCount() }}/{{ totalCount() }}</div>
+              <div class="vote-label">voted</div>
+            } @else {
+              <div class="waiting-text">Waiting to start...</div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Participants positioned around table -->
+      <div class="participants-around-table">
+        @for (participant of participants(); track participant.id; let i = $index) {
+          <div class="participant-card"
+               [style.--participant-index]="i"
+               [style.--total-participants]="participants().length"
+               [class.voted]="hasVoted(participant)"
+               [class.revealed]="roomState().revealed"
+               [class.is-you]="participant.id === currentUserId"
+               [class.non-participating-admin]="participant.id === roomState().adminUserId && !roomState().adminParticipates">
+
+            <div class="card-flip">
+              <div class="card-front">
+                <div class="avatar-circle">
+                  <mat-icon>person</mat-icon>
+                </div>
+                @if (hasVoted(participant) && !roomState().revealed) {
+                  <mat-icon class="voted-check">check_circle</mat-icon>
+                }
+              </div>
+
+              <div class="card-back" [class.warning]="participant.vote === '?' || !participant.vote">
+                <div class="vote-number" [class.warning]="participant.vote === '?' || !participant.vote">{{ participant.vote || '?' }}</div>
+              </div>
+            </div>
+
+            <div class="participant-name">
+              {{ participant.name }}
+              @if (participant.id === currentUserId) {
+                <span class="you-badge">(You)</span>
+              }
+              @if (participant.id === roomState().adminUserId) {
+                <mat-icon class="admin-icon">star</mat-icon>
+              }
+            </div>
+          </div>
+        }
+      </div>
     </div>
   </div>
 

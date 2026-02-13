@@ -240,26 +240,222 @@
 }
 
 .section-title {
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
   font-size: 18px;
   font-weight: 600;
   color: #424242;
+  text-align: center;
 }
 
-.participant-cards {
+// Poker Table Container
+.poker-table-container {
+  // Hidden on mobile, shown on tablet+
+  display: none;
+
+  @media (min-width: 768px) {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding-top: 48%;
+    min-height: 400px;
+  }
+
+  @media (min-width: 1024px) {
+    padding-top: 40%;
+    min-height: 480px;
+  }
+}
+
+// Poker Table - Oval shaped like real poker tables
+.poker-table {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  height: 60%;
+  background:
+    radial-gradient(ellipse at center, #2d6a4f 0%, #1e5128 70%, #0f3d1a 100%);
+  border-radius: 50%;
+  border: 10px solid #654321;
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.4),
+    inset 0 0 10px rgba(255, 255, 255, 0.1),
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 2px #8b6f47;
+
+  // Add poker table felt texture
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+    opacity: 0.5;
+  }
+
+  // Add betting circle/oval pattern
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 75%;
+    height: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+  }
+
+  @media (min-width: 768px) {
+    border: 14px solid #654321;
+    box-shadow:
+      inset 0 0 50px rgba(0, 0, 0, 0.4),
+      inset 0 0 15px rgba(255, 255, 255, 0.1),
+      0 10px 25px rgba(0, 0, 0, 0.4),
+      0 0 0 3px #8b6f47;
+
+    &::after {
+      border: 3px dashed rgba(255, 255, 255, 0.15);
+    }
+  }
+}
+
+// Table decorations - card suits
+.table-decorations {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+
+  .suit-decoration {
+    position: absolute;
+    font-size: 24px;
+    opacity: 0.15;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+
+    @media (min-width: 768px) {
+      font-size: 32px;
+    }
+
+    &.suit-top {
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #000;
+    }
+
+    &.suit-bottom {
+      bottom: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #000;
+    }
+
+    &.suit-left {
+      left: 10%;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #dc143c;
+    }
+
+    &.suit-right {
+      right: 10%;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #dc143c;
+    }
+  }
+}
+
+.table-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.table-info {
+  text-align: center;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+
+  .vote-count {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+
+    @media (min-width: 768px) {
+      font-size: 36px;
+    }
+  }
+
+  .vote-label {
+    font-size: 14px;
+    margin-top: 4px;
+    opacity: 0.9;
+
+    @media (min-width: 768px) {
+      font-size: 16px;
+    }
+  }
+
+  .waiting-text {
+    font-size: 14px;
+    opacity: 0.9;
+
+    @media (min-width: 768px) {
+      font-size: 16px;
+    }
+  }
+}
+
+// Mobile: Simple grid layout
+.participant-cards-mobile {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 12px;
 
-  // Desktop: more columns
   @media (min-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 16px;
+    display: none;
   }
+}
 
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 20px;
+// Participants positioned around table (tablet and desktop only)
+.participants-around-table {
+  display: none;
+
+  @media (min-width: 768px) {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
   }
 }
 
@@ -267,7 +463,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+
+  // Mobile: no positioning
+  @media (max-width: 767px) {
+    position: relative;
+  }
+
+  // Tablet+: Calculate position around the ellipse
+  @media (min-width: 768px) {
+    position: absolute;
+
+    $radiusX: 50%;
+    $radiusY: 50%;
+
+    --angle: calc((360deg / var(--total-participants)) * var(--participant-index));
+    --x: calc(50% + (#{$radiusX} - 40px) * cos(var(--angle) - 90deg));
+    --y: calc(50% + (#{$radiusY} - 40px) * sin(var(--angle) - 90deg));
+
+    left: var(--x);
+    top: var(--y);
+    transform: translate(-50%, -50%);
+  }
 
   &.is-you {
     .participant-name {
@@ -498,16 +715,26 @@
     font-size: 56px;
   }
 
-  .participant-cards {
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 8px;
-  }
-
   .card-carousel {
     margin-bottom: 8px;
   }
 
   .card-container {
     min-height: 210px;
+  }
+
+  .participant-cards-mobile {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+  }
+
+  .card-flip {
+    width: 60px;
+    height: 60px;
+  }
+
+  .participant-name {
+    font-size: 11px;
+    max-width: 70px;
   }
 }

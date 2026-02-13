@@ -62,13 +62,29 @@ export class RoomComponent implements OnInit, OnDestroy {
   });
 
   votedCount = computed(() => {
-    return this.participants().filter(
-      (p: Participant) => p.vote !== undefined && p.vote !== null,
-    ).length;
+    const adminId = this.roomState().adminUserId;
+    const adminParticipates = this.roomState().adminParticipates;
+
+    return this.participants().filter((p: Participant) => {
+      // Exclude admin if they're not participating
+      if (p.id === adminId && !adminParticipates) {
+        return false;
+      }
+      return p.vote !== undefined && p.vote !== null;
+    }).length;
   });
 
   totalCount = computed(() => {
-    return this.participants().length;
+    const adminId = this.roomState().adminUserId;
+    const adminParticipates = this.roomState().adminParticipates;
+
+    return this.participants().filter((p: Participant) => {
+      // Exclude admin if they're not participating
+      if (p.id === adminId && !adminParticipates) {
+        return false;
+      }
+      return true;
+    }).length;
   });
 
   averageVote = computed(() => {

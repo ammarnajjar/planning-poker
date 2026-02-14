@@ -27,11 +27,14 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
   - Participants positioned in an ellipse around the table
   - Decorative card suit symbols (♠♣♥♦)
   - Dynamic center display showing vote count or discussion mode
+  - Animated poker cards appear on table when votes are revealed
+  - Table background dims during discussion mode to emphasize highlighted participants
 - **Discussion Mode**: Facilitate estimate discussions with automatic voter selection
   - Randomly selects one participant with lowest and highest estimates
   - Visual highlighting with animated pulsing and gradient backgrounds
   - "LOW" and "HIGH" badges on selected participants
   - Dim non-selected participants to focus attention
+  - Automatically ends when admin hides votes
 - **Tinder-Style Voting (Mobile)**: Swipeable card interface for mobile devices
   - Touch-friendly carousel navigation
   - Swipe left/right to browse voting cards
@@ -133,9 +136,12 @@ The build artifacts will be stored in the `dist/` directory.
 3. **Participants see visual cards**: Each participant (except non-participating admin) has a face-down estimation card next to their avatar
 4. Once voting starts, all participants can select a card value (Fibonacci: 0, 1, 2, 3, 5, 8, 13, 20, 35, 50, 100, ?)
    - "?" is pre-selected by default for those who haven't voted
+   - Participants can change their votes freely until admin reveals
 5. **Visual feedback**: Estimation cards turn green when participant submits their vote
 6. Votes are hidden from others until revealed
 7. Admin clicks **"Reveal Votes"** to trigger animated 3D card flip revealing all votes
+   - Small poker cards appear on the table (desktop view) showing each participant's vote
+   - Voting is locked - participants cannot change their votes while revealed
 8. View the average calculation (excluding "?" votes)
 9. Admin clicks **"Reset Votes"** to start a new round (returns to "Start Voting" state)
 
@@ -155,8 +161,10 @@ The room creator has exclusive admin controls:
 - **Discussion Mode**: Facilitate focused discussions
   - Automatically selects one min and one max voter randomly
   - Visual highlighting with pulsing animations and badges
+  - Table background dims to emphasize highlighted participants
   - Click "Discuss" button when votes are revealed and estimates differ
   - Click "End Discussion" to exit discussion mode
+  - Automatically stops when admin hides votes
 - **Reset Votes**: Clear all votes and return to initial state
 - **Remove Participants**: Remove any participant from the room (except yourself)
   - Hover over participant card to reveal remove button
@@ -311,6 +319,7 @@ The `SupabaseService` handles all Supabase interactions and exposes Angular Sign
   - Blue gradient for LOW estimates, red/orange for HIGH estimates
   - "LOW" and "HIGH" badges on selected participants
   - Dims non-selected participants with grayscale filter
+  - Dims poker table background to emphasize highlighted participants
   - Shows "Discussion Mode" in center of poker table
 - Vote state management (disabled until admin starts voting)
 - Animated vote reveal with 3D card flip effect
@@ -503,15 +512,20 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
 
-### v1.1.0 (February 13, 2026)
+### v1.1.0 (February 14, 2026)
 - ✨ Admin participant removal with hover-activated button
 - ✨ Discussion mode to highlight min/max voters for focused conversations
+  - Table background dims during discussion mode for better focus
+  - Automatically stops when admin hides votes
 - ✨ Desktop poker table layout with realistic felt texture and wooden border
+  - Animated poker cards appear on table when votes are revealed
 - ✨ Tinder-style swipeable voting cards for mobile devices
+- ✨ Voting lock - participants cannot change votes once revealed
 - ♿ Full keyboard navigation support with ARIA attributes
 - 🐛 Fixed UI flash on page refresh for admin controls
 - 🐛 Fixed share URL to include base href path for production deployments
 - 🐛 Fixed participant counting to exclude non-participating admins
+- 🐛 Fixed white square backgrounds appearing around participant cards
 - 📱 Optimized no-scroll desktop layout for better UX
 
 See [RELEASE_NOTES_v1.1.0.md](RELEASE_NOTES_v1.1.0.md) for complete details.

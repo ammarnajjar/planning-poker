@@ -137,6 +137,11 @@ export class RoomComponent implements OnInit, OnDestroy {
     return this.roomState().adminParticipates;
   });
 
+  isVotingEnabled = computed(() => {
+    // Voting is enabled only when voting has started AND votes are not revealed
+    return this.roomState().votingStarted && !this.roomState().revealed;
+  });
+
   // Get candidates for min and max voters
   getMinMaxCandidates = computed(() => {
     if (!this.roomState().revealed) return { minCandidates: [], maxCandidates: [] };
@@ -240,8 +245,8 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Vote for a card value
    */
   vote(value: string): void {
-    // Only allow voting if session has started
-    if (!this.roomState().votingStarted) return;
+    // Only allow voting if session has started AND votes are not revealed
+    if (!this.roomState().votingStarted || this.roomState().revealed) return;
     this.supabaseService.vote(value);
 
     // Update carousel to show the selected card

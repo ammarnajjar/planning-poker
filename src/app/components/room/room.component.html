@@ -226,7 +226,9 @@
   @if (shouldShowVotingCards()) {
     <div class="voting-section">
         <div class="vote-status">
-          @if (roomState().votingStarted) {
+          @if (roomState().revealed) {
+            Votes revealed - Voting locked
+          } @else if (roomState().votingStarted) {
             {{ votedCount() }}/{{ totalCount() }} voted
           } @else {
             Waiting for voting to start...
@@ -240,7 +242,7 @@
                  role="button"
                  tabindex="0"
                  [class.selected]="isCardSelected(value)"
-                 [class.disabled]="!roomState().votingStarted"
+                 [class.disabled]="!isVotingEnabled()"
                  (click)="vote(value)"
                  (keyup.enter)="vote(value)"
                  (keyup.space)="vote(value)">
@@ -262,7 +264,7 @@
                  role="button"
                  tabindex="0"
                  [class.selected]="isCardSelected(cardValues[currentCardIndex])"
-                 [class.disabled]="!roomState().votingStarted"
+                 [class.disabled]="!isVotingEnabled()"
                  (click)="vote(cardValues[currentCardIndex])"
                  (keyup.enter)="vote(cardValues[currentCardIndex])"
                  (keyup.space)="vote(cardValues[currentCardIndex])">

@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, OnDestroy, OnInit } from "@angular/core";
+import { Component, computed, effect, linkedSignal, OnDestroy, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatCheckboxModule } from "@angular/material/checkbox";
@@ -29,6 +29,10 @@ import { Participant, SupabaseService } from "../../services/supabase.service";
   styleUrls: ["./room.component.scss"],
 })
 export class RoomComponent implements OnInit, OnDestroy {
+  // Constants
+  private readonly DEFAULT_CARD_INDEX = 5; // Index of "5" in cardValues
+  private readonly SWIPE_THRESHOLD = 50; // Minimum distance in pixels for a swipe
+
   // Extended Fibonacci sequence for voting
   readonly cardValues = [
     "0",
@@ -49,8 +53,16 @@ export class RoomComponent implements OnInit, OnDestroy {
   roomState = this.supabaseService.state;
   currentUserId = "";
 
-  // Tinder-style card navigation
-  currentCardIndex = 5; // Start at "5" (index 4 in cardValues)
+  // Tinder-style card navigation using Angular 21 linkedSignal
+  // Automatically syncs with myVote but can be manually overridden
+  currentCardIndex = linkedSignal<number>(() => {
+    const vote = this.myVote();
+    if (vote) {
+      const index = this.cardValues.indexOf(vote);
+      return index !== -1 ? index : this.DEFAULT_CARD_INDEX;
+    }
+    return this.DEFAULT_CARD_INDEX;
+  });
 
   // Touch swipe tracking
   private touchStartX = 0;
@@ -61,40 +73,29 @@ export class RoomComponent implements OnInit, OnDestroy {
     return Object.values(this.roomState().participants);
   });
 
+  // Helper computed for filtering participating users (excludes non-participating admin)
+  participatingUsers = computed(() => {
+    const adminId = this.roomState().adminUserId;
+    const adminParticipates = this.roomState().adminParticipates;
+
+    return this.participants().filter((p: Participant) => {
+      // Exclude admin if they're not participating
+      return !(p.id === adminId && !adminParticipates);
+    });
+  });
+
   votedCount = computed(() => {
-    const adminId = this.roomState().adminUserId;
-    const adminParticipates = this.roomState().adminParticipates;
-
-    return this.participants().filter((p: Participant) => {
-      // Exclude admin if they're not participating
-      if (p.id === adminId && !adminParticipates) {
-        return false;
-      }
-      return p.vote !== undefined && p.vote !== null;
-    }).length;
+    return this.participatingUsers().filter(p => p.vote != null).length;
   });
 
-  totalCount = computed(() => {
-    const adminId = this.roomState().adminUserId;
-    const adminParticipates = this.roomState().adminParticipates;
-
-    return this.participants().filter((p: Participant) => {
-      // Exclude admin if they're not participating
-      if (p.id === adminId && !adminParticipates) {
-        return false;
-      }
-      return true;
-    }).length;
-  });
+  totalCount = computed(() => this.participatingUsers().length);
 
   averageVote = computed(() => {
     if (!this.roomState().revealed) return null;
 
-    const participants = this.participants();
-    const numericVotes = participants
-      .map((p: Participant) => p.vote)
-      .filter(v => v && v !== "?")
-      .map(v => parseFloat(v!))
+    const numericVotes = this.participatingUsers()
+      .filter(p => p.vote && p.vote !== "?")
+      .map(p => parseFloat(p.vote!))
       .filter(v => !isNaN(v));
 
     if (numericVotes.length === 0) return null;
@@ -107,17 +108,6 @@ export class RoomComponent implements OnInit, OnDestroy {
     const participant = this.roomState().participants[this.currentUserId];
     return participant?.vote;
   });
-
-  // Sync carousel index with selected vote
-  private syncCarouselWithVote(): void {
-    const vote = this.myVote();
-    if (vote) {
-      const index = this.cardValues.indexOf(vote);
-      if (index !== -1) {
-        this.currentCardIndex = index;
-      }
-    }
-  }
 
   isAdmin = computed(() => {
     const adminId = this.roomState().adminUserId;
@@ -146,15 +136,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   getMinMaxCandidates = computed(() => {
     if (!this.roomState().revealed) return { minCandidates: [], maxCandidates: [] };
 
-    const participatingUsers = this.participants().filter((p: Participant) => {
-      const adminId = this.roomState().adminUserId;
-      const adminParticipates = this.roomState().adminParticipates;
-      // Exclude non-participating admin
-      if (p.id === adminId && !adminParticipates) return false;
-      return true;
-    });
-
-    const numericVotes = participatingUsers
+    const numericVotes = this.participatingUsers()
       .map((p: Participant) => ({
         participant: p,
         numericVote: p.vote && p.vote !== "?" ? parseFloat(p.vote) : null,
@@ -185,56 +167,59 @@ export class RoomComponent implements OnInit, OnDestroy {
   });
 
   constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private supabaseService: SupabaseService,
-  ) {}
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly supabaseService: SupabaseService,
+  ) {
+    // Handle user removal with effect (100% signal-based, no RxJS)
+    effect(() => {
+      if (this.supabaseService.userRemoved()) {
+        // User was removed by admin, redirect to home silently
+        this.router.navigate(["/"]);
+      }
+    });
+  }
 
   async ngOnInit(): Promise<void> {
-    // Get room ID from route
-    const roomId = this.route.snapshot.paramMap.get("id");
-    if (!roomId) {
-      this.router.navigate(["/"]);
-      return;
+    try {
+      // Get room ID from route
+      const roomId = this.route.snapshot.paramMap.get("id");
+      if (!roomId) {
+        this.router.navigate(["/"]);
+        return;
+      }
+
+      // Get user name, admin PIN, and isCreating flag from navigation state or localStorage
+      const state = history.state;
+      let userName = state?.["userName"];
+      const adminPin = state?.["adminPin"];
+      const isCreating = state?.["isCreating"];
+
+      // If no userName in state, try localStorage
+      if (!userName) {
+        userName = localStorage.getItem("planning-poker-username");
+      }
+
+      // If still no userName, redirect to home
+      if (!userName) {
+        this.router.navigate(["/"]);
+        return;
+      }
+
+      // Store userName in localStorage for future refreshes
+      localStorage.setItem("planning-poker-username", userName);
+
+      // Create or join room based on isCreating flag
+      if (isCreating) {
+        await this.supabaseService.createRoom(roomId, userName, adminPin);
+      } else {
+        await this.supabaseService.joinRoom(roomId, userName, adminPin);
+      }
+      this.currentUserId = this.supabaseService.getCurrentUserId();
+    } catch (error) {
+      console.error('Failed to initialize room:', error);
+      this.router.navigate(['/']);
     }
-
-    // Get user name, admin PIN, and isCreating flag from navigation state or localStorage
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras.state || history.state;
-    let userName = state?.["userName"];
-    const adminPin = state?.["adminPin"];
-    const isCreating = state?.["isCreating"];
-
-    // If no userName in state, try localStorage
-    if (!userName) {
-      userName = localStorage.getItem("planning-poker-username");
-    }
-
-    // If still no userName, redirect to home
-    if (!userName) {
-      this.router.navigate(["/"]);
-      return;
-    }
-
-    // Store userName in localStorage for future refreshes
-    localStorage.setItem("planning-poker-username", userName);
-
-    // Create or join room based on isCreating flag
-    if (isCreating) {
-      await this.supabaseService.createRoom(roomId, userName, adminPin);
-    } else {
-      await this.supabaseService.joinRoom(roomId, userName, adminPin);
-    }
-    this.currentUserId = this.supabaseService.getCurrentUserId();
-
-    // Sync carousel with current vote
-    this.syncCarouselWithVote();
-
-    // Subscribe to user removal events
-    this.supabaseService.onUserRemoved$.subscribe(() => {
-      // User was removed by admin, redirect to home silently
-      this.router.navigate(["/"]);
-    });
   }
 
   ngOnDestroy(): void {
@@ -252,7 +237,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     // Update carousel to show the selected card
     const index = this.cardValues.indexOf(value);
     if (index !== -1) {
-      this.currentCardIndex = index;
+      this.currentCardIndex.set(index);
     }
   }
 
@@ -346,26 +331,32 @@ export class RoomComponent implements OnInit, OnDestroy {
   /**
    * Copy room ID to clipboard
    */
-  copyRoomId(): void {
+  async copyRoomId(): Promise<void> {
     const roomId = this.roomState().roomId;
-    navigator.clipboard.writeText(roomId).then(() => {
-      // Could add a snackbar notification here
+    try {
+      await navigator.clipboard.writeText(roomId);
       console.log("Room ID copied to clipboard");
-    });
+    } catch (err) {
+      console.error('Failed to copy room ID:', err);
+      // Fallback: Could show error message or use alternative method
+    }
   }
 
   /**
    * Share room URL (copy full URL to clipboard)
    */
-  shareRoom(): void {
+  async shareRoom(): Promise<void> {
     const roomId = this.roomState().roomId;
-    const baseHref = document.querySelector('base')?.getAttribute('href') || '/';
+    const baseHref = document.querySelector('base')?.getAttribute('href') ?? '/';
     const origin = window.location.origin;
     const roomUrl = `${origin}${baseHref}room/${roomId}`;
-    navigator.clipboard.writeText(roomUrl).then(() => {
-      // Could add a snackbar notification here
+    try {
+      await navigator.clipboard.writeText(roomUrl);
       console.log("Room URL copied to clipboard");
-    });
+    } catch (err) {
+      console.error('Failed to copy room URL:', err);
+      // Fallback: Could show error message or use alternative method
+    }
   }
 
   /**
@@ -416,8 +407,8 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Navigate to previous card
    */
   previousCard(): void {
-    if (this.currentCardIndex > 0) {
-      this.currentCardIndex--;
+    if (this.currentCardIndex() > 0) {
+      this.currentCardIndex.set(this.currentCardIndex() - 1);
     }
   }
 
@@ -425,8 +416,8 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Navigate to next card
    */
   nextCard(): void {
-    if (this.currentCardIndex < this.cardValues.length - 1) {
-      this.currentCardIndex++;
+    if (this.currentCardIndex() < this.cardValues.length - 1) {
+      this.currentCardIndex.set(this.currentCardIndex() + 1);
     }
   }
 
@@ -434,7 +425,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Go to specific card index
    */
   goToCard(index: number): void {
-    this.currentCardIndex = index;
+    this.currentCardIndex.set(index);
   }
 
   /**
@@ -456,10 +447,9 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Detect swipe direction and navigate cards
    */
   private handleSwipe(): void {
-    const swipeThreshold = 50; // Minimum distance for a swipe
     const diff = this.touchStartX - this.touchEndX;
 
-    if (Math.abs(diff) > swipeThreshold) {
+    if (Math.abs(diff) > this.SWIPE_THRESHOLD) {
       if (diff > 0) {
         // Swiped left - go to next card
         this.nextCard();

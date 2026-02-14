@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AdminPinDialogComponent } from '../admin-pin-dialog/admin-pin-dialog.component';
 import { SupabaseService } from '../../services/supabase.service';
 import { firstValueFrom } from 'rxjs';
@@ -37,9 +38,10 @@ export class HomeComponent {
   joinError = signal(false);
 
   constructor(
-    private router: Router,
-    private dialog: MatDialog,
-    private supabaseService: SupabaseService
+    private readonly router: Router,
+    private readonly dialog: MatDialog,
+    private readonly supabaseService: SupabaseService,
+    private readonly snackBar: MatSnackBar
   ) {}
 
   /**
@@ -48,7 +50,7 @@ export class HomeComponent {
   async createRoom(): Promise<void> {
     const name = this.userName().trim();
     if (!name) {
-      alert('Please enter your name');
+      this.snackBar.open('Please enter your name', 'OK', { duration: 3000 });
       return;
     }
 
@@ -86,12 +88,12 @@ export class HomeComponent {
     this.joinError.set(false);
 
     if (!name) {
-      alert('Please enter your name');
+      this.snackBar.open('Please enter your name', 'OK', { duration: 3000 });
       return;
     }
 
     if (!room) {
-      alert('Please enter a room ID');
+      this.snackBar.open('Please enter a room ID', 'OK', { duration: 3000 });
       return;
     }
 

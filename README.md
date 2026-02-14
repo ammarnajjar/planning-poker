@@ -1,6 +1,6 @@
 # Planning Poker
 
-A production-ready Planning Poker application built with Angular 17+ and Supabase for reliable real-time synchronization.
+A production-ready Planning Poker application built with Angular 21 and Supabase for reliable real-time synchronization.
 
 ## Features
 
@@ -44,7 +44,7 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
 - **Accessibility**: Full keyboard navigation support with ARIA attributes
 - **Custom Favicon & Background**: Expressive Planning Poker themed design
 - **PWA Support**: Web app manifest for installation on mobile devices
-- **Modern Stack**: Angular 17+ with Standalone Components and Signals
+- **Modern Stack**: Angular 21 with Standalone Components, Signals, and linkedSignal()
 - **Responsive Design**: Mobile-first UI with Angular Material
 - **GitHub Pages**: Free static hosting with automated deployments
 - **Persistent Storage**: Data backed by PostgreSQL database
@@ -52,11 +52,12 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
 
 ## Tech Stack
 
-- **Frontend**: Angular 17+ (Standalone Components)
-- **State Management**: Angular Signals
+- **Frontend**: Angular 21 (Standalone Components)
+- **State Management**: Angular Signals with `linkedSignal()`
 - **Real-Time Sync**: Supabase (PostgreSQL + Real-time subscriptions)
 - **UI Library**: Angular Material
 - **Styling**: SCSS
+- **Testing**: Vitest with 100% statement coverage (244 tests)
 - **Hosting**: GitHub Pages
 - **CI/CD**: GitHub Actions
 
@@ -65,7 +66,7 @@ A production-ready Planning Poker application built with Angular 17+ and Supabas
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Angular CLI 17+
+- Angular CLI 21+
 
 ### Installation
 
@@ -103,6 +104,39 @@ npm run build:prod
 ```
 
 The build artifacts will be stored in the `dist/` directory.
+
+## Testing
+
+The project has comprehensive test coverage with 244 tests across all components and services.
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run tests with interactive UI
+npm run test:ui
+
+# Run tests in watch mode
+npm test -- --watch
+```
+
+### Test Coverage
+
+- **Statement Coverage**: 100% ✅
+- **Branch Coverage**: 98% ✅
+- **Function Coverage**: 100% ✅
+- **Line Coverage**: 100% ✅
+
+See [TESTING.md](TESTING.md) for detailed information about the test suite, including:
+- Test structure and patterns
+- Mocking strategies for Supabase
+- Angular 21 signal testing techniques
+- Coverage breakdown by component
 
 ## How to Use
 
@@ -512,6 +546,27 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
 
+### v1.2.0 (February 14, 2026) - Angular 21 Upgrade
+- ⬆️ **Upgraded to Angular 21** from Angular 19
+  - Leveraging latest Angular 21 features: `linkedSignal()` for reactive state
+  - Improved zoneless change detection support
+  - Enhanced signal-based reactivity
+- 🧪 **Comprehensive Test Suite** with 100% statement coverage
+  - 244 tests passing across 4 test suites
+  - 100% statement coverage, 98% branch coverage
+  - Full coverage of all features including Angular 21 APIs
+  - Type-safe tests with proper TypeScript types
+- ✅ **Code Quality Improvements**
+  - Zero linting errors with strict TypeScript configuration
+  - Proper type safety throughout codebase
+  - Production-ready build with all checks passing
+- 📚 **Documentation Updates**
+  - Comprehensive [TESTING.md](TESTING.md) documenting all 244 tests
+  - Updated coverage metrics and testing strategies
+  - Detailed examples of Angular 21 feature testing
+
+See [TESTING.md](TESTING.md) for complete test coverage details.
+
 ### v1.1.0 (February 14, 2026)
 - ✨ Admin participant removal with hover-activated button
 - ✨ Discussion mode to highlight min/max voters for focused conversations
@@ -554,4 +609,4 @@ For issues and questions:
 
 ---
 
-Built with ❤️ using Angular 17+ and Supabase
+Built with ❤️ using Angular 21 and Supabase

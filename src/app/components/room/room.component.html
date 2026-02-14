@@ -253,7 +253,7 @@
 
         <!-- Mobile: Swipeable Card -->
         <div class="card-carousel">
-          <button mat-icon-button class="nav-button prev" (click)="previousCard()" [disabled]="currentCardIndex === 0">
+          <button mat-icon-button class="nav-button prev" (click)="previousCard()" [disabled]="currentCardIndex() === 0">
             <mat-icon>chevron_left</mat-icon>
           </button>
 
@@ -263,16 +263,16 @@
             <div class="vote-card-large"
                  role="button"
                  tabindex="0"
-                 [class.selected]="isCardSelected(cardValues[currentCardIndex])"
+                 [class.selected]="isCardSelected(cardValues[currentCardIndex()])"
                  [class.disabled]="!isVotingEnabled()"
-                 (click)="vote(cardValues[currentCardIndex])"
-                 (keyup.enter)="vote(cardValues[currentCardIndex])"
-                 (keyup.space)="vote(cardValues[currentCardIndex])">
-              <span class="card-value-large">{{ cardValues[currentCardIndex] }}</span>
+                 (click)="vote(cardValues[currentCardIndex()])"
+                 (keyup.enter)="vote(cardValues[currentCardIndex()])"
+                 (keyup.space)="vote(cardValues[currentCardIndex()])">
+              <span class="card-value-large">{{ cardValues[currentCardIndex()] }}</span>
             </div>
           </div>
 
-          <button mat-icon-button class="nav-button next" (click)="nextCard()" [disabled]="currentCardIndex === cardValues.length - 1">
+          <button mat-icon-button class="nav-button next" (click)="nextCard()" [disabled]="currentCardIndex() === cardValues.length - 1">
             <mat-icon>chevron_right</mat-icon>
           </button>
         </div>
@@ -283,7 +283,7 @@
             <div class="indicator-dot"
                  role="button"
                  tabindex="0"
-                 [class.active]="i === currentCardIndex"
+                 [class.active]="i === currentCardIndex()"
                  (click)="goToCard(i)"
                  (keyup.enter)="goToCard(i)"
                  (keyup.space)="goToCard(i)"></div>

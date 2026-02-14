@@ -266,23 +266,35 @@
   }
 }
 
-// Poker Table - Oval shaped like real poker tables
+// Poker Table - Racetrack/stadium shaped like real poker tables
 .poker-table {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 85%;
-  height: 60%;
+  width: 63%;
+  height: 50%;
   background:
     radial-gradient(ellipse at center, #2d6a4f 0%, #1e5128 70%, #0f3d1a 100%);
-  border-radius: 50%;
-  border: 10px solid #654321;
+  border-radius: 9999px;
+
+  // Multiple border layers for depth
+  border: 4px solid #000000;
   box-shadow:
-    inset 0 0 40px rgba(0, 0, 0, 0.4),
-    inset 0 0 10px rgba(255, 255, 255, 0.1),
-    0 8px 20px rgba(0, 0, 0, 0.4),
-    0 0 0 2px #8b6f47;
+    // Black outer border shadow
+    0 0 0 8px #1a1a1a,
+    // Brown/tan wood inner border
+    0 0 0 20px #8b6f47,
+    // Inner brown shadow
+    inset 0 0 0 4px #654321,
+    // Deep inset shadow for felt depth
+    inset 0 8px 30px rgba(0, 0, 0, 0.6),
+    inset 0 -8px 20px rgba(0, 0, 0, 0.4),
+    // Highlight on top edge
+    inset 0 2px 10px rgba(255, 255, 255, 0.05),
+    // Outer drop shadow
+    0 15px 40px rgba(0, 0, 0, 0.5),
+    0 8px 20px rgba(0, 0, 0, 0.3);
 
   // Add poker table felt texture
   &::before {
@@ -292,7 +304,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    border-radius: 50%;
+    border-radius: 9999px;
     background-image:
       repeating-linear-gradient(
         90deg,
@@ -321,21 +333,40 @@
     width: 75%;
     height: 50%;
     border: 2px dashed rgba(255, 255, 255, 0.15);
-    border-radius: 50%;
+    border-radius: 9999px;
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
   }
 
   @media (min-width: 768px) {
-    border: 14px solid #654321;
+    width: 64%;
+    height: 45%;
+    border: 5px solid #000000;
     box-shadow:
-      inset 0 0 50px rgba(0, 0, 0, 0.4),
-      inset 0 0 15px rgba(255, 255, 255, 0.1),
-      0 10px 25px rgba(0, 0, 0, 0.4),
-      0 0 0 3px #8b6f47;
+      // Black outer border shadow
+      0 0 0 10px #1a1a1a,
+      // Brown/tan wood inner border
+      0 0 0 26px #8b6f47,
+      // Lighter tan highlight
+      0 0 0 28px #a68a5c,
+      // Inner brown shadow
+      inset 0 0 0 5px #654321,
+      // Deep inset shadow for felt depth
+      inset 0 10px 40px rgba(0, 0, 0, 0.6),
+      inset 0 -10px 25px rgba(0, 0, 0, 0.4),
+      // Highlight on top edge
+      inset 0 3px 15px rgba(255, 255, 255, 0.05),
+      // Outer drop shadow
+      0 20px 50px rgba(0, 0, 0, 0.6),
+      0 10px 30px rgba(0, 0, 0, 0.4);
 
     &::after {
       border: 3px dashed rgba(255, 255, 255, 0.15);
     }
+  }
+
+  @media (min-width: 1024px) {
+    width: 66%;
+    height: 42%;
   }
 }
 

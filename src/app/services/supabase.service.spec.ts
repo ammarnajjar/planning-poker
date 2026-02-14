@@ -1,5 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SupabaseService } from './supabase.service';
+import { SupabaseService, RoomState } from './supabase.service';
+
+// Type for accessing private members in tests
+type SupabaseServicePrivate = SupabaseService & {
+  supabase: typeof mockSupabase;
+  roomState: { update: (fn: (s: RoomState) => RoomState) => void };
+  currentUserId?: string;
+  currentUserName?: string;
+  heartbeatInterval?: ReturnType<typeof setInterval>;
+  cleanupInterval?: ReturnType<typeof setInterval>;
+  generateUserId?: () => string;
+};
+
+// Type for Supabase subscription callbacks
+type SubscriptionCallback = (payload: {
+  eventType: string;
+  new: Record<string, unknown>;
+  old: Record<string, unknown>;
+}) => void;
+
+interface SubscriptionConfig {
+  event: string;
+  table?: string;
+  schema?: string;
+}
 
 // Mock Supabase client
 const mockSupabase = {
@@ -19,8 +43,7 @@ describe('SupabaseService', () => {
     service = new SupabaseService();
 
     // Replace the supabase client with our mock
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (service as any).supabase = mockSupabase;
+    (service as SupabaseServicePrivate).supabase = mockSupabase;
   });
 
   describe('roomExists', () => {
@@ -145,8 +168,7 @@ describe('SupabaseService', () => {
   describe('getCurrentUserId', () => {
     it('should return the current user ID', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user123';
+      (service as SupabaseServicePrivate).currentUserId = 'user123';
 
       // Act
       const result = service.getCurrentUserId();
@@ -157,8 +179,7 @@ describe('SupabaseService', () => {
 
     it('should return empty string when no user ID is set', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = '';
+      (service as SupabaseServicePrivate).currentUserId = '';
 
       // Act
       const result = service.getCurrentUserId();
@@ -395,12 +416,9 @@ describe('SupabaseService', () => {
         })
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = mockSupabase.channel();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserName = 'Test User';
+      (service as SupabaseServicePrivate).currentChannel = mockSupabase.channel();
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
+      (service as SupabaseServicePrivate).currentUserName = 'Test User';
     });
 
     it('should call database update when voting', async () => {
@@ -414,9 +432,8 @@ describe('SupabaseService', () => {
         update: mockUpdate
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         votingStarted: true,
@@ -436,9 +453,8 @@ describe('SupabaseService', () => {
 
     it('should not allow voting when voting not started', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         votingStarted: false,
@@ -458,9 +474,8 @@ describe('SupabaseService', () => {
 
     it('should not allow voting when votes revealed', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         votingStarted: true,
@@ -501,17 +516,14 @@ describe('SupabaseService', () => {
         })
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = mockSupabase.channel();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'admin1';
+      (service as SupabaseServicePrivate).currentChannel = mockSupabase.channel();
+      (service as SupabaseServicePrivate).currentUserId = 'admin1';
     });
 
     it('should toggle reveal state', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -528,9 +540,8 @@ describe('SupabaseService', () => {
 
     it('should start voting session', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -554,9 +565,8 @@ describe('SupabaseService', () => {
         update: mockUpdate
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -575,9 +585,8 @@ describe('SupabaseService', () => {
 
     it('should toggle admin participation', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -603,9 +612,8 @@ describe('SupabaseService', () => {
         update: mockUpdate
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -645,17 +653,14 @@ describe('SupabaseService', () => {
         })
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = mockSupabase.channel();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'admin1';
+      (service as SupabaseServicePrivate).currentChannel = mockSupabase.channel();
+      (service as SupabaseServicePrivate).currentUserId = 'admin1';
     });
 
     it('should activate discussion mode with min and max voters', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -676,9 +681,8 @@ describe('SupabaseService', () => {
 
     it('should deactivate discussion mode', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -699,9 +703,8 @@ describe('SupabaseService', () => {
 
     it('should handle discussion mode with only min voter', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -728,9 +731,8 @@ describe('SupabaseService', () => {
         update: mockUpdate
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -767,10 +769,8 @@ describe('SupabaseService', () => {
         })
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = mockSupabase.channel();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'admin1';
+      (service as SupabaseServicePrivate).currentChannel = mockSupabase.channel();
+      (service as SupabaseServicePrivate).currentUserId = 'admin1';
     });
 
     it('should call database delete when removing participant', async () => {
@@ -785,9 +785,8 @@ describe('SupabaseService', () => {
         delete: mockDelete
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1'
@@ -803,9 +802,8 @@ describe('SupabaseService', () => {
 
     it('should not remove admin from room state', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
@@ -840,10 +838,8 @@ describe('SupabaseService', () => {
       const service2 = new SupabaseService();
 
       // Generate IDs by accessing internal method
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const id1 = (service1 as any).generateUserId();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const id2 = (service2 as any).generateUserId();
+      const id1 = (service1 as SupabaseServicePrivate).generateUserId();
+      const id2 = (service2 as SupabaseServicePrivate).generateUserId();
 
       expect(id1).not.toBe(id2);
       expect(typeof id1).toBe('string');
@@ -858,26 +854,21 @@ describe('SupabaseService', () => {
 
     it('should clear intervals when leaving room', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).heartbeatInterval = setInterval(() => {}, 1000);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).cleanupInterval = setInterval(() => {}, 1000);
+      (service as SupabaseServicePrivate).heartbeatInterval = setInterval(vi.fn(), 1000);
+      (service as SupabaseServicePrivate).cleanupInterval = setInterval(vi.fn(), 1000);
 
       // Act
       service.leaveRoom();
 
       // Assert - intervals should be cleared
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).heartbeatInterval).toBeUndefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).cleanupInterval).toBeUndefined();
+      expect((service as SupabaseServicePrivate).heartbeatInterval).toBeUndefined();
+      expect((service as SupabaseServicePrivate).cleanupInterval).toBeUndefined();
     });
 
     it('should remove channel when leaving room', async () => {
       // Arrange
       const mockChannel = { unsubscribe: vi.fn() };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = mockChannel;
+      (service as SupabaseServicePrivate).currentChannel = mockChannel;
 
       // Act
       service.leaveRoom();
@@ -891,8 +882,7 @@ describe('SupabaseService', () => {
 
     it('should handle leaving when no channel exists', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = null;
+      (service as SupabaseServicePrivate).currentChannel = null;
 
       // Act & Assert - should not throw
       expect(() => service.leaveRoom()).not.toThrow();
@@ -904,8 +894,7 @@ describe('SupabaseService', () => {
       // This test verifies the constructor sets up the listener
       // The actual service instance already has this set up
       expect(service).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).supabase).toBeDefined();
+      expect((service as SupabaseServicePrivate).supabase).toBeDefined();
     });
 
     it('should mark user offline on beforeunload event (lines 82-85)', () => {
@@ -918,10 +907,8 @@ describe('SupabaseService', () => {
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
 
       // Set up state with roomId and currentUserId
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123'
       }));
@@ -940,8 +927,7 @@ describe('SupabaseService', () => {
   describe('Early Returns', () => {
     it('should return early from vote if no roomId', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({ ...s, roomId: '' }));
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({ ...s, roomId: '' }));
 
       // Act
       await service.vote('5');
@@ -952,8 +938,7 @@ describe('SupabaseService', () => {
 
     it('should return early from toggleReveal if no roomId', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({ ...s, roomId: '' }));
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({ ...s, roomId: '' }));
 
       // Act
       await service.toggleReveal();
@@ -964,8 +949,7 @@ describe('SupabaseService', () => {
 
     it('should return early from resetVotes if no roomId', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({ ...s, roomId: '' }));
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({ ...s, roomId: '' }));
 
       // Act
       await service.resetVotes();
@@ -976,8 +960,7 @@ describe('SupabaseService', () => {
 
     it('should return early from startVoting if no roomId', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({ ...s, roomId: '' }));
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({ ...s, roomId: '' }));
 
       // Act
       await service.startVoting();
@@ -988,8 +971,7 @@ describe('SupabaseService', () => {
 
     it('should return early from toggleAdminParticipation if no roomId', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({ ...s, roomId: '' }));
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({ ...s, roomId: '' }));
 
       // Act
       await service.toggleAdminParticipation();
@@ -1000,8 +982,7 @@ describe('SupabaseService', () => {
 
     it('should return early from toggleDiscussion if no roomId', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({ ...s, roomId: '' }));
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({ ...s, roomId: '' }));
 
       // Act
       await service.toggleDiscussion('user1', 'user2');
@@ -1012,8 +993,7 @@ describe('SupabaseService', () => {
 
     it('should return early from removeParticipant if no roomId', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).roomState.update((s: any) => ({ ...s, roomId: '' }));
+      (service as SupabaseServicePrivate).roomState.update((s: RoomState) => ({ ...s, roomId: '' }));
 
       // Act
       await service.removeParticipant('user1');
@@ -1034,9 +1014,8 @@ describe('SupabaseService', () => {
 
     it('should update local state immediately', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         votingStarted: false,
@@ -1061,9 +1040,8 @@ describe('SupabaseService', () => {
         update: mockUpdate
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123'
       }));
@@ -1091,15 +1069,13 @@ describe('SupabaseService', () => {
         select: mockSelect
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         revealed: false
       }));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
 
       // Act
       await service.toggleReveal();
@@ -1127,9 +1103,8 @@ describe('SupabaseService', () => {
         select: mockSelect
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         revealed: false
@@ -1145,12 +1120,9 @@ describe('SupabaseService', () => {
 
   describe('Participant Heartbeat', () => {
     it('should have heartbeat constants', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).HEARTBEAT_INTERVAL_MS).toBe(2000);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).CLEANUP_INTERVAL_MS).toBe(3000);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).PARTICIPANT_TIMEOUT_MS).toBe(5000);
+      expect((service as SupabaseServicePrivate).HEARTBEAT_INTERVAL_MS).toBe(2000);
+      expect((service as SupabaseServicePrivate).CLEANUP_INTERVAL_MS).toBe(3000);
+      expect((service as SupabaseServicePrivate).PARTICIPANT_TIMEOUT_MS).toBe(5000);
     });
   });
 
@@ -1182,16 +1154,14 @@ describe('SupabaseService', () => {
 
     it('should not clear vote when enabling participation', async () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         adminUserId: 'admin1',
         adminParticipates: false
       }));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'admin1';
+      (service as SupabaseServicePrivate).currentUserId = 'admin1';
 
       // Act
       await service.toggleAdminParticipation();
@@ -1221,12 +1191,9 @@ describe('SupabaseService', () => {
       mockSupabase.removeChannel = mockRemoveChannel;
 
       const mockChannel = { unsubscribe: vi.fn() };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = mockChannel;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).heartbeatInterval = setInterval(() => {}, 1000);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).cleanupInterval = setInterval(() => {}, 1000);
+      (service as SupabaseServicePrivate).currentChannel = mockChannel;
+      (service as SupabaseServicePrivate).heartbeatInterval = setInterval(vi.fn(), 1000);
+      (service as SupabaseServicePrivate).cleanupInterval = setInterval(vi.fn(), 1000);
 
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -1255,10 +1222,8 @@ describe('SupabaseService', () => {
       expect(mockRemoveChannel).toHaveBeenCalledWith(mockChannel);
 
       // Cleanup new intervals
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).heartbeatInterval);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).cleanupInterval);
+      clearInterval((service as SupabaseServicePrivate).heartbeatInterval);
+      clearInterval((service as SupabaseServicePrivate).cleanupInterval);
     });
 
     it('should throw error if room already exists', async () => {
@@ -1429,8 +1394,7 @@ describe('SupabaseService', () => {
       mockSupabase.removeChannel = mockRemoveChannel;
 
       const mockChannel = { unsubscribe: vi.fn() };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentChannel = mockChannel;
+      (service as SupabaseServicePrivate).currentChannel = mockChannel;
 
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -1456,19 +1420,15 @@ describe('SupabaseService', () => {
       expect(mockRemoveChannel).toHaveBeenCalledWith(mockChannel);
 
       // Cleanup
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).heartbeatInterval);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).cleanupInterval);
+      clearInterval((service as SupabaseServicePrivate).heartbeatInterval);
+      clearInterval((service as SupabaseServicePrivate).cleanupInterval);
     });
 
     it('should clear existing intervals before joining (lines 198, 201)', async () => {
       // Arrange
       // Set up existing intervals
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).heartbeatInterval = setInterval(() => {}, 1000);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).cleanupInterval = setInterval(() => {}, 1000);
+      (service as SupabaseServicePrivate).heartbeatInterval = setInterval(vi.fn(), 1000);
+      (service as SupabaseServicePrivate).cleanupInterval = setInterval(vi.fn(), 1000);
 
       mockSupabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -1491,16 +1451,12 @@ describe('SupabaseService', () => {
       await service.joinRoom('TEST123', 'Bob');
 
       // Assert - intervals should have been cleared and new ones created
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).heartbeatInterval).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).cleanupInterval).toBeDefined();
+      expect((service as SupabaseServicePrivate).heartbeatInterval).toBeDefined();
+      expect((service as SupabaseServicePrivate).cleanupInterval).toBeDefined();
 
       // Cleanup
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).heartbeatInterval);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).cleanupInterval);
+      clearInterval((service as SupabaseServicePrivate).heartbeatInterval);
+      clearInterval((service as SupabaseServicePrivate).cleanupInterval);
     });
 
     it('should throw error if room does not exist', async () => {
@@ -1723,8 +1679,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (service as any).verifyAdminPin('TEST123', '1234');
+      const result = await (service as SupabaseServicePrivate).verifyAdminPin('TEST123', '1234');
 
       // Assert
       expect(result).toBe(true);
@@ -1741,8 +1696,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (service as any).verifyAdminPin('TEST123', 'wrong');
+      const result = await (service as SupabaseServicePrivate).verifyAdminPin('TEST123', 'wrong');
 
       // Assert
       expect(result).toBe(false);
@@ -1759,8 +1713,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (service as any).verifyAdminPin('TEST123', '1234');
+      const result = await (service as SupabaseServicePrivate).verifyAdminPin('TEST123', '1234');
 
       // Assert
       expect(result).toBe(false);
@@ -1777,8 +1730,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await (service as any).verifyAdminPin('NONEXISTENT', '1234');
+      const result = await (service as SupabaseServicePrivate).verifyAdminPin('NONEXISTENT', '1234');
 
       // Assert
       expect(result).toBe(false);
@@ -1837,8 +1789,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (service as any).loadRoomState('TEST123');
+      await (service as SupabaseServicePrivate).loadRoomState('TEST123');
 
       // Assert
       const state = service.state();
@@ -1877,8 +1828,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (service as any).loadRoomState('TEST123');
+      await (service as SupabaseServicePrivate).loadRoomState('TEST123');
 
       // Assert
       const state = service.state();
@@ -1912,8 +1862,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (service as any).loadRoomState('NONEXISTENT');
+      await (service as SupabaseServicePrivate).loadRoomState('NONEXISTENT');
 
       // Assert
       const state = service.state();
@@ -1926,9 +1875,8 @@ describe('SupabaseService', () => {
   describe('HandleParticipantChange', () => {
     it('should remove participant on DELETE event', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice', lastSeen: Date.now() }
@@ -1936,8 +1884,7 @@ describe('SupabaseService', () => {
       }));
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).handleParticipantChange({
+      (service as SupabaseServicePrivate).handleParticipantChange({
         eventType: 'DELETE',
         old: { user_id: 'user1', name: 'Alice', vote: '', last_seen: 0 },
         new: null
@@ -1949,11 +1896,9 @@ describe('SupabaseService', () => {
 
     it('should set userRemoved signal when current user is deleted', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice', lastSeen: Date.now() }
@@ -1961,8 +1906,7 @@ describe('SupabaseService', () => {
       }));
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).handleParticipantChange({
+      (service as SupabaseServicePrivate).handleParticipantChange({
         eventType: 'DELETE',
         old: { user_id: 'user1', name: 'Alice', vote: '', last_seen: 0 },
         new: null
@@ -1977,8 +1921,7 @@ describe('SupabaseService', () => {
       const now = Date.now();
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).handleParticipantChange({
+      (service as SupabaseServicePrivate).handleParticipantChange({
         eventType: 'INSERT',
         new: { user_id: 'user1', name: 'Alice', vote: '5', last_seen: now },
         old: null
@@ -1993,9 +1936,8 @@ describe('SupabaseService', () => {
 
     it('should remove participant when last_seen is 0', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice', lastSeen: Date.now() }
@@ -2003,8 +1945,7 @@ describe('SupabaseService', () => {
       }));
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).handleParticipantChange({
+      (service as SupabaseServicePrivate).handleParticipantChange({
         eventType: 'UPDATE',
         new: { user_id: 'user1', name: 'Alice', vote: '', last_seen: 0 },
         old: null
@@ -2017,9 +1958,8 @@ describe('SupabaseService', () => {
     it('should remove participant when last_seen is too old', () => {
       // Arrange
       const oldTimestamp = Date.now() - 15000; // 15 seconds ago
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice', lastSeen: Date.now() }
@@ -2027,8 +1967,7 @@ describe('SupabaseService', () => {
       }));
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).handleParticipantChange({
+      (service as SupabaseServicePrivate).handleParticipantChange({
         eventType: 'UPDATE',
         new: { user_id: 'user1', name: 'Alice', vote: '', last_seen: oldTimestamp },
         old: null
@@ -2041,9 +1980,8 @@ describe('SupabaseService', () => {
     it('should not update state if participant data unchanged', () => {
       // Arrange
       const lastSeen = Date.now();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice', vote: '5', lastSeen }
@@ -2053,8 +1991,7 @@ describe('SupabaseService', () => {
       const initialState = service.state();
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).handleParticipantChange({
+      (service as SupabaseServicePrivate).handleParticipantChange({
         eventType: 'UPDATE',
         new: { user_id: 'user1', name: 'Alice', vote: '5', last_seen: lastSeen },
         old: null
@@ -2074,12 +2011,10 @@ describe('SupabaseService', () => {
         })
       });
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
 
       // Act - This triggers line 557: sendHeartbeat()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).startHeartbeat('TEST123');
+      (service as SupabaseServicePrivate).startHeartbeat('TEST123');
 
       // Wait for async call to complete
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -2088,10 +2023,8 @@ describe('SupabaseService', () => {
       expect(mockUpdate).toHaveBeenCalled();
 
       // Cleanup
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).heartbeatInterval);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).cleanupInterval);
+      clearInterval((service as SupabaseServicePrivate).heartbeatInterval);
+      clearInterval((service as SupabaseServicePrivate).cleanupInterval);
     });
 
     it('should create heartbeat and cleanup intervals', () => {
@@ -2102,24 +2035,18 @@ describe('SupabaseService', () => {
         })
       });
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
 
       // Act - This creates intervals including cleanup callback (lines 561-577)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).startHeartbeat('TEST123');
+      (service as SupabaseServicePrivate).startHeartbeat('TEST123');
 
       // Assert
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).heartbeatInterval).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).cleanupInterval).toBeDefined();
+      expect((service as SupabaseServicePrivate).heartbeatInterval).toBeDefined();
+      expect((service as SupabaseServicePrivate).cleanupInterval).toBeDefined();
 
       // Cleanup
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).heartbeatInterval);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).cleanupInterval);
+      clearInterval((service as SupabaseServicePrivate).heartbeatInterval);
+      clearInterval((service as SupabaseServicePrivate).cleanupInterval);
     });
 
     it('should execute cleanup interval callback to remove stale participants', async () => {
@@ -2127,9 +2054,8 @@ describe('SupabaseService', () => {
       vi.useFakeTimers();
 
       const now = Date.now();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice', lastSeen: now - 20000 } // Very old - should be removed
@@ -2145,8 +2071,7 @@ describe('SupabaseService', () => {
       });
 
       // Act - Start heartbeat which creates cleanup interval (lines 561-577)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).startHeartbeat('TEST123');
+      (service as SupabaseServicePrivate).startHeartbeat('TEST123');
 
       // Fast-forward time to trigger cleanup interval (3000ms)
       await vi.advanceTimersByTimeAsync(3100);
@@ -2155,10 +2080,8 @@ describe('SupabaseService', () => {
       expect(service.state().participants['user1']).toBeUndefined();
 
       // Cleanup
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).heartbeatInterval);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).cleanupInterval);
+      clearInterval((service as SupabaseServicePrivate).heartbeatInterval);
+      clearInterval((service as SupabaseServicePrivate).cleanupInterval);
 
       vi.useRealTimers();
     });
@@ -2168,9 +2091,8 @@ describe('SupabaseService', () => {
       vi.useFakeTimers();
 
       const recentTime = Date.now() - 1000; // 1 second ago - should NOT be removed
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user2: { id: 'user2', name: 'Bob', lastSeen: recentTime }
@@ -2186,8 +2108,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).startHeartbeat('TEST123');
+      (service as SupabaseServicePrivate).startHeartbeat('TEST123');
 
       // Fast-forward time to trigger cleanup interval
       await vi.advanceTimersByTimeAsync(3100);
@@ -2197,10 +2118,8 @@ describe('SupabaseService', () => {
       expect(service.state().participants['user2'].name).toBe('Bob');
 
       // Cleanup
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).heartbeatInterval);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearInterval((service as any).cleanupInterval);
+      clearInterval((service as SupabaseServicePrivate).heartbeatInterval);
+      clearInterval((service as SupabaseServicePrivate).cleanupInterval);
 
       vi.useRealTimers();
     });
@@ -2209,10 +2128,8 @@ describe('SupabaseService', () => {
   describe('GenerateUserId', () => {
     it('should generate unique user IDs', () => {
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const id1 = (service as any).generateUserId();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const id2 = (service as any).generateUserId();
+      const id1 = (service as SupabaseServicePrivate).generateUserId();
+      const id2 = (service as SupabaseServicePrivate).generateUserId();
 
       // Assert
       expect(id1).toMatch(/^user_\d+_[a-z0-9]+$/);
@@ -2224,8 +2141,7 @@ describe('SupabaseService', () => {
   describe('GetCurrentUserId', () => {
     it('should return current user ID', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user123';
+      (service as SupabaseServicePrivate).currentUserId = 'user123';
 
       // Act
       const userId = service.getCurrentUserId();
@@ -2238,11 +2154,9 @@ describe('SupabaseService', () => {
   describe('IsAdmin', () => {
     it('should return true when current user is admin', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'admin1';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      (service as SupabaseServicePrivate).currentUserId = 'admin1';
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         adminUserId: 'admin1'
       }));
@@ -2256,11 +2170,9 @@ describe('SupabaseService', () => {
 
     it('should return false when current user is not admin', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         adminUserId: 'admin1'
       }));
@@ -2282,9 +2194,8 @@ describe('SupabaseService', () => {
         })
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         revealed: true,
@@ -2317,11 +2228,9 @@ describe('SupabaseService', () => {
       });
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123'
       }));
@@ -2339,11 +2248,9 @@ describe('SupabaseService', () => {
       const mockUpdate = vi.fn();
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = 'user1';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: ''
       }));
@@ -2360,11 +2267,9 @@ describe('SupabaseService', () => {
       const mockUpdate = vi.fn();
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).currentUserId = '';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      (service as SupabaseServicePrivate).currentUserId = '';
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123'
       }));
@@ -2382,9 +2287,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let participantCallback: any;
+      let participantCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'participants') {
           participantCallback = callback; // This is line 402
         }
@@ -2397,8 +2302,7 @@ describe('SupabaseService', () => {
       });
 
       // Act - This calls subscribeToRoom which registers the participant callback at line 401-407
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
 
       // Verify callback was registered
       expect(participantCallback).toBeDefined();
@@ -2420,9 +2324,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let participantCallback: any;
+      let participantCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'participants') {
           participantCallback = callback;
         }
@@ -2435,9 +2339,8 @@ describe('SupabaseService', () => {
       });
 
       // Add a participant first
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user3: { id: 'user3', name: 'Charlie', lastSeen: Date.now() }
@@ -2445,8 +2348,7 @@ describe('SupabaseService', () => {
       }));
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
 
       // Invoke callback with DELETE event
       participantCallback({
@@ -2465,9 +2367,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let roomUpdateCallback: any;
+      let roomUpdateCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'rooms') {
           roomUpdateCallback = callback;
         }
@@ -2480,8 +2382,7 @@ describe('SupabaseService', () => {
       });
 
       // Act - Call subscribeToRoom
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
 
       // Simulate subscription callback
       roomUpdateCallback({ new: { revealed: true } });
@@ -2494,9 +2395,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let roomUpdateCallback: any;
+      let roomUpdateCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'rooms') {
           roomUpdateCallback = callback;
         }
@@ -2509,8 +2410,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
       roomUpdateCallback({ new: { voting_started: true } });
 
       // Assert
@@ -2521,9 +2421,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let roomUpdateCallback: any;
+      let roomUpdateCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'rooms') {
           roomUpdateCallback = callback;
         }
@@ -2536,8 +2436,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
       roomUpdateCallback({ new: { admin_participates: true } });
 
       // Assert
@@ -2548,9 +2447,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let roomUpdateCallback: any;
+      let roomUpdateCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'rooms') {
           roomUpdateCallback = callback;
         }
@@ -2563,8 +2462,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
       roomUpdateCallback({
         new: {
           discussion_active: true,
@@ -2583,9 +2481,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let roomUpdateCallback: any;
+      let roomUpdateCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'rooms') {
           roomUpdateCallback = callback;
         }
@@ -2597,9 +2495,8 @@ describe('SupabaseService', () => {
         subscribe: mockSubscribe
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         revealed: false
       }));
@@ -2607,8 +2504,7 @@ describe('SupabaseService', () => {
       const initialState = service.state();
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
       roomUpdateCallback({ new: { some_other_field: 'value' } });
 
       // Assert - state should not change
@@ -2619,9 +2515,9 @@ describe('SupabaseService', () => {
       // Arrange
       const mockOn = vi.fn().mockReturnThis();
       const mockSubscribe = vi.fn();
-      let roomUpdateCallback: any;
+      let roomUpdateCallback: SubscriptionCallback | undefined;
 
-      mockOn.mockImplementation((event: string, config: any, callback: any) => {
+      mockOn.mockImplementation((event: string, config: SubscriptionConfig, callback: SubscriptionCallback) => {
         if (config.table === 'rooms') {
           roomUpdateCallback = callback;
         }
@@ -2636,8 +2532,7 @@ describe('SupabaseService', () => {
       const initialRevealed = service.state().revealed;
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
       roomUpdateCallback({});
 
       // Assert - state should not change
@@ -2655,8 +2550,7 @@ describe('SupabaseService', () => {
       });
 
       // Act
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (service as any).subscribeToRoom('TEST123');
+      (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
 
       // Assert
       expect(mockSupabase.channel).toHaveBeenCalledWith('room:TEST123');
@@ -2668,9 +2562,8 @@ describe('SupabaseService', () => {
   describe('Cleanup Interval Logic', () => {
     it('should remove participant with undefined lastSeen', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice' } // No lastSeen
@@ -2685,7 +2578,7 @@ describe('SupabaseService', () => {
       Object.keys(participants).forEach(userId => {
         const participant = participants[userId];
         if (!participant || !participant.lastSeen || now - participant.lastSeen > timeoutThreshold) {
-          state.update((s: any) => {
+          state.update((s: RoomState) => {
             const newParticipants = { ...s.participants };
             delete newParticipants[userId];
             return { ...s, participants: newParticipants };
@@ -2699,11 +2592,11 @@ describe('SupabaseService', () => {
 
     it('should remove participant with null participant object', () => {
       // Arrange
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           user1: null as any
         }
       }));
@@ -2716,7 +2609,7 @@ describe('SupabaseService', () => {
       Object.keys(participants).forEach(userId => {
         const participant = participants[userId];
         if (!participant || !participant.lastSeen || now - participant.lastSeen > timeoutThreshold) {
-          state.update((s: any) => {
+          state.update((s: RoomState) => {
             const newParticipants = { ...s.participants };
             delete newParticipants[userId];
             return { ...s, participants: newParticipants };
@@ -2731,9 +2624,8 @@ describe('SupabaseService', () => {
     it('should keep participant with recent lastSeen', () => {
       // Arrange
       const recentTime = Date.now() - 1000; // 1 second ago
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const state = (service as any).roomState;
-      state.update((s: any) => ({
+      const state = (service as SupabaseServicePrivate).roomState;
+      state.update((s: RoomState) => ({
         ...s,
         participants: {
           user1: { id: 'user1', name: 'Alice', lastSeen: recentTime }
@@ -2748,7 +2640,7 @@ describe('SupabaseService', () => {
       Object.keys(participants).forEach(userId => {
         const participant = participants[userId];
         if (!participant || !participant.lastSeen || now - participant.lastSeen > timeoutThreshold) {
-          state.update((s: any) => {
+          state.update((s: RoomState) => {
             const newParticipants = { ...s.participants };
             delete newParticipants[userId];
             return { ...s, participants: newParticipants };

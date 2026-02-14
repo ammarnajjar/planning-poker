@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { signal, computed, linkedSignal, effect } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { SupabaseService, Participant } from '../../services/supabase.service';
+import { describe, it, expect } from 'vitest';
+import { signal, computed, linkedSignal } from '@angular/core';
+import { Participant } from '../../services/supabase.service';
 
 /**
  * RoomComponent Comprehensive Test Suite

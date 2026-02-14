@@ -1,7 +1,6 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import { Subject } from 'rxjs';
 
 export interface Participant {
   id: string;
@@ -26,6 +25,11 @@ export interface RoomState {
   providedIn: 'root'
 })
 export class SupabaseService {
+  // Constants
+  private readonly HEARTBEAT_INTERVAL_MS = 2000;
+  private readonly CLEANUP_INTERVAL_MS = 3000;
+  private readonly PARTICIPANT_TIMEOUT_MS = 5000;
+
   private supabase: SupabaseClient;
   private roomState: WritableSignal<RoomState> = signal<RoomState>({
     participants: {},
@@ -53,9 +57,9 @@ export class SupabaseService {
   private heartbeatInterval?: ReturnType<typeof setInterval>;
   private cleanupInterval?: ReturnType<typeof setInterval>;
 
-  // Subject for when current user is removed
-  private userRemovedSubject = new Subject<void>();
-  public readonly onUserRemoved$ = this.userRemovedSubject.asObservable();
+  // Signal for when current user is removed (Angular 21 zoneless compatible)
+  private userRemovedSignal = signal(false);
+  public readonly userRemoved = this.userRemovedSignal.asReadonly();
 
   constructor() {
     // Initialize Supabase client without auth persistence
@@ -462,8 +466,8 @@ export class SupabaseService {
 
       // Check if the removed user is the current user
       if (userId === this.currentUserId) {
-        // Emit event that current user was removed
-        this.userRemovedSubject.next();
+        // Signal that current user was removed
+        this.userRemovedSignal.set(true);
       }
 
       this.roomState.update(state => {
@@ -551,16 +555,17 @@ export class SupabaseService {
     };
 
     sendHeartbeat(); // Send immediately
-    this.heartbeatInterval = setInterval(sendHeartbeat, 2000);
+    this.heartbeatInterval = setInterval(sendHeartbeat, this.HEARTBEAT_INTERVAL_MS);
 
-    // Clean up stale participants every 3 seconds
+    // Clean up stale participants
     this.cleanupInterval = setInterval(() => {
       const now = Date.now();
       const participants = this.roomState().participants;
 
       Object.keys(participants).forEach(userId => {
         const participant = participants[userId];
-        if (!participant || !participant.lastSeen || now - participant.lastSeen > 10000) {
+        const timeoutThreshold = this.PARTICIPANT_TIMEOUT_MS * 2; // 2x heartbeat interval
+        if (!participant || !participant.lastSeen || now - participant.lastSeen > timeoutThreshold) {
           // Remove from local state
           this.roomState.update(state => {
             const newParticipants = { ...state.participants };
@@ -569,7 +574,7 @@ export class SupabaseService {
           });
         }
       });
-    }, 3000);
+    }, this.CLEANUP_INTERVAL_MS);
   }
 
   /**

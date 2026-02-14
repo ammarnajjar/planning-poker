@@ -1,6 +1,5 @@
 import { CommonModule } from "@angular/common";
 import { Component, computed, effect, linkedSignal, OnDestroy, OnInit } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatCheckboxModule } from "@angular/material/checkbox";
@@ -69,9 +68,6 @@ export class RoomComponent implements OnInit, OnDestroy {
   private touchStartX = 0;
   private touchEndX = 0;
 
-  // Convert user removed observable to signal
-  private userRemoved = toSignal(this.supabaseService.onUserRemoved$);
-
   // Computed values
   participants = computed(() => {
     return Object.values(this.roomState().participants);
@@ -89,9 +85,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   });
 
   votedCount = computed(() => {
-    return this.participatingUsers().filter((p: Participant) =>
-      p.vote !== undefined && p.vote !== null
-    ).length;
+    return this.participatingUsers().filter(p => p.vote != null).length;
   });
 
   totalCount = computed(() => this.participatingUsers().length);
@@ -99,11 +93,9 @@ export class RoomComponent implements OnInit, OnDestroy {
   averageVote = computed(() => {
     if (!this.roomState().revealed) return null;
 
-    const participants = this.participants();
-    const numericVotes = participants
-      .map((p: Participant) => p.vote)
-      .filter(v => v && v !== "?")
-      .map(v => parseFloat(v!))
+    const numericVotes = this.participatingUsers()
+      .filter(p => p.vote && p.vote !== "?")
+      .map(p => parseFloat(p.vote!))
       .filter(v => !isNaN(v));
 
     if (numericVotes.length === 0) return null;
@@ -179,9 +171,9 @@ export class RoomComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly supabaseService: SupabaseService,
   ) {
-    // Handle user removal with effect instead of subscription
+    // Handle user removal with effect (100% signal-based, no RxJS)
     effect(() => {
-      if (this.userRemoved()) {
+      if (this.supabaseService.userRemoved()) {
         // User was removed by admin, redirect to home silently
         this.router.navigate(["/"]);
       }
@@ -355,7 +347,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    */
   async shareRoom(): Promise<void> {
     const roomId = this.roomState().roomId;
-    const baseHref = document.querySelector('base')?.getAttribute('href') || '/';
+    const baseHref = document.querySelector('base')?.getAttribute('href') ?? '/';
     const origin = window.location.origin;
     const roomUrl = `${origin}${baseHref}room/${roomId}`;
     try {

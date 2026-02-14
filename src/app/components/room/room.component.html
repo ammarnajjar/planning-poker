@@ -145,6 +145,24 @@
             }
           </div>
         </div>
+
+        <!-- Revealed cards on table -->
+        @if (roomState().revealed) {
+          <div class="cards-on-table">
+            @for (participant of participants(); track participant.id; let i = $index) {
+              @if (participant.vote) {
+                <div class="table-card"
+                     [style.--card-index]="i"
+                     [style.--total-cards]="participants().length">
+                  <div class="table-card-inner">
+                    <div class="table-card-value">{{ participant.vote }}</div>
+                    <div class="table-card-name">{{ participant.name }}</div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
       </div>
 
       <!-- Participants positioned around table -->

@@ -368,6 +368,24 @@
     width: 66%;
     height: 42%;
   }
+
+  // Discussion mode: dim the table background to emphasize highlighted participants
+  &.discussion-mode-active {
+    &::before {
+      background: rgba(0, 60, 0, 0.4); // Darker semi-transparent overlay
+      transition: background 0.5s ease;
+    }
+
+    &::after {
+      opacity: 0.05; // Dim the dashed border
+      transition: opacity 0.5s ease;
+    }
+
+    .table-decorations {
+      opacity: 0.05;
+      transition: opacity 0.5s ease;
+    }
+  }
 }
 
 // Table decorations - card suits

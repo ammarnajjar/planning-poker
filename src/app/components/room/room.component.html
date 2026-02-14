@@ -119,7 +119,7 @@
     <!-- Tablet/Desktop: Poker Table Layout -->
     <div class="poker-table-container">
       <!-- Poker Table -->
-      <div class="poker-table">
+      <div class="poker-table" [class.discussion-mode-active]="roomState().discussionActive">
         <!-- Decorative card suits -->
         <div class="table-decorations">
           <div class="suit-decoration suit-top">♠</div>

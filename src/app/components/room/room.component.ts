@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, OnDestroy, OnInit } from "@angular/core";
+import { Component, computed, linkedSignal, OnDestroy, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatCheckboxModule } from "@angular/material/checkbox";
@@ -49,8 +49,16 @@ export class RoomComponent implements OnInit, OnDestroy {
   roomState = this.supabaseService.state;
   currentUserId = "";
 
-  // Tinder-style card navigation
-  currentCardIndex = 5; // Start at "5" (index 4 in cardValues)
+  // Tinder-style card navigation using Angular 21 linkedSignal
+  // Automatically syncs with myVote but can be manually overridden
+  currentCardIndex = linkedSignal<number>(() => {
+    const vote = this.myVote();
+    if (vote) {
+      const index = this.cardValues.indexOf(vote);
+      return index !== -1 ? index : 5; // Default to "5"
+    }
+    return 5; // Default to "5" (index in cardValues)
+  });
 
   // Touch swipe tracking
   private touchStartX = 0;
@@ -107,17 +115,6 @@ export class RoomComponent implements OnInit, OnDestroy {
     const participant = this.roomState().participants[this.currentUserId];
     return participant?.vote;
   });
-
-  // Sync carousel index with selected vote
-  private syncCarouselWithVote(): void {
-    const vote = this.myVote();
-    if (vote) {
-      const index = this.cardValues.indexOf(vote);
-      if (index !== -1) {
-        this.currentCardIndex = index;
-      }
-    }
-  }
 
   isAdmin = computed(() => {
     const adminId = this.roomState().adminUserId;
@@ -227,9 +224,6 @@ export class RoomComponent implements OnInit, OnDestroy {
     }
     this.currentUserId = this.supabaseService.getCurrentUserId();
 
-    // Sync carousel with current vote
-    this.syncCarouselWithVote();
-
     // Subscribe to user removal events
     this.supabaseService.onUserRemoved$.subscribe(() => {
       // User was removed by admin, redirect to home silently
@@ -252,7 +246,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     // Update carousel to show the selected card
     const index = this.cardValues.indexOf(value);
     if (index !== -1) {
-      this.currentCardIndex = index;
+      this.currentCardIndex.set(index);
     }
   }
 
@@ -416,8 +410,8 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Navigate to previous card
    */
   previousCard(): void {
-    if (this.currentCardIndex > 0) {
-      this.currentCardIndex--;
+    if (this.currentCardIndex() > 0) {
+      this.currentCardIndex.set(this.currentCardIndex() - 1);
     }
   }
 
@@ -425,8 +419,8 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Navigate to next card
    */
   nextCard(): void {
-    if (this.currentCardIndex < this.cardValues.length - 1) {
-      this.currentCardIndex++;
+    if (this.currentCardIndex() < this.cardValues.length - 1) {
+      this.currentCardIndex.set(this.currentCardIndex() + 1);
     }
   }
 
@@ -434,7 +428,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Go to specific card index
    */
   goToCard(index: number): void {
-    this.currentCardIndex = index;
+    this.currentCardIndex.set(index);
   }
 
   /**

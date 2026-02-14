@@ -628,12 +628,13 @@
 
   // Discussion mode: highlight min voter (low estimate)
   &.discussion-min {
-    animation: pulseMin 2s ease-in-out infinite;
     z-index: 10;
 
     .card-flip {
       box-shadow: 0 0 30px rgba(33, 150, 243, 0.8);
       border-radius: 50%;
+      transform: scale(1.15);
+      animation: pulseMinCard 2s ease-in-out infinite;
     }
 
     .card-back {
@@ -661,12 +662,13 @@
 
   // Discussion mode: highlight max voter (high estimate)
   &.discussion-max {
-    animation: pulseMax 2s ease-in-out infinite;
     z-index: 10;
 
     .card-flip {
       box-shadow: 0 0 30px rgba(255, 87, 34, 0.8);
       border-radius: 50%;
+      transform: scale(1.15);
+      animation: pulseMaxCard 2s ease-in-out infinite;
     }
 
     .card-back {
@@ -693,27 +695,27 @@
   }
 }
 
-// Pulse animation for min voter (blue)
-@keyframes pulseMin {
+// Pulse animation for min voter card (blue)
+@keyframes pulseMinCard {
   0%, 100% {
-    transform: scale(1);
+    transform: scale(1.15);
     filter: brightness(1);
   }
   50% {
-    transform: scale(1.08);
-    filter: brightness(1.15);
+    transform: scale(1.18);
+    filter: brightness(1.1);
   }
 }
 
-// Pulse animation for max voter (orange/red)
-@keyframes pulseMax {
+// Pulse animation for max voter card (orange/red)
+@keyframes pulseMaxCard {
   0%, 100% {
-    transform: scale(1);
+    transform: scale(1.15);
     filter: brightness(1);
   }
   50% {
-    transform: scale(1.08);
-    filter: brightness(1.15);
+    transform: scale(1.18);
+    filter: brightness(1.1);
   }
 }
 

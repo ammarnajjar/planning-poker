@@ -256,6 +256,12 @@ export class RoomComponent implements OnInit, OnDestroy {
    */
   toggleReveal(): void {
     if (!this.isAdmin()) return;
+
+    // If hiding votes and discussion mode is active, stop discussion mode
+    if (this.roomState().revealed && this.roomState().discussionActive) {
+      this.supabaseService.toggleDiscussion(null, null);
+    }
+
     this.supabaseService.toggleReveal();
   }
 

@@ -8,7 +8,7 @@
   "orientation": "portrait-primary",
   "scope": "./",
   "start_url": "./",
-  "categories": ["productivity", "utilities"]
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "icons/icon-72x72.png",

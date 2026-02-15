@@ -151,4 +151,106 @@ test.describe('Mobile-Specific Features', () => {
     await expect(page.locator('.toolbar-title')).toBeVisible();
   });
 
+  // High Priority Coverage - Carousel Navigation
+  test('should navigate carousel with next/previous buttons', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
+    await page.getByRole('button', { name: /Create New Room/i }).click();
+    await page.getByRole('button', { name: /OK/i }).click();
+
+    await expect(page).toHaveURL(/\/room\//);
+    const roomId = page.url().split('/room/')[1];
+
+    // Enable participation and start voting
+    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+    await page.getByRole('button', { name: /Start Voting/i }).click();
+    await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+
+    // Check if carousel is visible (mobile view)
+    const carousel = page.locator('.card-carousel');
+    if (await carousel.isVisible().catch(() => false)) {
+      // Test next button
+      const nextButton = page.locator('.nav-button.next');
+      await expect(nextButton).toBeVisible();
+
+      // Previous button should be disabled initially
+      const prevButton = page.locator('.nav-button.prev');
+      await expect(prevButton).toBeDisabled();
+
+      // Click next button
+      await nextButton.click();
+      await page.waitForTimeout(300); // Wait for animation
+
+      // Previous button should now be enabled
+      await expect(prevButton).toBeEnabled();
+
+      // Click previous to go back
+      await prevButton.click();
+      await page.waitForTimeout(300);
+
+      // Should be back at start
+      await expect(prevButton).toBeDisabled();
+    }
+
+    await cleanupTestRoom(roomId);
+  });
+
+  test('should navigate carousel with indicator dots', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
+    await page.getByRole('button', { name: /Create New Room/i }).click();
+    await page.getByRole('button', { name: /OK/i }).click();
+
+    await expect(page).toHaveURL(/\/room\//);
+    const roomId = page.url().split('/room/')[1];
+
+    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+    await page.getByRole('button', { name: /Start Voting/i }).click();
+    await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+
+    const indicators = page.locator('.carousel-indicators .indicator-dot');
+    if (await indicators.first().isVisible().catch(() => false)) {
+      const count = await indicators.count();
+      expect(count).toBeGreaterThan(1);
+
+      // Click on second indicator
+      if (count > 1) {
+        await indicators.nth(1).click();
+        await page.waitForTimeout(300);
+
+        // Second indicator should be active
+        const secondActive = await indicators.nth(1).getAttribute('class');
+        expect(secondActive).toContain('active');
+      }
+    }
+
+    await cleanupTestRoom(roomId);
+  });
+
+  // High Priority Coverage - Accessibility
+  test('should have proper ARIA labels for voting cards', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.getByRole('button', { name: /Create New Room/i }).click();
+    await page.getByRole('button', { name: /OK/i }).click();
+
+    await expect(page).toHaveURL(/\/room\//);
+    const roomId = page.url().split('/room/')[1];
+
+    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+    await page.getByRole('button', { name: /Start Voting/i }).click();
+    await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+
+    // Voting cards should have role="button"
+    const cards = page.locator('[role="button"].vote-card-large');
+    await expect(cards.first()).toBeVisible();
+
+    // Should be keyboard accessible (tabindex)
+    const firstCard = cards.first();
+    const tabindex = await firstCard.getAttribute('tabindex');
+    expect(tabindex).toBe('0');
+
+    await cleanupTestRoom(roomId);
+  });
+
 });

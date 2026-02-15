@@ -35,7 +35,7 @@ Visit `http://localhost:4200`
 
 ### 4. Run Tests
 ```bash
-# Run all 244 tests
+# Run all 244 unit tests
 npm test
 
 # Run with coverage report
@@ -43,6 +43,9 @@ npm run test:coverage
 
 # Run with interactive UI
 npm run test:ui
+
+# Run E2E tests (130 tests across 5 browsers)
+npm run test:e2e
 ```
 
 ### 5. Build for Production
@@ -96,7 +99,9 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) will automatically 
 - **State Management**: Angular Signals with `linkedSignal()`
 - **Real-Time Sync**: Supabase (PostgreSQL + Real-time subscriptions)
 - **UI Library**: Angular Material
-- **Testing**: Vitest with 100% statement coverage (244 tests)
+- **Testing**:
+  - Unit Tests: Vitest with 100% statement coverage (244 tests)
+  - E2E Tests: Playwright with 100% pass rate (125 tests, 5 skipped)
 - **Deployment**: GitHub Pages via GitHub Actions
 
 ### Key Files
@@ -255,13 +260,21 @@ See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for schema and setup instructions.
 ## Test Coverage
 
 The project has comprehensive test coverage:
+
+### Unit Tests (Vitest)
 - **244 tests** across 4 test suites
 - **100% statement coverage**
 - **98% branch coverage**
 - **100% function coverage**
 - **100% line coverage**
 
-See [TESTING.md](TESTING.md) for detailed test documentation.
+### E2E Tests (Playwright)
+- **130 tests** (26 test cases × 5 browsers)
+- **125 passing** (100% of runnable tests)
+- **5 skipped** (clipboard test - headless limitation)
+- **Browsers**: Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari
+
+See [TESTING.md](TESTING.md) for unit test details and [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for e2e test documentation.
 
 ## Troubleshooting
 

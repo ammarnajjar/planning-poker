@@ -738,11 +738,7 @@ test.describe('Multi-User Real-Time Sync', () => {
     }
   });
 
-  test.skip('should remove participant when admin clicks remove button', async ({ browser }) => {
-    // NOTE: This test requires DELETE events to be enabled in Supabase real-time settings
-    // To enable: Go to Supabase Dashboard > Database > Replication > participants table
-    // Enable "Delete" events in addition to existing "Insert" and "Update" events
-
+  test('should remove participant when admin clicks remove button', async ({ browser }) => {
     const context1 = await browser.newContext();
     const context2 = await browser.newContext();
 
@@ -769,24 +765,35 @@ test.describe('Multi-User Real-Time Sync', () => {
       await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
 
       // Admin hovers over user's participant card and clicks remove button
-      const participantCard = adminPage.locator('.participant-card').filter({ hasNotText: '(You)' }).first();
+      // Target the desktop/tablet layout around the poker table (visible cards only)
+      const participantCard = adminPage.locator('.participants-around-table .participant-card').filter({ hasNotText: '(You)' }).first();
+      await expect(participantCard).toBeVisible({ timeout: 10000 });
+
+      // Hover to make button visible (CSS shows button on hover)
       await participantCard.hover();
+
+      // Wait for button to be visible after hover
       const removeButton = participantCard.locator('.remove-participant-btn');
-      await removeButton.click({ force: true });
+      await expect(removeButton).toBeVisible({ timeout: 10000 });
 
-      // User should be redirected to home page (via DELETE real-time event)
-      await expect(userPage).toHaveURL('/', { timeout: 20000 });
+      // Click the remove button
+      await removeButton.click();
 
-      // Admin should see participant count decrease to 1
+      // Wait for real-time events to propagate
+      await adminPage.waitForTimeout(2000);
+
+      // Admin should see participant count decrease to 1 (via DELETE real-time event)
       await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
+
+      // User should also be redirected to home page (via userRemoved signal)
+      await expect(userPage).toHaveURL('/', { timeout: 10000 });
     } finally {
       await context1.close();
       await context2.close();
     }
   });
 
-  test.skip('should sync participant removal across all users', async ({ browser }) => {
-    // NOTE: This test requires DELETE events to be enabled in Supabase real-time settings
+  test('should sync participant removal across all users', async ({ browser }) => {
     const context1 = await browser.newContext();
     const context2 = await browser.newContext();
     const context3 = await browser.newContext();
@@ -823,21 +830,27 @@ test.describe('Multi-User Real-Time Sync', () => {
       await expect(user1Page.locator('.section-title')).toContainText('Participants (3)', { timeout: 10000 });
       await expect(user2Page.locator('.section-title')).toContainText('Participants (3)', { timeout: 10000 });
 
-      // Admin removes User1
-      const removeButtons = adminPage.locator('.remove-participant-btn');
-      await expect(removeButtons.first()).toBeVisible({ timeout: 10000 });
-      await removeButtons.first().click();
+      // Admin removes User1 - target desktop/tablet layout cards
+      const user1Card = adminPage.locator('.participants-around-table .participant-card').filter({ hasText: 'User1' }).first();
+      await expect(user1Card).toBeVisible({ timeout: 10000 });
+      await user1Card.hover();
+
+      const removeButton = user1Card.locator('.remove-participant-btn');
+      await expect(removeButton).toBeVisible({ timeout: 10000 });
+      await removeButton.click();
+
+      // Wait for real-time events to propagate
+      await adminPage.waitForTimeout(2000);
 
       // User1 should be redirected to home
-      await expect(user1Page).toHaveURL('/', { timeout: 15000 });
+      await expect(user1Page).toHaveURL('/', { timeout: 10000 });
 
       // Admin and User2 should see participant count decrease to 2
       await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
       await expect(user2Page.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
 
       // User2 should no longer see User1 in the participants list
-      const user2ParticipantNames = user2Page.locator('.participant-name');
-      await expect(user2ParticipantNames).not.toContainText('User1', { timeout: 10000 });
+      await expect(user2Page.locator('.participant-card').filter({ hasText: 'User1' })).toHaveCount(0, { timeout: 10000 });
     } finally {
       await context1.close();
       await context2.close();

@@ -33,6 +33,9 @@ test.describe('Room Sharing', () => {
     await expect(page).toHaveURL(/\/room\//);
     const roomId = captureRoomId(page);
 
+    // Wait for room to be fully loaded
+    await expect(page.locator('.room-id')).toContainText(roomId);
+
     const shareButton = page.locator('button[mattooltip="Share Room URL"]');
     await shareButton.click();
 
@@ -45,7 +48,7 @@ test.describe('Room Sharing', () => {
     expect(clipboardText).toContain('http');
   });
 
-  test('should allow second user to join using shared URL', async ({ browser }) => {
+  test('should redirect to home when visiting shared URL without username', async ({ browser }) => {
     const context1 = await browser.newContext();
     const context2 = await browser.newContext();
 
@@ -61,17 +64,22 @@ test.describe('Room Sharing', () => {
 
       await expect(adminPage).toHaveURL(/\/room\//);
       const roomUrl = adminPage.url();
-      captureRoomId(adminPage);
+      const roomId = captureRoomId(adminPage);
 
       // Wait for admin to be in room
       await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
 
-      // User navigates to the shared URL directly
+      // User navigates to the shared URL directly (without username in state)
       await userPage.goto(roomUrl);
 
-      // Should show name entry dialog or join form
+      // App should redirect to home because no username is set
+      await expect(userPage).toHaveURL('/', { timeout: 5000 });
+
+      // User can then enter their name and join the room
       await userPage.locator('input[placeholder="Enter your name"]').fill('User 2');
-      await userPage.getByRole('button', { name: /^Join$/i }).click();
+      await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
+      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.getByRole('button', { name: /^Join Room$/i }).click();
 
       // Both should see 2 participants
       await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });

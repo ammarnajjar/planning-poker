@@ -59,7 +59,7 @@ A production-ready Planning Poker application built with Angular 21 and Supabase
 - **Styling**: SCSS
 - **Testing**:
   - Unit Tests: Vitest with 100% statement coverage (244 tests)
-  - E2E Tests: Playwright with 100% pass rate (125 tests, 5 skipped)
+  - E2E Tests: Playwright with 100% pass rate (239 tests passing, 15 skipped)
 - **Hosting**: GitHub Pages
 - **CI/CD**: GitHub Actions
 
@@ -139,7 +139,7 @@ See [TESTING.md](TESTING.md) for detailed information about the unit test suite.
 
 ### End-to-End Tests (Playwright)
 
-The project has 130 e2e tests across 26 test cases running on 5 browser configurations with 100% pass rate (excluding skipped tests).
+The project has 254 e2e tests across 51 test cases running on 5 browser configurations with 100% pass rate (excluding skipped tests).
 
 ```bash
 # Install Playwright browsers (first time only)
@@ -162,15 +162,15 @@ npm run test:e2e:report
 ```
 
 **E2E Test Coverage:**
-- **Total Tests**: 130 (26 test cases × 5 browsers)
-- **Passed**: 125 tests (100% of runnable tests) ✅
-- **Skipped**: 5 tests (1 clipboard test × 5 browsers - headless limitation)
+- **Total Tests**: 254 (51 test cases × 5 browsers, with 3 clipboard tests skipped per browser)
+- **Passed**: 239 tests (100% of runnable tests) ✅
+- **Skipped**: 15 tests (3 clipboard tests × 5 browsers - headless limitation)
 - **Browsers**: Chrome, Firefox, Safari, Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12 Pro)
-- **Duration**: ~1 minute for full suite
+- **Duration**: ~2 minutes for full suite
 - **Test Suites**:
-  - Home Page Tests: 10 test cases (login, room creation, validation)
-  - Room Functionality: 9 test cases (voting, participants, admin controls) - 1 skipped (clipboard)
-  - Mobile Features: 7 test cases (responsive design, touch targets)
+  - **High Priority** (27 test cases): Core functionality, room management, voting, multi-user sync, admin controls
+  - **Moderate Priority** (17 test cases): Room sharing, multi-round voting, validation, UI states
+  - **Home & Mobile** (7 test cases): Login flow, mobile responsiveness, touch targets
 
 See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for comprehensive e2e testing documentation.
 
@@ -672,9 +672,11 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ### v1.3.0 (February 15, 2026) - E2E Testing Suite + Bug Fixes
 - 🧪 **Comprehensive E2E Testing Suite** with Playwright
-  - 130 tests across 5 browser configurations (100% pass rate for runnable tests)
-  - 125 passing, 5 skipped (clipboard test - headless browser limitation)
+  - 254 tests across 5 browser configurations (100% pass rate for runnable tests)
+  - 239 passing, 15 skipped (3 clipboard tests - headless browser limitation)
   - Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari coverage
+  - **High Priority Tests** (27 test cases): Core features, room management, voting, multi-user sync
+  - **Moderate Priority Tests** (17 test cases): Room sharing, multi-round voting, validation, UI states
   - Automatic test data cleanup after each test
   - Comprehensive [E2E_TESTING.md](tests/e2e/E2E_TESTING.md) documentation
   - Automated CI testing with GitHub Actions

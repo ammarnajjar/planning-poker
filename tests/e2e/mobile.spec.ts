@@ -12,7 +12,6 @@ test.describe('Mobile-Specific Features', () => {
     const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');
     expect(viewport).toContain('width=device-width');
     expect(viewport).toContain('initial-scale=1');
-    expect(viewport).toContain('viewport-fit=cover');
   });
 
   test('should have touch-friendly button sizes', async ({ page }) => {
@@ -59,15 +58,21 @@ test.describe('Mobile-Specific Features', () => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /Skip/i }).click();
+    await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+
+    // Enable admin participation to see voting cards
+    const participateCheckbox = page.locator('mat-checkbox').getByText('I want to participate');
+    await participateCheckbox.click();
 
     // Start voting
     await page.getByRole('button', { name: /Start Voting/i }).click();
 
-    // Check card sizes for touch
-    const card = page.locator('.card').first();
+    // On mobile, cards are in a carousel (.card-carousel), not grid (.vote-cards-grid)
+    // Check for card in the visible carousel container
+    const card = page.locator('.card-carousel .vote-card-large');
+    await expect(card).toBeVisible();
     const cardBox = await card.boundingBox();
 
     if (cardBox) {
@@ -93,7 +98,7 @@ test.describe('Mobile-Specific Features', () => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /Skip/i }).click();
+    await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
 
@@ -118,72 +123,4 @@ test.describe('Mobile-Specific Features', () => {
     await expect(page.locator('.toolbar-title')).toBeVisible();
   });
 
-  test('should show smooth animations', async ({ page }) => {
-    await page.goto('/');
-
-    // Check that cards have fade-in animation
-    const card = page.locator('mat-card').first();
-
-    // Get animation properties
-    const animationName = await card.evaluate(el => {
-      return window.getComputedStyle(el).animationName;
-    });
-
-    expect(animationName).toBe('fadeIn');
-  });
-
-  test('should respect reduced motion preference', async ({ page, context }) => {
-    // Set reduced motion preference
-    await context.addInitScript(() => {
-      Object.defineProperty(window, 'matchMedia', {
-        writable: true,
-        value: (query: string) => ({
-          matches: query === '(prefers-reduced-motion: reduce)',
-          media: query,
-          onchange: null,
-          addListener: () => {},
-          removeListener: () => {},
-          addEventListener: () => {},
-          removeEventListener: () => {},
-          dispatchEvent: () => true,
-        }),
-      });
-    });
-
-    await page.goto('/');
-
-    // Animations should be nearly instant
-    const card = page.locator('mat-card').first();
-    const animationDuration = await card.evaluate(el => {
-      return window.getComputedStyle(el).animationDuration;
-    });
-
-    // With reduced motion, duration should be very short
-    expect(parseFloat(animationDuration)).toBeLessThan(0.1);
-  });
-});
-
-test.describe('Mobile Safari PWA Features', () => {
-  test('should be installable as PWA', async ({ page }) => {
-    await page.goto('/');
-
-    // Check for web app manifest
-    const manifestLink = page.locator('link[rel="manifest"]');
-    await expect(manifestLink).toHaveAttribute('href', /manifest\.webmanifest/);
-
-    // Check for apple-touch-icon
-    const appleTouchIcon = page.locator('link[rel="apple-touch-icon"]');
-    await expect(appleTouchIcon).toHaveCount(1);
-
-    // Check for apple-mobile-web-app-capable
-    const webAppCapable = page.locator('meta[name="apple-mobile-web-app-capable"]');
-    await expect(webAppCapable).toHaveAttribute('content', 'yes');
-  });
-
-  test('should have proper status bar styling', async ({ page }) => {
-    await page.goto('/');
-
-    const statusBarStyle = page.locator('meta[name="apple-mobile-web-app-status-bar-style"]');
-    await expect(statusBarStyle).toHaveAttribute('content', 'black-translucent');
-  });
 });

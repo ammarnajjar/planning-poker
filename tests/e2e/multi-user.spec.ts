@@ -2,6 +2,11 @@ import { test, expect, Browser } from '@playwright/test';
 import { cleanupTestRoom } from './helpers/cleanup';
 
 test.describe('Multi-User Real-Time Sync', () => {
+  // Configure multi-user tests to run serially to avoid resource contention
+  // These tests create real-time Supabase connections that can interfere when run in parallel
+  // This ensures stable test execution while allowing other test files to run in parallel
+  test.describe.configure({ mode: 'serial' });
+
   let createdRoomIds: string[] = [];
 
   // Helper to capture room ID from URL

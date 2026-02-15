@@ -176,6 +176,17 @@ jobs:
           key: node-modules-${{ runner.os }}-${{ needs.setup.outputs.cache-key }}-${{ github.run_id }}
           fail-on-cache-miss: true
 
+      - name: Cache Angular/Vite
+        uses: actions/cache@v4
+        with:
+          path: |
+            .angular/cache
+            node_modules/.vite
+          key: angular-vite-e2e-${{ runner.os }}-${{ needs.setup.outputs.cache-key }}-${{ hashFiles('src/**/*.[tj]s', 'src/**/*.html', 'src/**/*.scss') }}
+          restore-keys: |
+            angular-vite-e2e-${{ runner.os }}-${{ needs.setup.outputs.cache-key }}-
+            angular-vite-e2e-${{ runner.os }}-
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 

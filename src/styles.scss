@@ -9,7 +9,14 @@
 html, body {
   height: 100%;
   font-family: Roboto, "Helvetica Neue", sans-serif;
-  overflow: hidden;
+}
+
+// Allow scrolling on mobile, hide overflow on desktop if needed
+@media (max-width: 600px) {
+  html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }
 
 body {

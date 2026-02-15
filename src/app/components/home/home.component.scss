@@ -12,19 +12,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 56px);
+  justify-content: flex-start;
+  min-height: 100vh;
   padding: 16px;
+  padding-top: calc(56px + 16px); // toolbar height + padding
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   position: relative;
-  overflow-y: auto;
 
   @media (min-width: 600px) {
+    justify-content: center;
     min-height: calc(100vh - 64px);
     padding: 24px;
+    padding-top: 24px;
   }
 }
 

@@ -47,5 +47,37 @@ body {
 
   .mat-toolbar {
     padding: 0 8px !important;
+    min-height: 56px !important;
+    height: 56px !important;
+  }
+
+  // Improve Material form field sizing for mobile
+  .mat-mdc-form-field {
+    font-size: 16px !important; // Prevents iOS zoom on focus
+  }
+
+  .mat-mdc-text-field-wrapper {
+    padding-bottom: 0 !important;
+  }
+
+  // Better button sizing for touch
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-stroked-button {
+    min-height: 44px; // iOS recommended touch target
+    font-size: 15px;
+  }
+
+  // Card content padding optimization
+  .mat-mdc-card-content {
+    padding: 16px !important;
+  }
+
+  .mat-mdc-card-header {
+    padding: 16px 16px 0 !important;
+  }
+
+  .mat-mdc-card-actions {
+    padding: 8px 8px 16px !important;
   }
 }

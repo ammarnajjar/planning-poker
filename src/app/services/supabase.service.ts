@@ -527,13 +527,28 @@ export class SupabaseService {
    * Add or update current user in participants
    */
   private async addParticipant(roomId: string, userName: string): Promise<void> {
+    const now = Date.now();
     const participant = {
       room_id: roomId,
       user_id: this.currentUserId,
       name: userName,
-      last_seen: Date.now(),
+      last_seen: now,
       vote: null
     };
+
+    // Update local state immediately so participant appears instantly
+    this.roomState.update(state => ({
+      ...state,
+      participants: {
+        ...state.participants,
+        [this.currentUserId]: {
+          id: this.currentUserId,
+          name: userName,
+          vote: undefined,
+          lastSeen: now
+        }
+      }
+    }));
 
     await this.supabase
       .from('participants')
@@ -583,6 +598,23 @@ export class SupabaseService {
   async vote(value: string): Promise<void> {
     const roomId = this.roomState().roomId;
     if (!roomId) return;
+
+    // Update local state immediately for better UX and test reliability
+    this.roomState.update(state => {
+      const currentParticipant = state.participants[this.currentUserId];
+      if (!currentParticipant) return state;
+
+      return {
+        ...state,
+        participants: {
+          ...state.participants,
+          [this.currentUserId]: {
+            ...currentParticipant,
+            vote: value
+          }
+        }
+      };
+    });
 
     await this.supabase
       .from('participants')

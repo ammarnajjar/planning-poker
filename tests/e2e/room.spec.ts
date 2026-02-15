@@ -70,14 +70,9 @@ test.describe('Room Functionality', () => {
     expect(gridVisible || carouselVisible).toBeTruthy();
   });
 
-  test.skip('should allow selecting a card', async ({ page }) => {
-    // SKIPPED: Potential app bug - vote state doesn't sync from Supabase in test environment
-    // The vote stays at "?" even after 10+ seconds, indicating the Supabase real-time
-    // subscription for vote updates may not be working properly in the test context.
-    // Investigation showed that myVote() computed signal never updates from undefined,
-    // suggesting the roomState().participants data isn't syncing from Supabase.
-    // Fails on: chromium, webkit, Mobile Chrome (passes only on Mobile Safari and firefox)
-    // TODO: Investigate why Supabase real-time subscription doesn't work in certain test browsers
+  test('should allow selecting a card', async ({ page }) => {
+    // Fixed: Now using optimistic updates for vote state
+    // Vote state is updated locally immediately when voting, then synced to Supabase
 
     // Create room and start voting
     await page.goto('/');
@@ -178,11 +173,9 @@ test.describe('Room Functionality', () => {
     await expect(page.locator('mat-card-title')).toContainText('Welcome to Planning Poker');
   });
 
-  test.skip('should show participants list', async ({ page }) => {
-    // SKIPPED: Potential app bug - participant count stays at (0) even after 10+ seconds
-    // The admin user creates a room but never appears in participants list
-    // This may be a race condition or Supabase synchronization issue
-    // TODO: Investigate why participants don't load immediately after room creation
+  test('should show participants list', async ({ page }) => {
+    // Fixed: Now using optimistic updates for participants
+    // Participant is added to local state immediately when joining/creating room
 
     // Create room
     await page.goto('/');
@@ -196,10 +189,10 @@ test.describe('Room Functionality', () => {
     await expect(page.locator('.participants-section')).toBeVisible();
 
     // Wait for participant count to update from (0) to at least (1)
-    await expect(page.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
+    await expect(page.locator('.section-title')).toContainText('Participants (1)');
 
-    // Now verify participant name is visible
-    await expect(page.locator('.participant-name')).toContainText('Test User');
+    // Now verify participant name is visible (use first() because there are mobile and desktop layouts)
+    await expect(page.locator('.participant-name').first()).toContainText('Test User');
   });
 
   test('should be mobile responsive in room', async ({ page, isMobile }) => {

@@ -57,7 +57,9 @@ A production-ready Planning Poker application built with Angular 21 and Supabase
 - **Real-Time Sync**: Supabase (PostgreSQL + Real-time subscriptions)
 - **UI Library**: Angular Material
 - **Styling**: SCSS
-- **Testing**: Vitest with 100% statement coverage (244 tests)
+- **Testing**:
+  - Unit Tests: Vitest with 100% statement coverage (244 tests)
+  - E2E Tests: Playwright with 97.7% pass rate (127/130 tests)
 - **Hosting**: GitHub Pages
 - **CI/CD**: GitHub Actions
 
@@ -107,12 +109,14 @@ The build artifacts will be stored in the `dist/` directory.
 
 ## Testing
 
-The project has comprehensive test coverage with 244 tests across all components and services.
+The project has comprehensive test coverage with both unit tests and end-to-end tests.
 
-### Run Tests
+### Unit Tests (Vitest)
+
+The project has 244 unit tests across all components and services with 100% statement coverage.
 
 ```bash
-# Run all tests
+# Run all unit tests
 npm test
 
 # Run tests with coverage report
@@ -125,18 +129,50 @@ npm run test:ui
 npm test -- --watch
 ```
 
-### Test Coverage
-
+**Unit Test Coverage:**
 - **Statement Coverage**: 100% ✅
 - **Branch Coverage**: 98% ✅
 - **Function Coverage**: 100% ✅
 - **Line Coverage**: 100% ✅
 
-See [TESTING.md](TESTING.md) for detailed information about the test suite, including:
-- Test structure and patterns
-- Mocking strategies for Supabase
-- Angular 21 signal testing techniques
-- Coverage breakdown by component
+See [TESTING.md](TESTING.md) for detailed information about the unit test suite.
+
+### End-to-End Tests (Playwright)
+
+The project has 130 e2e tests across 26 test cases running on 5 browser configurations with 97.7% pass rate.
+
+```bash
+# Install Playwright browsers (first time only)
+npx playwright install
+
+# Run all e2e tests across 5 browsers
+npm run test:e2e
+
+# Run with interactive UI
+npm run test:e2e:ui
+
+# Run in headed mode (see browser)
+npm run test:e2e:headed
+
+# Debug mode (step-by-step)
+npm run test:e2e:debug
+
+# View last test report
+npm run test:e2e:report
+```
+
+**E2E Test Coverage:**
+- **Total Tests**: 130 (26 test cases × 5 browsers)
+- **Passed**: 127 tests (97.7%) ✅
+- **Skipped**: 3 tests (browser compatibility only)
+- **Browsers**: Chrome, Firefox, Safari, Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12 Pro)
+- **Duration**: ~1 minute for full suite
+- **Test Suites**:
+  - Home Page Tests: 10 test cases (login, room creation, validation)
+  - Room Functionality: 9 test cases (voting, participants, admin controls)
+  - Mobile Features: 7 test cases (responsive design, touch targets)
+
+See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for comprehensive e2e testing documentation.
 
 ## How to Use
 
@@ -546,12 +582,32 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
 
+### v1.3.0 (February 15, 2026) - E2E Testing Suite + Bug Fixes
+- 🧪 **Comprehensive E2E Testing Suite** with Playwright
+  - 130 tests across 5 browser configurations (97.7% pass rate)
+  - Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari coverage
+  - Comprehensive [E2E_TESTING.md](tests/e2e/E2E_TESTING.md) documentation
+  - Automated CI testing with GitHub Actions
+- 🐛 **Critical Bug Fix: Participant List Loading**
+  - Fixed participant count staying at (0) after room creation
+  - Implemented optimistic UI updates for instant participant visibility
+  - Participants now appear instantly when joining rooms
+- 🐛 **Critical Bug Fix: Vote Selection Syncing**
+  - Fixed vote staying at "?" after card selection
+  - Implemented optimistic UI updates for immediate vote feedback
+  - Vote selections now update instantly with visual feedback
+- ⚡ **Performance Improvements**
+  - Optimistic UI updates eliminate lag in real-time synchronization
+  - Better UX across all browsers and devices
+
+See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for complete e2e testing details.
+
 ### v1.2.0 (February 14, 2026) - Angular 21 Upgrade
 - ⬆️ **Upgraded to Angular 21** from Angular 19
   - Leveraging latest Angular 21 features: `linkedSignal()` for reactive state
   - Improved zoneless change detection support
   - Enhanced signal-based reactivity
-- 🧪 **Comprehensive Test Suite** with 100% statement coverage
+- 🧪 **Comprehensive Unit Test Suite** with 100% statement coverage
   - 244 tests passing across 4 test suites
   - 100% statement coverage, 98% branch coverage
   - Full coverage of all features including Angular 21 APIs
@@ -565,7 +621,7 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
   - Updated coverage metrics and testing strategies
   - Detailed examples of Angular 21 feature testing
 
-See [TESTING.md](TESTING.md) for complete test coverage details.
+See [TESTING.md](TESTING.md) for complete unit test coverage details.
 
 ### v1.1.0 (February 14, 2026)
 - ✨ Admin participant removal with hover-activated button

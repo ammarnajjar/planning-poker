@@ -20,7 +20,7 @@ test.describe('Room Admin Controls', () => {
     createdRoomIds = [];
   });
 
-  test('should display admin controls for room creator', async ({ page }) => {
+  test('should display admin controls for room creator @smoke', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Admin User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
@@ -33,7 +33,7 @@ test.describe('Room Admin Controls', () => {
     await expect(page.getByRole('button', { name: /Start Voting/i })).toBeVisible();
   });
 
-  test('should toggle admin participation', async ({ page }) => {
+  test('should toggle admin participation @smoke', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Admin');
     await page.getByRole('button', { name: /Create New Room/i }).click();

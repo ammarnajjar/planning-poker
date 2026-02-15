@@ -43,6 +43,9 @@ npm test -- --watch
 # Run all E2E tests across 5 browsers
 npm run test:e2e
 
+# Run smoke tests only (critical path - fast)
+npm run test:e2e:smoke
+
 # Run with interactive UI
 npm run test:e2e:ui
 
@@ -352,14 +355,57 @@ Location: [src/app/components/home/home.component.spec.ts](src/app/components/ho
 - ✅ Show participant vote status indicators
 - ✅ Show admin controls only to admin
 
+### Specialized E2E Test Suites
+
+#### Smoke Tests (@smoke)
+**12 critical path tests** that cover the most important user flows:
+- Home page loads correctly
+- Creating a new room
+- Joining an existing room
+- Starting voting session
+- Submitting votes
+- Multi-user real-time sync
+- Admin controls
+
+Run smoke tests for quick validation:
+```bash
+npm run test:e2e:smoke
+```
+
+#### Accessibility Tests (@a11y)
+**7 tests** using @axe-core/playwright to ensure WCAG compliance:
+- No accessibility violations on key pages
+- Keyboard navigation support
+- ARIA labels for interactive elements
+- Focus visibility
+- Screen reader compatibility
+
+Run accessibility tests:
+```bash
+npm run test:e2e -- --grep @a11y
+```
+
+#### Performance Tests (@performance)
+**6 tests** with performance budgets:
+- Home page load time (< 3000ms)
+- Room navigation (< 1000ms)
+- Interaction time (< 500ms)
+- Web Vitals (FCP < 1.8s, LCP < 2.5s)
+- Memory leak detection
+
+Run performance tests:
+```bash
+npm run test:e2e -- --grep @performance
+```
+
 ### E2E Test Summary
 
-- **Total Test Files:** 16 suites
-- **Total Test Cases:** 51 unique tests
-- **Total Test Runs:** 254 (51 tests × 5 browsers, with 3 clipboard tests × 5 browsers skipped)
+- **Total Test Files:** 18 suites (including accessibility and performance)
+- **Total Test Cases:** 57 unique tests
+- **Total Test Runs:** 270+ (57 tests × 5 browsers, with clipboard tests skipped)
 - **Browser Coverage:** Chromium, Firefox, WebKit, Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12 Pro)
-- **Pass Rate:** 100% (239/239 runnable tests)
-- **Skipped Tests:** 15 (3 clipboard tests × 5 browsers - headless browser limitation)
+- **Pass Rate:** 100%
+- **Smoke Tests:** 12 critical path tests for rapid feedback
 
 See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for comprehensive E2E testing documentation.
 
@@ -426,6 +472,30 @@ See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for comprehensive E2E t
 - Database connection errors
 - Invalid room/PIN errors
 - Edge cases (empty values, null checks)
+
+## Test Data Factories
+
+The E2E tests use centralized test data factories for consistency. Located in [tests/e2e/helpers/factories.ts](tests/e2e/helpers/factories.ts):
+
+```typescript
+// Generate unique test usernames
+const username = createTestUser('TestUser');
+
+// Use centralized selectors
+await page.locator(Selectors.home.nameInput).fill(username);
+
+// Use performance budgets
+expect(loadTime).toBeLessThan(PerformanceBudgets.PAGE_LOAD);
+
+// Use voting card constants
+expect(vote).toBe(VotingCards.VALUES[0]);
+```
+
+**Benefits:**
+- Consistent test data across all tests
+- Centralized selectors for easy maintenance
+- Performance budgets enforced consistently
+- Reduced duplication
 
 ## Test Structure
 

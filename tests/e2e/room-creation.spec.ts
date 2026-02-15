@@ -20,7 +20,7 @@ test.describe('Room Creation and Navigation', () => {
     createdRoomIds = [];
   });
 
-  test('should create room and navigate to room page', async ({ page }) => {
+  test('should create room and navigate to room page @smoke', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
@@ -51,7 +51,7 @@ test.describe('Room Creation and Navigation', () => {
     expect(clipboardText).toBe(roomId);
   });
 
-  test('should leave room and return to home', async ({ page }) => {
+  test('should leave room and return to home @smoke', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();

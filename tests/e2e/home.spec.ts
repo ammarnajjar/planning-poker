@@ -16,7 +16,7 @@ test.describe('Home Page', () => {
     createdRoomIds = [];
   });
 
-  test('should display the home page with title and branding', async ({ page }) => {
+  test('should display the home page with title and branding @smoke', async ({ page }) => {
     // Check title
     await expect(page).toHaveTitle(/Planning Poker/);
 
@@ -41,7 +41,7 @@ test.describe('Home Page', () => {
     await expect(listItems.first()).toContainText('Create a room');
   });
 
-  test('should have name input field', async ({ page }) => {
+  test('should have name input field @smoke', async ({ page }) => {
     const nameInput = page.locator('input[placeholder="Enter your name"]');
     await expect(nameInput).toBeVisible();
     await expect(nameInput).toBeEditable();
@@ -82,7 +82,7 @@ test.describe('Home Page', () => {
     await expect(page.locator('simple-snack-bar')).toContainText('Please enter your name');
   });
 
-  test('should create room with valid name', async ({ page }) => {
+  test('should create room with valid name @smoke', async ({ page }) => {
     // Enter name
     await page.locator('input[placeholder="Enter your name"]').fill('Test User');
 

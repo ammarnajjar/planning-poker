@@ -22,7 +22,7 @@ test.describe('Multi-User Real-Time Sync', () => {
     createdRoomIds = [];
   });
 
-  test('should show both users when they join the same room', async ({ browser }) => {
+  test('should show both users when they join the same room @smoke', async ({ browser }) => {
     const context1 = await browser.newContext();
     const context2 = await browser.newContext();
 
@@ -62,7 +62,7 @@ test.describe('Multi-User Real-Time Sync', () => {
     }
   });
 
-  test('should sync vote count between users in real-time', async ({ browser }) => {
+  test('should sync vote count between users in real-time @smoke', async ({ browser }) => {
     const context1 = await browser.newContext();
     const context2 = await browser.newContext();
 
@@ -169,7 +169,7 @@ test.describe('Multi-User Real-Time Sync', () => {
     }
   });
 
-  test('should sync vote reveal between admin and participants', async ({ browser }) => {
+  test('should sync vote reveal between admin and participants @smoke', async ({ browser }) => {
     const context1 = await browser.newContext();
     const context2 = await browser.newContext();
 

@@ -20,7 +20,7 @@ test.describe('Room Voting', () => {
     createdRoomIds = [];
   });
 
-  test('should show voting cards when voting starts', async ({ page }) => {
+  test('should show voting cards when voting starts @smoke', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Admin User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
@@ -45,7 +45,7 @@ test.describe('Room Voting', () => {
     expect(gridVisible || carouselVisible).toBeTruthy();
   });
 
-  test('should allow selecting a card', async ({ page }) => {
+  test('should allow selecting a card @smoke', async ({ page }) => {
     await page.goto('/');
     await page.locator('input[placeholder="Enter your name"]').fill('Admin User');
     await page.getByRole('button', { name: /Create New Room/i }).click();

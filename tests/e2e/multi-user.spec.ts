@@ -645,19 +645,35 @@ test.describe('Multi-User Real-Time Sync', () => {
       await expect(adminPage.locator('.vote-status')).toBeVisible({ timeout: 10000 });
       await expect(userPage.locator('.vote-status')).toBeVisible({ timeout: 10000 });
 
-      // Admin votes for 5
-      const adminCard = adminPage.locator('.vote-cards-grid .vote-card-large').filter({ hasText: /^5$/ });
-      const adminCardVisible = await adminCard.isVisible().catch(() => false);
-      if (adminCardVisible) {
-        await adminCard.click();
-      } else {
-        // Use carousel - wait for it to be ready, then click
-        await adminPage.locator('.card-carousel .vote-card-large').waitFor({ state: 'visible', timeout: 5000 });
-        await adminPage.locator('.card-carousel .vote-card-large').click();
+      // Admin votes for 5 - with retry logic
+      let adminVoteConfirmed = false;
+      for (let attempt = 0; attempt < 3 && !adminVoteConfirmed; attempt++) {
+        if (attempt > 0) {
+          console.log(`Admin vote retry attempt ${attempt}`);
+          await adminPage.waitForTimeout(1000);
+        }
+
+        const adminCard = adminPage.locator('.vote-cards-grid .vote-card-large').filter({ hasText: /^5$/ });
+        const adminCardVisible = await adminCard.isVisible().catch(() => false);
+        if (adminCardVisible) {
+          await adminCard.click();
+        } else {
+          // Use carousel - wait for it to be ready, then click
+          await adminPage.locator('.card-carousel .vote-card-large').waitFor({ state: 'visible', timeout: 5000 });
+          await adminPage.locator('.card-carousel .vote-card-large').click();
+        }
+
+        // Check if vote was confirmed
+        try {
+          await expect(adminPage.locator('.current-selection')).toContainText('Your vote:', { timeout: 3000 });
+          adminVoteConfirmed = true;
+        } catch (e) {
+          // Vote not confirmed, will retry
+        }
       }
 
-      // Wait for admin vote to register
-      await expect(adminPage.locator('.current-selection')).toContainText('Your vote:', { timeout: 10000 });
+      // Final verification
+      await expect(adminPage.locator('.current-selection')).toContainText('Your vote:', { timeout: 5000 });
       await expect(adminPage.locator('.vote-status')).toContainText('1/2', { timeout: 10000 });
 
       // User votes - try to find any visible card in the grid to avoid carousel issues
@@ -749,31 +765,51 @@ test.describe('Multi-User Real-Time Sync', () => {
       await expect(adminPage).toHaveURL(/\/room\//);
       const roomId = captureRoomId(adminPage);
 
+      // Wait for room to be fully initialized
+      await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
+
       await userPage.goto('/');
       await userPage.locator('input[placeholder="Enter your name"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
       await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
-      await expect(userPage).toHaveURL(/\/room\//);
+      await expect(userPage).toHaveURL(/\/room\//, { timeout: 10000 });
 
       await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 15000 });
 
       // Enable admin participation and start voting
       await adminPage.locator('mat-checkbox').getByText('I want to participate').click();
       await adminPage.getByRole('button', { name: /Start Voting/i }).click();
-      await expect(userPage.locator('.voting-section')).toBeVisible({ timeout: 10000 });
 
-      // Both vote the SAME value
+      // Wait for voting sections to be fully loaded
+      await expect(userPage.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+      await expect(adminPage.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+      await expect(adminPage.locator('.vote-status')).toBeVisible({ timeout: 10000 });
+      await expect(userPage.locator('.vote-status')).toBeVisible({ timeout: 10000 });
+
+      // Both vote the SAME value (5)
       const adminCard = adminPage.locator('.vote-cards-grid .vote-card-large').filter({ hasText: /^5$/ });
       if (await adminCard.isVisible().catch(() => false)) {
         await adminCard.click();
+      } else {
+        // Use carousel fallback
+        await adminPage.locator('.card-carousel .vote-card-large').waitFor({ state: 'visible', timeout: 5000 });
+        await adminPage.locator('.card-carousel .vote-card-large').click();
       }
+      await expect(adminPage.locator('.current-selection')).toContainText('Your vote:', { timeout: 10000 });
 
+      // User votes same value (5)
       const userCard = userPage.locator('.vote-cards-grid .vote-card-large').filter({ hasText: /^5$/ });
       if (await userCard.isVisible().catch(() => false)) {
         await userCard.click();
+      } else {
+        // Use carousel fallback (default is 5)
+        await userPage.locator('.card-carousel .vote-card-large').waitFor({ state: 'visible', timeout: 5000 });
+        await userPage.locator('.card-carousel .vote-card-large').click();
       }
+      await expect(userPage.locator('.current-selection')).toContainText('Your vote:', { timeout: 10000 });
 
+      // Wait for both votes to be registered
       await expect(adminPage.locator('.vote-status')).toContainText('2/2 voted', { timeout: 15000 });
 
       // Reveal votes

@@ -503,10 +503,15 @@ export class SupabaseService {
         // Convert null to undefined for vote to match Participant interface
         let vote = participant.vote === null ? undefined : participant.vote;
 
-        // Preserve existing vote if new update has null vote and existing has a vote
-        // This prevents heartbeat UPDATEs from clearing votes
-        if (existing && existing.vote && !vote && existing.lastSeen < participant.last_seen) {
-          vote = existing.vote;
+        // Preserve existing vote only for race conditions (heartbeat racing with vote UPDATE)
+        // Only preserve votes when voting is active (votingStarted=true, revealed=false)
+        // During reset, votingStarted becomes false, so votes won't be preserved
+        if (existing && existing.vote && !vote && state.votingStarted && !state.revealed) {
+          const timeDiff = participant.last_seen - existing.lastSeen;
+          // Preserve vote if update comes soon after previous update (likely a heartbeat race)
+          if (timeDiff > 0 && timeDiff < 2500) { // Just over one heartbeat interval
+            vote = existing.vote;
+          }
         }
 
         if (existing &&

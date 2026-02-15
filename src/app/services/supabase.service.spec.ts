@@ -448,7 +448,11 @@ describe('SupabaseService', () => {
 
       // Assert - verify database update was called
       expect(mockSupabase.from).toHaveBeenCalledWith('participants');
-      expect(mockUpdate).toHaveBeenCalledWith({ vote: '5' });
+      // Now includes last_seen to prevent stale participant filtering
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+        vote: '5',
+        last_seen: expect.any(Number)
+      }));
     });
 
     it('should not allow voting when voting not started', () => {

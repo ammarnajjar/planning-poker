@@ -454,8 +454,8 @@ export class SupabaseService {
    * Handle participant change events
    */
   private handleParticipantChange(payload: {
-    new: { user_id: string; name: string; vote: string; last_seen: number } | null;
-    old: { user_id: string; name: string; vote: string; last_seen: number } | null;
+    new: { user_id: string; name: string; vote?: string | null; last_seen: number } | null;
+    old: { user_id: string; name: string; vote?: string | null; last_seen: number } | null;
     eventType: string;
   }): void {
     const { eventType, new: newData, old: oldData } = payload;
@@ -500,9 +500,12 @@ export class SupabaseService {
       // Update or add participant
       this.roomState.update(state => {
         const existing = state.participants[participant.user_id];
+        // Convert null to undefined for vote to match Participant interface
+        const vote = participant.vote === null ? undefined : participant.vote;
+
         if (existing &&
             existing.name === participant.name &&
-            existing.vote === participant.vote &&
+            existing.vote === vote &&
             existing.lastSeen === participant.last_seen) {
           return state; // No change
         }
@@ -514,7 +517,7 @@ export class SupabaseService {
             [participant.user_id]: {
               id: participant.user_id,
               name: participant.name,
-              vote: participant.vote,
+              vote: vote,
               lastSeen: participant.last_seen
             }
           }
@@ -618,7 +621,7 @@ export class SupabaseService {
 
     await this.supabase
       .from('participants')
-      .update({ vote: value })
+      .update({ vote: value, last_seen: Date.now() })
       .eq('room_id', roomId)
       .eq('user_id', this.currentUserId);
   }
@@ -693,7 +696,7 @@ export class SupabaseService {
     // Clear all votes for this room
     await this.supabase
       .from('participants')
-      .update({ vote: null })
+      .update({ vote: null, last_seen: Date.now() })
       .eq('room_id', roomId);
 
     // Set revealed to false, voting_started to false, and clear discussion
@@ -727,7 +730,7 @@ export class SupabaseService {
     // Clear all votes for this room
     await this.supabase
       .from('participants')
-      .update({ vote: null })
+      .update({ vote: null, last_seen: Date.now() })
       .eq('room_id', roomId);
 
     // Set voting_started to true and revealed to false
@@ -774,7 +777,7 @@ export class SupabaseService {
 
       await this.supabase
         .from('participants')
-        .update({ vote: null })
+        .update({ vote: null, last_seen: Date.now() })
         .eq('room_id', roomId)
         .eq('user_id', this.currentUserId);
     }

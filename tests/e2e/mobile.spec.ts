@@ -163,12 +163,7 @@ test.describe('Mobile-Specific Features', () => {
   });
 });
 
-test.describe('Mobile Safari Specific', () => {
-  test.use({
-    ...devices['iPhone 12 Pro'],
-    hasTouch: true,
-  });
-
+test.describe('Mobile Safari PWA Features', () => {
   test('should be installable as PWA', async ({ page }) => {
     await page.goto('/');
 

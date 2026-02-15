@@ -255,7 +255,104 @@ Update this document whenever:
 - ✅ Tests should not depend on each other
 - ✅ Use descriptive test names that explain what is being tested
 - ✅ Wait for elements with proper timeouts (avoid hard sleeps)
-- ✅ Clean up test data (though app uses session storage)
+- ✅ Clean up test data (see Test Data Cleanup section below)
+
+### Test Data Cleanup Strategy
+
+**Current Status**: Tests use the REAL Supabase database (not mocked), which means test data persists after test runs.
+
+#### Application Cleanup Mechanism
+
+The app has a **client-side cleanup** mechanism for participants:
+- **Heartbeat**: Every 2 seconds, updates `last_seen` timestamp
+- **Cleanup Check**: Every 3 seconds, removes inactive participants from UI
+- **Timeout**: Participants inactive >10 seconds are removed from UI
+- **Scope**: Client-side only (removes from UI, NOT from database)
+
+See [Heartbeat & Cleanup Architecture](../../README.md#heartbeat--cleanup-architecture) in README.md for full details.
+
+#### Why Test Data Cleanup Matters
+
+Since the app **does NOT delete** data from the database during normal operation:
+- ✅ Test rooms remain in database after tests complete
+- ✅ Test participants remain in database after tests complete
+- ⚠️ Over time, this creates "data pollution" in the test environment
+- ⚠️ Can cause issues with room ID collisions if same IDs are reused
+
+#### Recommended Cleanup Strategies
+
+**Option 1: After-Each Test Cleanup (Recommended)**
+
+Add cleanup hooks to delete test data after each test:
+
+```typescript
+// tests/e2e/room.spec.ts
+test.afterEach(async () => {
+  if (roomId) {
+    // Delete test room and participants from database
+    await supabase.from('participants').delete().eq('room_id', roomId);
+    await supabase.from('rooms').delete().eq('id', roomId);
+  }
+});
+```
+
+**Benefits**:
+- ✅ Test isolation - each test starts with clean state
+- ✅ No data pollution between tests
+- ✅ Easy to debug - clear ownership of test data
+
+**Option 2: Unique Test Data**
+
+Use unique identifiers for each test run:
+
+```typescript
+const timestamp = Date.now();
+const roomId = `test-${timestamp}`;
+```
+
+**Benefits**:
+- ✅ No cleanup code needed
+- ✅ Historical test data preserved for debugging
+
+**Drawbacks**:
+- ⚠️ Database grows indefinitely
+- ⚠️ Requires periodic manual cleanup
+
+**Option 3: Separate Test Database**
+
+Use a dedicated Supabase project for testing:
+
+```typescript
+// playwright.config.ts
+webServer: {
+  command: 'npm start -- --configuration=test',
+}
+```
+
+Then periodically wipe the test database.
+
+**Benefits**:
+- ✅ Complete isolation from production
+- ✅ Can drop entire database between runs
+
+**Drawbacks**:
+- ⚠️ Requires separate Supabase project
+- ⚠️ Additional configuration overhead
+
+#### Current Implementation
+
+Currently, tests do NOT implement automatic cleanup. This is acceptable for:
+- ✅ Development and local testing
+- ✅ CI/CD with fresh database resets
+- ⚠️ Long-running test environments (may need periodic manual cleanup)
+
+#### Future Considerations
+
+If test data pollution becomes an issue, implement **Option 1** (After-Each Cleanup) as it provides the best balance of:
+- Test isolation
+- Debugging capability
+- Database hygiene
+- Minimal configuration overhead
 
 ### Debugging Failed Tests
 

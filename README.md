@@ -416,6 +416,88 @@ The app subscribes to PostgreSQL changes using Supabase Realtime:
 - **Room updates**: Detects when votes are revealed, reset, or admin participation changes
 - **Automatic cleanup**: Stale participants (inactive >10 seconds) are removed
 
+### Heartbeat & Cleanup Architecture
+
+The application uses a sophisticated heartbeat and cleanup mechanism to maintain accurate participant state:
+
+#### How It Works
+
+**1. Heartbeat System** ([supabase.service.ts:29](src/app/services/supabase.service.ts#L29))
+- **Interval**: Every 2 seconds (`HEARTBEAT_INTERVAL_MS = 2000`)
+- **Action**: Updates the participant's `last_seen` timestamp in the database
+- **Purpose**: Signals "I'm still active" to other participants
+- **Implementation**: Runs continuously while user is in a room
+
+**2. Cleanup System** ([supabase.service.ts:30](src/app/services/supabase.service.ts#L30))
+- **Interval**: Every 3 seconds (`CLEANUP_INTERVAL_MS = 3000`)
+- **Threshold**: 10 seconds of inactivity (`PARTICIPANT_TIMEOUT_MS = 5000` × 2)
+- **Action**: Removes participants from local state if their `last_seen` is older than threshold
+- **Scope**: Client-side only (removes from UI, not from database)
+
+**3. Browser Close Handler** ([supabase.service.ts:79-93](src/app/services/supabase.service.ts#L79))
+- **Trigger**: When user closes browser tab or navigates away
+- **Action**: Sets participant's `last_seen` to 0 immediately
+- **Purpose**: Fast cleanup without waiting for timeout
+- **Result**: Other participants see them disappear within 3 seconds
+
+#### Why Client-Side Cleanup?
+
+The cleanup is intentionally **client-side only** for several reasons:
+
+1. **Performance**: No database operations during cleanup checks
+2. **Scalability**: Each client manages their own view independently
+3. **Consistency**: Real-time subscriptions keep all clients in sync
+4. **Data Retention**: Historical data remains in database for analytics (optional)
+
+#### Database Cleanup (Optional)
+
+For production environments, you can enable **server-side cleanup** using PostgreSQL triggers:
+
+```sql
+-- Auto-delete participants older than 1 hour (see SUPABASE_SETUP.md)
+CREATE OR REPLACE FUNCTION cleanup_old_participants()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM participants
+  WHERE last_seen < (EXTRACT(EPOCH FROM NOW()) * 1000 - 3600000);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule with pg_cron (every 15 minutes)
+SELECT cron.schedule('cleanup-old-participants', '*/15 * * * *',
+  'SELECT cleanup_old_participants();');
+```
+
+This is **optional** and not required for the app to function correctly.
+
+#### Test Data Cleanup
+
+For E2E tests, the cleanup mechanism differs:
+
+- **Production**: Client-side cleanup removes from UI only
+- **E2E Tests**: Should explicitly delete test data after each test
+- **Recommendation**: Use `test.afterEach()` to call cleanup functions
+- **Reason**: Ensures test isolation and prevents data pollution
+
+Example:
+```typescript
+test.afterEach(async () => {
+  if (roomId) {
+    // Delete test room and participants from database
+    await cleanupTestRoom(roomId);
+  }
+});
+```
+
+#### Timing Summary
+
+| Event | Interval | Purpose |
+|-------|----------|---------|
+| Heartbeat | 2 seconds | Update `last_seen` timestamp |
+| Cleanup Check | 3 seconds | Remove stale participants from UI |
+| Timeout Threshold | 10 seconds | Mark participant as inactive |
+| Database Cleanup | Optional (15 min) | Remove old data from database |
+
 ### Benefits of Supabase
 
 - ✅ **Reliable**: No dependency on unreliable public relay servers

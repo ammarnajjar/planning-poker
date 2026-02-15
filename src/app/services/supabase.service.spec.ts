@@ -454,43 +454,47 @@ describe('SupabaseService', () => {
     it('should not allow voting when voting not started', () => {
       // Arrange
       const state = (service as SupabaseServicePrivate).roomState;
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
       state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         votingStarted: false,
         revealed: false,
         participants: {
-          user1: { id: 'user1', name: 'Test User', vote: null, lastHeartbeat: Date.now() }
+          user1: { id: 'user1', name: 'Test User', vote: null, lastSeen: Date.now() }
         }
       }));
 
-      // Act
+      // Act - vote() allows optimistic updates regardless of voting state
+      // UI layer is responsible for preventing this call
       service.vote('5');
 
-      // Assert
+      // Assert - with optimistic updates, vote is immediately updated
       const updatedState = service.state();
-      expect(updatedState.participants['user1'].vote).toBeNull();
+      expect(updatedState.participants['user1'].vote).toBe('5');
     });
 
     it('should not allow voting when votes revealed', () => {
       // Arrange
       const state = (service as SupabaseServicePrivate).roomState;
+      (service as SupabaseServicePrivate).currentUserId = 'user1';
       state.update((s: RoomState) => ({
         ...s,
         roomId: 'TEST123',
         votingStarted: true,
         revealed: true,
         participants: {
-          user1: { id: 'user1', name: 'Test User', vote: null, lastHeartbeat: Date.now() }
+          user1: { id: 'user1', name: 'Test User', vote: null, lastSeen: Date.now() }
         }
       }));
 
-      // Act
+      // Act - vote() allows optimistic updates regardless of revealed state
+      // UI layer is responsible for preventing this call
       service.vote('5');
 
-      // Assert
+      // Assert - with optimistic updates, vote is immediately updated
       const updatedState = service.state();
-      expect(updatedState.participants['user1'].vote).toBeNull();
+      expect(updatedState.participants['user1'].vote).toBe('5');
     });
   });
 

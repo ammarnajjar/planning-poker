@@ -85,7 +85,9 @@ test.describe('Room Multi-Round Voting', () => {
     }
     await expect(page.locator('.current-selection')).toContainText('Your vote:', { timeout: 5000 });
 
-    // Reset
+    // Reveal and reset
+    await page.getByRole('button', { name: /Reveal/i }).click();
+    await page.waitForTimeout(1000);
     await page.getByRole('button', { name: /Reset/i }).click();
     await page.waitForTimeout(1000);
 
@@ -117,6 +119,10 @@ test.describe('Room Multi-Round Voting', () => {
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
 
       await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
+
+      // Enable admin participation
+      await adminPage.locator('mat-checkbox').getByText('I want to participate').click();
+      await adminPage.waitForTimeout(500);
 
       // Round 1
       await adminPage.getByRole('button', { name: /Start Voting/i }).click();

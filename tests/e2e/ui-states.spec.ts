@@ -145,8 +145,8 @@ test.describe('UI States and Feedback', () => {
         await userCard.click();
         await userPage.waitForTimeout(1000);
 
-        // Admin should see that user has voted (status changes)
-        await expect(adminPage.locator('.vote-status')).toContainText('1/2', { timeout: 10000 });
+        // Admin should see that user has voted (vote count on poker table for non-participating admin)
+        await expect(adminPage.locator('.vote-count')).toContainText('1/1', { timeout: 10000 });
       }
     } finally {
       await context1.close();

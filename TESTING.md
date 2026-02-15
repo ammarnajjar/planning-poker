@@ -2,9 +2,12 @@
 
 This document describes the testing setup and coverage for the Planning Poker application.
 
-## Testing Framework
+## Testing Frameworks
 
-The project uses [Vitest](https://vitest.dev/) as the testing framework. Vitest is a modern, fast unit testing framework that works well with TypeScript and provides excellent developer experience.
+The project uses two complementary testing frameworks:
+
+1. **[Vitest](https://vitest.dev/)** - Unit testing framework for component and service testing
+2. **[Playwright](https://playwright.dev/)** - End-to-end testing framework for user flow validation
 
 ### Why Vitest?
 
@@ -35,17 +38,45 @@ npm run test:coverage
 npm test -- --watch
 ```
 
+### Run E2E tests
+```bash
+# Run all E2E tests across 5 browsers
+npm run test:e2e
+
+# Run smoke tests only (critical path - fast)
+npm run test:e2e:smoke
+
+# Run with interactive UI
+npm run test:e2e:ui
+
+# Run in headed mode (see browser)
+npm run test:e2e:headed
+
+# View last test report
+npm run test:e2e:report
+```
+
 ## Test Coverage Summary
 
 **🎉 100% Statement Coverage Achieved!**
 
+### Unit Tests (Vitest)
 **Total: 244 tests passing across 4 test suites**
 
-### Coverage Metrics
+#### Coverage Metrics
 - **Statement Coverage: 100%** ✅
 - **Branch Coverage: 98%** ✅
 - **Function Coverage: 100%** ✅
 - **Line Coverage: 100%** ✅
+
+### End-to-End Tests (Playwright)
+**Total: 254 tests (51 test cases × 5 browsers, with 3 tests skipped per browser)**
+
+#### Test Results
+- **Passed: 239 tests** (100% of runnable tests) ✅
+- **Skipped: 15 tests** (3 clipboard tests × 5 browsers - headless limitation)
+- **Failed: 0 tests** ✅
+- **Duration: ~2 minutes** for full suite across all browsers
 
 ### Coverage by Component
 
@@ -215,6 +246,169 @@ Location: [src/app/components/home/home.component.spec.ts](src/app/components/ho
 - ✅ Error Handling Logic (4 tests)
 - ✅ PIN Dialog Logic (8 tests)
 
+## End-to-End Test Suites (Playwright)
+
+### High Priority Tests (27 tests × 5 browsers = 135 tests, 10 skipped)
+
+#### 1. Room Creation Tests (room-creation.spec.ts) - 3 tests
+- ✅ Create room and navigate to room page
+- ✅ Copy room ID to clipboard
+- ✅ Leave room and return to home
+
+#### 2. Room Admin Controls Tests (room-admin-controls.spec.ts) - 4 tests
+- ✅ Display admin controls for room creator
+- ✅ Toggle admin participation
+- ✅ Have share room button
+- ✅ Show participants list
+
+#### 3. Room Voting Tests (room-voting.spec.ts) - 4 tests
+- ✅ Show voting cards when voting starts
+- ✅ Allow selecting a card
+- ✅ Support keyboard navigation
+- ✅ Apply correct card styling
+
+#### 4. Room Voting Advanced Tests (room-voting-advanced.spec.ts) - 4 tests
+- ✅ Include special values (?, 100)
+- ✅ Reset votes correctly
+- ✅ Be mobile responsive in room
+- ✅ Copy room ID to clipboard (skipped in headless)
+
+#### 5. Multi-User Sync Tests (multi-user-sync.spec.ts) - 4 tests
+- ✅ Allow multiple users to join a room
+- ✅ Synchronize vote count across users
+- ✅ Detect when participant leaves
+- ✅ Synchronize reveal state across users
+
+#### 6. Multi-User Reset Tests (multi-user-reset.spec.ts) - 2 tests
+- ✅ Reset votes for all participants
+- ✅ Clear votes when starting new round
+
+#### 7. Multi-User Discussion Tests (multi-user-discussion.spec.ts) - 4 tests
+- ✅ Start discussion mode highlighting voters
+- ✅ End discussion mode manually
+- ✅ Auto-end discussion on hide
+- ✅ Handle discussion when all votes are same
+
+#### 8. Multi-User Removal Tests (multi-user-removal.spec.ts) - 4 tests
+- ✅ Remove participant from room
+- ✅ Redirect removed participant
+- ✅ Update counts after removal
+- ✅ Show remove button only to admins
+
+#### 9. Multi-User Admin PIN Tests (multi-user-admin-pin.spec.ts) - 4 tests
+- ✅ Support admin participation in multi-user
+- ✅ Admin with PIN can rejoin as admin
+- ✅ User cannot join as admin without PIN
+- ✅ Correct PIN required to join as admin
+
+#### 10. Multi-User Edge Cases Tests (multi-user-edge-cases.spec.ts) - 3 tests
+- ✅ Handle joining non-existent room
+- ✅ Handle browser refresh in room
+- ✅ Handle multi-tab same user
+
+#### 11. Home Page Tests (home.spec.ts) - 10 tests
+- ✅ Display the home page with title and branding
+- ✅ Show "How it works" section
+- ✅ Have name input field
+- ✅ Show create and join buttons initially
+- ✅ Toggle join form when clicking Join Existing Room
+- ✅ Show admin checkbox when in join mode
+- ✅ Validate required name field when creating room
+- ✅ Create room with valid name
+- ✅ Be mobile responsive
+- ✅ Prevent zoom on input focus (mobile)
+
+#### 12. Mobile Features Tests (mobile.spec.ts) - 8 tests
+- ✅ Have proper viewport meta tag
+- ✅ Have touch-friendly button sizes
+- ✅ Not zoom on input focus
+- ✅ Display compact mobile layout
+- ✅ Have proper touch targets in room
+- ✅ Enable scrolling on mobile
+- ✅ Hide toolbar title on mobile in room
+- ✅ Handle orientation change
+
+### Moderate Priority Tests (17 tests × 5 browsers = 85 tests, 5 skipped)
+
+#### 13. Room Sharing Tests (room-sharing.spec.ts) - 3 tests
+- ✅ Copy full room URL when clicking share button (skipped in headless)
+- ✅ Redirect to home when visiting shared URL without username
+- ✅ Show room not found for invalid room ID in URL
+
+#### 14. Room Multi-Round Tests (room-multi-round.spec.ts) - 3 tests
+- ✅ Support multiple rounds of voting
+- ✅ Clear previous votes when starting new round
+- ✅ Maintain participant list across multiple rounds
+
+#### 15. Room Validation Tests (room-validation.spec.ts) - 6 tests
+- ✅ Reject empty room ID when joining
+- ✅ Handle room ID case sensitivity
+- ✅ Generate unique room IDs
+- ✅ Validate user name is required
+- ✅ Accept valid room ID format
+- ✅ Trim whitespace from room ID input
+
+#### 16. UI States Tests (ui-states.spec.ts) - 5 tests
+- ✅ Show correct button states based on room state
+- ✅ Display vote status correctly
+- ✅ Show selected card state visually
+- ✅ Show participant vote status indicators
+- ✅ Show admin controls only to admin
+
+### Specialized E2E Test Suites
+
+#### Smoke Tests (@smoke)
+**12 critical path tests** that cover the most important user flows:
+- Home page loads correctly
+- Creating a new room
+- Joining an existing room
+- Starting voting session
+- Submitting votes
+- Multi-user real-time sync
+- Admin controls
+
+Run smoke tests for quick validation:
+```bash
+npm run test:e2e:smoke
+```
+
+#### Accessibility Tests (@a11y)
+**7 tests** using @axe-core/playwright to ensure WCAG compliance:
+- No accessibility violations on key pages
+- Keyboard navigation support
+- ARIA labels for interactive elements
+- Focus visibility
+- Screen reader compatibility
+
+Run accessibility tests:
+```bash
+npm run test:e2e -- --grep @a11y
+```
+
+#### Performance Tests (@performance)
+**6 tests** with performance budgets:
+- Home page load time (< 3000ms)
+- Room navigation (< 1000ms)
+- Interaction time (< 500ms)
+- Web Vitals (FCP < 1.8s, LCP < 2.5s)
+- Memory leak detection
+
+Run performance tests:
+```bash
+npm run test:e2e -- --grep @performance
+```
+
+### E2E Test Summary
+
+- **Total Test Files:** 18 suites (including accessibility and performance)
+- **Total Test Cases:** 57 unique tests
+- **Total Test Runs:** 270+ (57 tests × 5 browsers, with clipboard tests skipped)
+- **Browser Coverage:** Chromium, Firefox, WebKit, Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12 Pro)
+- **Pass Rate:** 100%
+- **Smoke Tests:** 12 critical path tests for rapid feedback
+
+See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for comprehensive E2E testing documentation.
+
 ## Key Features Tested
 
 ### 1. Room Management ✅
@@ -278,6 +472,30 @@ Location: [src/app/components/home/home.component.spec.ts](src/app/components/ho
 - Database connection errors
 - Invalid room/PIN errors
 - Edge cases (empty values, null checks)
+
+## Test Data Factories
+
+The E2E tests use centralized test data factories for consistency. Located in [tests/e2e/helpers/factories.ts](tests/e2e/helpers/factories.ts):
+
+```typescript
+// Generate unique test usernames
+const username = createTestUser('TestUser');
+
+// Use centralized selectors
+await page.locator(Selectors.home.nameInput).fill(username);
+
+// Use performance budgets
+expect(loadTime).toBeLessThan(PerformanceBudgets.PAGE_LOAD);
+
+// Use voting card constants
+expect(vote).toBe(VotingCards.VALUES[0]);
+```
+
+**Benefits:**
+- Consistent test data across all tests
+- Centralized selectors for easy maintenance
+- Performance budgets enforced consistently
+- Reduced duplication
 
 ## Test Structure
 

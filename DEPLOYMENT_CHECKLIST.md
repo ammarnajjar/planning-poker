@@ -80,11 +80,12 @@ npm run build:prod
 - Verify `.nojekyll` file is in the output
 - Wait a few minutes for DNS propagation
 
-### Gun.js Not Syncing
+### Supabase Not Syncing
 - Check browser console for errors
 - Verify internet connection
 - Try refreshing both browser windows
-- Check if Gun.js relay peers are accessible
+- Check Supabase API keys are correct
+- Verify Realtime is enabled for both tables
 
 ### Blank Page
 - Check browser console for errors
@@ -112,7 +113,11 @@ If you need to redeploy without pushing code:
 
 ## Environment Variables
 
-This app requires **NO environment variables** or API keys! 🎉
+This app requires Supabase configuration in environment files:
+- `src/environments/environment.ts` - Development
+- `src/environments/environment.prod.ts` - Production
+
+See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for setup instructions.
 
 ## DNS & Custom Domain (Optional)
 
@@ -148,7 +153,7 @@ If you encounter issues:
 1. Check the [README.md](README.md) troubleshooting section
 2. Review GitHub Actions logs
 3. Check browser console for JavaScript errors
-4. Verify Gun.js relay peer connectivity
+4. Verify Supabase connection and API keys
 
 ---
 

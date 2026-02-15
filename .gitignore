@@ -44,3 +44,14 @@ Thumbs.db
 # Environment files with API keys
 /src/environments/environment.ts
 /src/environments/environment.prod.ts
+
+# Claude Code settings
+.claude/
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

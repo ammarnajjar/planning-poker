@@ -454,8 +454,8 @@ export class SupabaseService {
    * Handle participant change events
    */
   private handleParticipantChange(payload: {
-    new: { user_id: string; name: string; vote: string; last_seen: number } | null;
-    old: { user_id: string; name: string; vote: string; last_seen: number } | null;
+    new: { user_id: string; name: string; vote?: string | null; last_seen: number } | null;
+    old: { user_id: string; name: string; vote?: string | null; last_seen: number } | null;
     eventType: string;
   }): void {
     const { eventType, new: newData, old: oldData } = payload;
@@ -500,11 +500,28 @@ export class SupabaseService {
       // Update or add participant
       this.roomState.update(state => {
         const existing = state.participants[participant.user_id];
+        // Convert null to undefined for vote to match Participant interface
+        let vote = participant.vote === null ? undefined : participant.vote;
+
+        // Preserve existing vote only when voting is active (votingStarted=true, revealed=false)
+        // This prevents heartbeat UPDATEs from clearing votes during active voting
+        // During reset, votingStarted becomes false, so votes won't be preserved
+        // Note: We don't check timestamp because heartbeats happen every 2s, so the time
+        // difference between a vote UPDATE and heartbeat UPDATE could be anywhere from 0-2000ms
+        if (existing && existing.vote && !vote && state.votingStarted && !state.revealed) {
+          vote = existing.vote;
+        }
+
         if (existing &&
             existing.name === participant.name &&
-            existing.vote === participant.vote &&
+            existing.vote === vote &&
             existing.lastSeen === participant.last_seen) {
           return state; // No change
+        }
+
+        // Prevent out-of-order updates: only apply if timestamp is newer
+        if (existing && existing.lastSeen > participant.last_seen) {
+          return state;
         }
 
         return {
@@ -514,7 +531,7 @@ export class SupabaseService {
             [participant.user_id]: {
               id: participant.user_id,
               name: participant.name,
-              vote: participant.vote,
+              vote: vote,
               lastSeen: participant.last_seen
             }
           }
@@ -527,13 +544,28 @@ export class SupabaseService {
    * Add or update current user in participants
    */
   private async addParticipant(roomId: string, userName: string): Promise<void> {
+    const now = Date.now();
     const participant = {
       room_id: roomId,
       user_id: this.currentUserId,
       name: userName,
-      last_seen: Date.now(),
+      last_seen: now,
       vote: null
     };
+
+    // Update local state immediately so participant appears instantly
+    this.roomState.update(state => ({
+      ...state,
+      participants: {
+        ...state.participants,
+        [this.currentUserId]: {
+          id: this.currentUserId,
+          name: userName,
+          vote: undefined,
+          lastSeen: now
+        }
+      }
+    }));
 
     await this.supabase
       .from('participants')
@@ -584,9 +616,26 @@ export class SupabaseService {
     const roomId = this.roomState().roomId;
     if (!roomId) return;
 
+    // Update local state immediately for better UX and test reliability
+    this.roomState.update(state => {
+      const currentParticipant = state.participants[this.currentUserId];
+      if (!currentParticipant) return state;
+
+      return {
+        ...state,
+        participants: {
+          ...state.participants,
+          [this.currentUserId]: {
+            ...currentParticipant,
+            vote: value
+          }
+        }
+      };
+    });
+
     await this.supabase
       .from('participants')
-      .update({ vote: value })
+      .update({ vote: value, last_seen: Date.now() })
       .eq('room_id', roomId)
       .eq('user_id', this.currentUserId);
   }
@@ -661,7 +710,7 @@ export class SupabaseService {
     // Clear all votes for this room
     await this.supabase
       .from('participants')
-      .update({ vote: null })
+      .update({ vote: null, last_seen: Date.now() })
       .eq('room_id', roomId);
 
     // Set revealed to false, voting_started to false, and clear discussion
@@ -695,7 +744,7 @@ export class SupabaseService {
     // Clear all votes for this room
     await this.supabase
       .from('participants')
-      .update({ vote: null })
+      .update({ vote: null, last_seen: Date.now() })
       .eq('room_id', roomId);
 
     // Set voting_started to true and revealed to false
@@ -742,7 +791,7 @@ export class SupabaseService {
 
       await this.supabase
         .from('participants')
-        .update({ vote: null })
+        .update({ vote: null, last_seen: Date.now() })
         .eq('room_id', roomId)
         .eq('user_id', this.currentUserId);
     }

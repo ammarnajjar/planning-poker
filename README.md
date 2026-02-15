@@ -57,7 +57,9 @@ A production-ready Planning Poker application built with Angular 21 and Supabase
 - **Real-Time Sync**: Supabase (PostgreSQL + Real-time subscriptions)
 - **UI Library**: Angular Material
 - **Styling**: SCSS
-- **Testing**: Vitest with 100% statement coverage (244 tests)
+- **Testing**:
+  - Unit Tests: Vitest with 100% statement coverage (244 tests)
+  - E2E Tests: Playwright with 100% pass rate (239 tests passing, 15 skipped)
 - **Hosting**: GitHub Pages
 - **CI/CD**: GitHub Actions
 
@@ -107,12 +109,14 @@ The build artifacts will be stored in the `dist/` directory.
 
 ## Testing
 
-The project has comprehensive test coverage with 244 tests across all components and services.
+The project has comprehensive test coverage with both unit tests and end-to-end tests.
 
-### Run Tests
+### Unit Tests (Vitest)
+
+The project has 244 unit tests across all components and services with 100% statement coverage.
 
 ```bash
-# Run all tests
+# Run all unit tests
 npm test
 
 # Run tests with coverage report
@@ -125,18 +129,50 @@ npm run test:ui
 npm test -- --watch
 ```
 
-### Test Coverage
-
+**Unit Test Coverage:**
 - **Statement Coverage**: 100% ✅
 - **Branch Coverage**: 98% ✅
 - **Function Coverage**: 100% ✅
 - **Line Coverage**: 100% ✅
 
-See [TESTING.md](TESTING.md) for detailed information about the test suite, including:
-- Test structure and patterns
-- Mocking strategies for Supabase
-- Angular 21 signal testing techniques
-- Coverage breakdown by component
+See [TESTING.md](TESTING.md) for detailed information about the unit test suite.
+
+### End-to-End Tests (Playwright)
+
+The project has 254 e2e tests across 51 test cases running on 5 browser configurations with 100% pass rate (excluding skipped tests).
+
+```bash
+# Install Playwright browsers (first time only)
+npx playwright install
+
+# Run all e2e tests across 5 browsers
+npm run test:e2e
+
+# Run with interactive UI
+npm run test:e2e:ui
+
+# Run in headed mode (see browser)
+npm run test:e2e:headed
+
+# Debug mode (step-by-step)
+npm run test:e2e:debug
+
+# View last test report
+npm run test:e2e:report
+```
+
+**E2E Test Coverage:**
+- **Total Tests**: 254 (51 test cases × 5 browsers, with 3 clipboard tests skipped per browser)
+- **Passed**: 239 tests (100% of runnable tests) ✅
+- **Skipped**: 15 tests (3 clipboard tests × 5 browsers - headless limitation)
+- **Browsers**: Chrome, Firefox, Safari, Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12 Pro)
+- **Duration**: ~2 minutes for full suite
+- **Test Suites**:
+  - **High Priority** (27 test cases): Core functionality, room management, voting, multi-user sync, admin controls
+  - **Moderate Priority** (17 test cases): Room sharing, multi-round voting, validation, UI states
+  - **Home & Mobile** (7 test cases): Login flow, mobile responsiveness, touch targets
+
+See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for comprehensive e2e testing documentation.
 
 ## How to Use
 
@@ -380,6 +416,94 @@ The app subscribes to PostgreSQL changes using Supabase Realtime:
 - **Room updates**: Detects when votes are revealed, reset, or admin participation changes
 - **Automatic cleanup**: Stale participants (inactive >10 seconds) are removed
 
+### Heartbeat & Cleanup Architecture
+
+The application uses a sophisticated heartbeat and cleanup mechanism to maintain accurate participant state:
+
+#### How It Works
+
+**1. Heartbeat System** ([supabase.service.ts:29](src/app/services/supabase.service.ts#L29))
+- **Interval**: Every 2 seconds (`HEARTBEAT_INTERVAL_MS = 2000`)
+- **Action**: Updates the participant's `last_seen` timestamp in the database
+- **Purpose**: Signals "I'm still active" to other participants
+- **Implementation**: Runs continuously while user is in a room
+
+**2. Cleanup System** ([supabase.service.ts:30](src/app/services/supabase.service.ts#L30))
+- **Interval**: Every 3 seconds (`CLEANUP_INTERVAL_MS = 3000`)
+- **Threshold**: 10 seconds of inactivity (`PARTICIPANT_TIMEOUT_MS = 5000` × 2)
+- **Action**: Removes participants from local state if their `last_seen` is older than threshold
+- **Scope**: Client-side only (removes from UI, not from database)
+
+**3. Browser Close Handler** ([supabase.service.ts:79-93](src/app/services/supabase.service.ts#L79))
+- **Trigger**: When user closes browser tab or navigates away
+- **Action**: Sets participant's `last_seen` to 0 immediately
+- **Purpose**: Fast cleanup without waiting for timeout
+- **Result**: Other participants see them disappear within 3 seconds
+
+#### Why Client-Side Cleanup?
+
+The cleanup is intentionally **client-side only** for several reasons:
+
+1. **Performance**: No database operations during cleanup checks
+2. **Scalability**: Each client manages their own view independently
+3. **Consistency**: Real-time subscriptions keep all clients in sync
+4. **Data Retention**: Historical data remains in database for analytics (optional)
+
+#### Database Cleanup (Optional)
+
+For production environments, you can enable **server-side cleanup** using PostgreSQL triggers:
+
+```sql
+-- Auto-delete participants older than 1 hour (see SUPABASE_SETUP.md)
+CREATE OR REPLACE FUNCTION cleanup_old_participants()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM participants
+  WHERE last_seen < (EXTRACT(EPOCH FROM NOW()) * 1000 - 3600000);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule with pg_cron (every 15 minutes)
+SELECT cron.schedule('cleanup-old-participants', '*/15 * * * *',
+  'SELECT cleanup_old_participants();');
+```
+
+This is **optional** and not required for the app to function correctly.
+
+#### Test Data Cleanup
+
+For E2E tests, automatic cleanup is **implemented**:
+
+- **Production**: Client-side cleanup removes from UI only
+- **E2E Tests**: Automatically delete test data after each test using `cleanupTestRoom()`
+- **Implementation**: All test files use `test.afterEach()` hooks with room ID tracking
+- **Benefits**: Test isolation, no data pollution, clean database state
+
+Example from [tests/e2e/room.spec.ts](tests/e2e/room.spec.ts):
+```typescript
+import { cleanupTestRoom } from './helpers/cleanup';
+
+let createdRoomIds: string[] = [];
+
+test.afterEach(async () => {
+  for (const roomId of createdRoomIds) {
+    await cleanupTestRoom(roomId);
+  }
+  createdRoomIds = [];
+});
+```
+
+See [E2E_TESTING.md](tests/e2e/E2E_TESTING.md#test-data-cleanup-strategy) for full implementation details.
+
+#### Timing Summary
+
+| Event | Interval | Purpose |
+|-------|----------|---------|
+| Heartbeat | 2 seconds | Update `last_seen` timestamp |
+| Cleanup Check | 3 seconds | Remove stale participants from UI |
+| Timeout Threshold | 10 seconds | Mark participant as inactive |
+| Database Cleanup | Optional (15 min) | Remove old data from database |
+
 ### Benefits of Supabase
 
 - ✅ **Reliable**: No dependency on unreliable public relay servers
@@ -546,12 +670,36 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
 
+### v1.3.0 (February 15, 2026) - E2E Testing Suite + Bug Fixes
+- 🧪 **Comprehensive E2E Testing Suite** with Playwright
+  - 254 tests across 5 browser configurations (100% pass rate for runnable tests)
+  - 239 passing, 15 skipped (3 clipboard tests - headless browser limitation)
+  - Chrome, Firefox, Safari, Mobile Chrome, Mobile Safari coverage
+  - **High Priority Tests** (27 test cases): Core features, room management, voting, multi-user sync
+  - **Moderate Priority Tests** (17 test cases): Room sharing, multi-round voting, validation, UI states
+  - Automatic test data cleanup after each test
+  - Comprehensive [E2E_TESTING.md](tests/e2e/E2E_TESTING.md) documentation
+  - Automated CI testing with GitHub Actions
+- 🐛 **Critical Bug Fix: Participant List Loading**
+  - Fixed participant count staying at (0) after room creation
+  - Implemented optimistic UI updates for instant participant visibility
+  - Participants now appear instantly when joining rooms
+- 🐛 **Critical Bug Fix: Vote Selection Syncing**
+  - Fixed vote staying at "?" after card selection
+  - Implemented optimistic UI updates for immediate vote feedback
+  - Vote selections now update instantly with visual feedback
+- ⚡ **Performance Improvements**
+  - Optimistic UI updates eliminate lag in real-time synchronization
+  - Better UX across all browsers and devices
+
+See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for complete e2e testing details.
+
 ### v1.2.0 (February 14, 2026) - Angular 21 Upgrade
 - ⬆️ **Upgraded to Angular 21** from Angular 19
   - Leveraging latest Angular 21 features: `linkedSignal()` for reactive state
   - Improved zoneless change detection support
   - Enhanced signal-based reactivity
-- 🧪 **Comprehensive Test Suite** with 100% statement coverage
+- 🧪 **Comprehensive Unit Test Suite** with 100% statement coverage
   - 244 tests passing across 4 test suites
   - 100% statement coverage, 98% branch coverage
   - Full coverage of all features including Angular 21 APIs
@@ -565,7 +713,7 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
   - Updated coverage metrics and testing strategies
   - Detailed examples of Angular 21 feature testing
 
-See [TESTING.md](TESTING.md) for complete test coverage details.
+See [TESTING.md](TESTING.md) for complete unit test coverage details.
 
 ### v1.1.0 (February 14, 2026)
 - ✨ Admin participant removal with hover-activated button

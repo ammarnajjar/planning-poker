@@ -203,6 +203,8 @@ If your team uses the app regularly and you want guaranteed uptime, consider upg
 - For server-side cleanup, uncomment the pg_cron lines in Step 2
 - Or manually run: `SELECT cleanup_old_participants();` in SQL Editor
 
+**For detailed explanation** of how the heartbeat and cleanup mechanism works, see the [Heartbeat & Cleanup Architecture](README.md#heartbeat--cleanup-architecture) section in README.md.
+
 ## Database Schema Reference
 
 ### `rooms` table

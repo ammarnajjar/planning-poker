@@ -61,9 +61,10 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm start',
+    // In CI, explicitly enable cache for faster dev server startup
+    command: process.env['CI'] ? 'ng serve --cache' : 'npm start',
     url: 'http://localhost:4200',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env['CI'],
     timeout: 120 * 1000,
   },
 });

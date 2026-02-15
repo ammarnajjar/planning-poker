@@ -192,6 +192,9 @@ jobs:
 
       - name: Run Playwright tests
         run: npx playwright test --project=chromium
+        env:
+          # Force enable Angular build cache in CI
+          NG_BUILD_CACHE: .angular/cache
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4

@@ -149,8 +149,11 @@ test.describe('Room Functionality', () => {
   });
 
   test('should copy room ID to clipboard', async ({ page, context, browserName }) => {
-    // Skip on webkit (Safari) and firefox - clipboard permissions not supported
-    test.skip(browserName === 'webkit' || browserName === 'firefox', 'Clipboard permissions not fully supported');
+    // Skip on webkit (Safari), firefox, and CI - clipboard API unreliable in headless browsers
+    test.skip(
+      browserName === 'webkit' || browserName === 'firefox' || !!process.env['CI'],
+      'Clipboard API not fully supported in headless/CI environments'
+    );
 
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);

@@ -38,15 +38,15 @@ jobs:
           cat > src/environments/environment.ts << EOF
           export const environment = {
             production: false,
-            supabaseUrl: "https://placeholder.supabase.co",
-            supabaseAnonKey: "placeholder-key"
+            supabaseUrl: "${{ secrets.SUPABASE_URL || 'https://placeholder.supabase.co' }}",
+            supabaseAnonKey: "${{ secrets.SUPABASE_ANON_KEY || 'placeholder-key' }}"
           };
           EOF
           cat > src/environments/environment.prod.ts << EOF
           export const environment = {
             production: true,
-            supabaseUrl: "https://placeholder.supabase.co",
-            supabaseAnonKey: "placeholder-key"
+            supabaseUrl: "${{ secrets.SUPABASE_URL || 'https://placeholder.supabase.co' }}",
+            supabaseAnonKey: "${{ secrets.SUPABASE_ANON_KEY || 'placeholder-key' }}"
           };
           EOF
 

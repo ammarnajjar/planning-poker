@@ -162,10 +162,10 @@ test.describe('Room Functionality', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
-    captureRoomId(page);
+    const roomId = captureRoomId(page);
 
-    // Get room ID text
-    const roomIdText = await page.locator('.room-id').textContent();
+    // Wait for room ID to be visible
+    await expect(page.locator('.room-id')).toBeVisible();
 
     // Click copy button
     await page.locator('button[mattooltip="Copy Room ID"]').click();
@@ -173,9 +173,9 @@ test.describe('Room Functionality', () => {
     // Wait a moment for clipboard operation
     await page.waitForTimeout(500);
 
-    // Check clipboard content
+    // Check clipboard content matches the room ID from URL
     const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clipboardText).toBe(roomIdText?.trim());
+    expect(clipboardText).toBe(roomId);
 
     // Should show snackbar confirmation (Material snackbar)
     // The snackbar might disappear quickly, so we just check the clipboard worked above

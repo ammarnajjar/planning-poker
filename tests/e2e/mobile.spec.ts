@@ -1,8 +1,14 @@
 import { test, expect, devices } from '@playwright/test';
 import { cleanupTestRoom } from './helpers/cleanup';
 
+// In CI (chromium project), use Pixel 5 for mobile tests
+// This ensures mobile tests run on chromium which is installed in CI
+const mobileDevice = process.env['CI']
+  ? devices['Pixel 5']  // Android device using chromium
+  : devices['iPhone 12 Pro'];  // iOS device using webkit
+
 test.use({
-  ...devices['iPhone 12 Pro'],
+  ...mobileDevice,
 });
 
 test.describe('Mobile-Specific Features', () => {

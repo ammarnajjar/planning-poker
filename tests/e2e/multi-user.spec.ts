@@ -70,20 +70,14 @@ test.describe('Multi-User Real-Time Sync', () => {
     }
   });
 
-  // TODO: This test is currently failing due to Supabase real-time not broadcasting participant UPDATE events
-  // The issue is that when a user votes, their participant row is updated in the database,
-  // but other users' clients do not receive the UPDATE event via real-time subscription.
-  // This needs investigation of Supabase project settings - possibly real-time UPDATE events
-  // are not enabled for the participants table, or there's a configuration issue.
-  // All other real-time sync works (JOIN, DELETE, room state changes), just not participant UPDATEs.
-  test.skip('should sync vote count between users in real-time', async ({ browser }) => {
+  test('should sync vote count between users in real-time', async ({ browser }) => {
     const context1 = await browser.newContext();
     const context2 = await browser.newContext();
 
     const adminPage = await context1.newPage();
     const userPage = await context2.newPage();
 
-    try {
+    try{
       // Admin creates room
       await adminPage.goto('/');
       await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');

@@ -501,13 +501,24 @@ export class SupabaseService {
       this.roomState.update(state => {
         const existing = state.participants[participant.user_id];
         // Convert null to undefined for vote to match Participant interface
-        const vote = participant.vote === null ? undefined : participant.vote;
+        let vote = participant.vote === null ? undefined : participant.vote;
+
+        // Preserve existing vote if new update has null vote and existing has a vote
+        // This prevents heartbeat UPDATEs from clearing votes
+        if (existing && existing.vote && !vote && existing.lastSeen < participant.last_seen) {
+          vote = existing.vote;
+        }
 
         if (existing &&
             existing.name === participant.name &&
             existing.vote === vote &&
             existing.lastSeen === participant.last_seen) {
           return state; // No change
+        }
+
+        // Prevent out-of-order updates: only apply if timestamp is newer
+        if (existing && existing.lastSeen > participant.last_seen) {
+          return state;
         }
 
         return {

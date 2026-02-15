@@ -1,8 +1,19 @@
 import { test, expect } from '@playwright/test';
+import { cleanupTestRoom } from './helpers/cleanup';
 
 test.describe('Home Page', () => {
+  let createdRoomIds: string[] = [];
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+  });
+
+  test.afterEach(async () => {
+    // Clean up any rooms created during tests
+    for (const roomId of createdRoomIds) {
+      await cleanupTestRoom(roomId);
+    }
+    createdRoomIds = [];
   });
 
   test('should display the home page with title and branding', async ({ page }) => {

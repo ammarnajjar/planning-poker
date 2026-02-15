@@ -1,10 +1,30 @@
 import { test, expect, devices } from '@playwright/test';
+import { cleanupTestRoom } from './helpers/cleanup';
 
 test.use({
   ...devices['iPhone 12 Pro'],
 });
 
 test.describe('Mobile-Specific Features', () => {
+  let createdRoomIds: string[] = [];
+
+  // Helper to capture room ID from URL
+  const captureRoomId = (page: any) => {
+    const url = page.url();
+    const roomId = url.split('/room/')[1];
+    if (roomId && !createdRoomIds.includes(roomId)) {
+      createdRoomIds.push(roomId);
+    }
+    return roomId;
+  };
+
+  test.afterEach(async () => {
+    // Clean up any rooms created during tests
+    for (const roomId of createdRoomIds) {
+      await cleanupTestRoom(roomId);
+    }
+    createdRoomIds = [];
+  });
   test('should have proper viewport meta tag', async ({ page }) => {
     await page.goto('/');
 
@@ -61,6 +81,7 @@ test.describe('Mobile-Specific Features', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Enable admin participation to see voting cards
     const participateCheckbox = page.locator('mat-checkbox').getByText('I want to participate');
@@ -101,6 +122,7 @@ test.describe('Mobile-Specific Features', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Toolbar title should be hidden on mobile
     const toolbarTitle = page.locator('.toolbar-title');

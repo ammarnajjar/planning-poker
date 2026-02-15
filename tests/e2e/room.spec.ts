@@ -1,6 +1,27 @@
 import { test, expect } from '@playwright/test';
+import { cleanupTestRoom } from './helpers/cleanup';
 
 test.describe('Room Functionality', () => {
+  let createdRoomIds: string[] = [];
+
+  // Helper to capture room ID from URL
+  const captureRoomId = (page: any) => {
+    const url = page.url();
+    const roomId = url.split('/room/')[1];
+    if (roomId && !createdRoomIds.includes(roomId)) {
+      createdRoomIds.push(roomId);
+    }
+    return roomId;
+  };
+
+  test.afterEach(async () => {
+    // Clean up any rooms created during tests
+    for (const roomId of createdRoomIds) {
+      await cleanupTestRoom(roomId);
+    }
+    createdRoomIds = [];
+  });
+
   test('should create room and navigate to room page', async ({ page }) => {
     await page.goto('/');
 
@@ -16,6 +37,7 @@ test.describe('Room Functionality', () => {
 
     // Should navigate to room page
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Check room toolbar
     await expect(page.locator('mat-toolbar')).toBeVisible();
@@ -31,6 +53,7 @@ test.describe('Room Functionality', () => {
 
     // Wait for room page
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Wait for room state to load and admin controls to appear
     await expect(page.getByRole('button', { name: /Start Voting/i })).toBeVisible();
@@ -48,6 +71,7 @@ test.describe('Room Functionality', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Enable admin participation to see voting cards
     const participateCheckbox = page.locator('mat-checkbox').getByText('I want to participate');
@@ -81,6 +105,7 @@ test.describe('Room Functionality', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Enable admin participation (click the text, not the checkbox itself)
     const participateCheckbox = page.locator('mat-checkbox').getByText('I want to participate');
@@ -137,6 +162,7 @@ test.describe('Room Functionality', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Get room ID text
     const roomIdText = await page.locator('.room-id').textContent();
@@ -164,6 +190,7 @@ test.describe('Room Functionality', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Click back button
     await page.locator('button[mattooltip="Leave Room"]').click();
@@ -184,6 +211,7 @@ test.describe('Room Functionality', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     // Participants section should be visible
     await expect(page.locator('.participants-section')).toBeVisible();
@@ -203,6 +231,7 @@ test.describe('Room Functionality', () => {
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page);
 
     if (isMobile) {
       // On mobile, toolbar title should be hidden

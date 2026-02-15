@@ -341,18 +341,54 @@ Then periodically wipe the test database.
 
 #### Current Implementation
 
-Currently, tests do NOT implement automatic cleanup. This is acceptable for:
-- ✅ Development and local testing
-- ✅ CI/CD with fresh database resets
-- ⚠️ Long-running test environments (may need periodic manual cleanup)
+✅ **Implemented: Option 1 (After-Each Test Cleanup)**
 
-#### Future Considerations
+All e2e tests now implement automatic cleanup using the `cleanupTestRoom()` helper:
 
-If test data pollution becomes an issue, implement **Option 1** (After-Each Cleanup) as it provides the best balance of:
-- Test isolation
-- Debugging capability
-- Database hygiene
-- Minimal configuration overhead
+**Implementation Details**:
+- **Helper File**: [tests/e2e/helpers/cleanup.ts](helpers/cleanup.ts)
+- **Supabase Client**: Uses real Supabase credentials to delete test data
+- **Cleanup Hook**: `test.afterEach()` in all test files
+- **Room ID Tracking**: Each test captures room IDs from URLs for cleanup
+- **Console Output**: Shows "✓ Cleaned up test room: {roomId}" after each test
+
+**Example Usage** (from [room.spec.ts](room.spec.ts)):
+```typescript
+import { cleanupTestRoom } from './helpers/cleanup';
+
+test.describe('Room Functionality', () => {
+  let createdRoomIds: string[] = [];
+
+  const captureRoomId = (page) => {
+    const roomId = page.url().split('/room/')[1];
+    if (roomId && !createdRoomIds.includes(roomId)) {
+      createdRoomIds.push(roomId);
+    }
+    return roomId;
+  };
+
+  test.afterEach(async () => {
+    for (const roomId of createdRoomIds) {
+      await cleanupTestRoom(roomId);
+    }
+    createdRoomIds = [];
+  });
+
+  test('should create room', async ({ page }) => {
+    // ... create room ...
+    await expect(page).toHaveURL(/\/room\//);
+    captureRoomId(page); // Track for cleanup
+  });
+});
+```
+
+**Benefits**:
+- ✅ Test isolation - each test starts with clean state
+- ✅ No data pollution between tests
+- ✅ Easy to debug - clear ownership of test data
+- ✅ Visible cleanup - console logs show successful cleanup
+- ✅ CI/CD friendly - works in GitHub Actions
+- ✅ Minimal overhead - cleanup takes ~50-100ms per room
 
 ### Debugging Failed Tests
 

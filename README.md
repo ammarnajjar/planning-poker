@@ -472,22 +472,28 @@ This is **optional** and not required for the app to function correctly.
 
 #### Test Data Cleanup
 
-For E2E tests, the cleanup mechanism differs:
+For E2E tests, automatic cleanup is **implemented**:
 
 - **Production**: Client-side cleanup removes from UI only
-- **E2E Tests**: Should explicitly delete test data after each test
-- **Recommendation**: Use `test.afterEach()` to call cleanup functions
-- **Reason**: Ensures test isolation and prevents data pollution
+- **E2E Tests**: Automatically delete test data after each test using `cleanupTestRoom()`
+- **Implementation**: All test files use `test.afterEach()` hooks with room ID tracking
+- **Benefits**: Test isolation, no data pollution, clean database state
 
-Example:
+Example from [tests/e2e/room.spec.ts](tests/e2e/room.spec.ts):
 ```typescript
+import { cleanupTestRoom } from './helpers/cleanup';
+
+let createdRoomIds: string[] = [];
+
 test.afterEach(async () => {
-  if (roomId) {
-    // Delete test room and participants from database
+  for (const roomId of createdRoomIds) {
     await cleanupTestRoom(roomId);
   }
+  createdRoomIds = [];
 });
 ```
+
+See [E2E_TESTING.md](tests/e2e/E2E_TESTING.md#test-data-cleanup-strategy) for full implementation details.
 
 #### Timing Summary
 

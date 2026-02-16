@@ -23,7 +23,8 @@
   <!-- https://github.com/rafgraph/spa-github-pages -->
   <script>
     (function(l) {
-      if (l.search[1] === '/' ) {
+      // Only run on GitHub Pages (github.io domain) to prevent issues on local dev
+      if (l.hostname.includes('github.io') && l.search[1] === '/' ) {
         var decoded = l.search.slice(1).split('&').map(function(s) {
           return s.replace(/~and~/g, '&')
         }).join('?');

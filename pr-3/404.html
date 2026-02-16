@@ -27,13 +27,19 @@
         pathSegmentsToKeep = 2; // Keep /planning-poker/pr-3/
       }
 
-      l.replace(
-        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      // Debug logging
+      console.log('[404.html] pathname:', l.pathname);
+      console.log('[404.html] pathSegments:', pathSegments);
+      console.log('[404.html] pathSegmentsToKeep:', pathSegmentsToKeep);
+
+      var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
         l.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/') + '/?/' +
         l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
         (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash
-      );
+        l.hash;
+
+      console.log('[404.html] Redirecting to:', redirectUrl);
+      l.replace(redirectUrl);
     } else {
       // On local dev, redirect to homepage
       // For proper SPA routing on local dev, use: ng serve

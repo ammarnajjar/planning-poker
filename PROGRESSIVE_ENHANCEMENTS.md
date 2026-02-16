@@ -184,6 +184,109 @@ if (navigator.clipboard) { /* use feature */ }
 3. Have someone start voting in the room
 4. You should see a notification
 
+### Network Information API
+1. **Chrome DevTools Network Throttling:**
+   - Open Chrome DevTools (F12)
+   - Go to Network tab
+   - Click "Online" dropdown at top
+   - Select "Fast 3G" or "Slow 3G"
+   - Check browser console for polling interval changes
+   - Expected: `[Supabase] Adjusting heartbeat interval to 5000ms (poor connection)`
+
+2. **Connection Quality Indicator:**
+   - Throttle network to "Slow 3G"
+   - Look at room toolbar - should see warning icon (signal bars)
+   - Icon should pulse orange/red
+   - Hover to see connection description
+
+3. **Data Saver Mode:**
+   - Chrome: Settings → Privacy and security → Enable "Data Saver"
+   - Check console for 5-second polling interval
+   - Expected: Respects data saver preference
+
+### Page Visibility API
+1. **Tab Switching:**
+   - Open room in Chrome
+   - Open DevTools console (F12)
+   - Join the room (start heartbeat)
+   - Switch to another tab
+   - Check console: `[Supabase] Page visibility changed: hidden`
+   - Check console: `[Supabase] Reducing polling rate to 6000ms` (or 3x current rate)
+   - Switch back to room tab
+   - Check console: `[Supabase] Page visibility changed: visible`
+   - Check console: `[Supabase] Restoring polling rate to 2000ms`
+
+2. **Battery Impact Test:**
+   - Open room on mobile device
+   - Let it run for 5 minutes in foreground
+   - Note battery drain
+   - Switch to another app (room tab hidden)
+   - Let it run for 5 minutes in background
+   - Battery drain should be significantly less (3x reduction in polling)
+
+3. **Minimize Window:**
+   - Open room
+   - Minimize browser window completely
+   - Page should detect as hidden and reduce polling
+   - Restore window - polling should return to normal
+
+### Idle Detection API
+1. **Chrome/Edge Only (Permission Required):**
+   - Open room in Chrome or Edge
+   - Console should show permission request
+   - If prompted, allow "idle detection" permission
+   - Stay inactive (don't touch mouse/keyboard) for 2+ minutes
+   - After 2 minutes, check toolbar - idle icon (eye-off) should appear
+   - Icon should pulse gray
+   - Move mouse or type - icon should disappear
+
+2. **Permission Denied Test:**
+   - Open room in Chrome
+   - When prompted, deny permission
+   - Check console: `[IdleDetection] Permission denied`
+   - No idle detection should occur (graceful fallback)
+
+3. **Screen Lock Test:**
+   - Open room on laptop with Chrome
+   - Allow idle detection permission
+   - Lock your screen (Windows: Win+L, Mac: Cmd+Ctrl+Q)
+   - User should be marked as idle immediately
+   - Unlock screen - should return to active
+
+### Screen Orientation API
+1. **Mobile Device - Portrait to Landscape:**
+   - Open room on mobile device (phone)
+   - Hold device in portrait mode
+   - Join/create room
+   - Check console: `[ScreenOrientation] Locked to landscape`
+   - Device should auto-rotate to landscape (if auto-rotate enabled)
+   - Leave room
+   - Check console: `[ScreenOrientation] Orientation unlocked`
+   - Device can now rotate freely again
+
+2. **Mobile Device - Already Landscape:**
+   - Hold device in landscape mode
+   - Join/create room
+   - Check console - should see no lock message (already in desired orientation)
+   - Device stays in landscape
+
+3. **Desktop Test:**
+   - Open room on desktop browser
+   - Check console - no orientation locking should occur
+   - Check: `isMobileDevice()` returns false
+   - Feature is disabled on desktop (screen size > 768px)
+
+4. **Tablet Test:**
+   - Open room on tablet (iPad, Android tablet)
+   - If screen < 768px, should lock to landscape
+   - If screen >= 768px, no lock
+
+5. **Safari iOS Test:**
+   - Open room on iPhone Safari
+   - Note: Lock may fail (limited support)
+   - Check console for error message
+   - App should work normally despite failure (graceful fallback)
+
 ---
 
 ### 5. Network Information API 📶

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Planning Poker - Redirecting...</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .message {
+      text-align: center;
+    }
+  </style>
+  <script>
+    // Single Page Apps for GitHub Pages
+    // Root-level 404.html that handles ALL subdirectories
+    // https://github.com/rafgraph/spa-github-pages
+
+    var l = window.location;
+    if (l.hostname.includes('github.io')) {
+      // Auto-detect number of path segments to keep based on URL structure
+      // For /planning-poker/room/XXX -> keep 1 segment (planning-poker)
+      // For /planning-poker/pr-3/room/XXX -> keep 2 segments (planning-poker/pr-3)
+
+      var pathSegments = l.pathname.split('/').filter(function(segment) {
+        return segment.length > 0;
+      });
+
+      console.log('[Root 404] pathname:', l.pathname);
+      console.log('[Root 404] pathSegments:', pathSegments);
+
+      // Default: keep 1 segment for main deployment
+      var pathSegmentsToKeep = 1;
+
+      // Check if second segment is a PR preview (pr-{number})
+      if (pathSegments.length > 1 && pathSegments[1].match(/^pr-\d+$/)) {
+        pathSegmentsToKeep = 2; // Keep both planning-poker and pr-3
+        console.log('[Root 404] Detected PR preview, keeping 2 segments');
+      } else {
+        console.log('[Root 404] Main deployment, keeping 1 segment');
+      }
+
+      // Build redirect URL
+      var basePath = l.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/');
+      var remainingPath = l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~');
+      var search = l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '';
+
+      var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        basePath + '/?/' + remainingPath + search + l.hash;
+
+      console.log('[Root 404] Redirecting to:', redirectUrl);
+
+      // Show redirect URL on page for debugging
+      var debugEl = document.getElementById('debug-info');
+      if (debugEl) {
+        debugEl.innerHTML = 'Redirecting from: ' + l.pathname + '<br>To: ' + redirectUrl;
+      }
+
+      // Redirect
+      setTimeout(function() {
+        l.replace(redirectUrl);
+      }, 100); // Small delay to see debug info
+    } else {
+      // On local dev, redirect to homepage
+      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/');
+    }
+  </script>
+</head>
+<body>
+  <div class="message">
+    <h1>Redirecting...</h1>
+    <p id="debug-info">Processing redirect...</p>
+  </div>
+</body>
+</html>

@@ -13,8 +13,19 @@
     // Only run on GitHub Pages (github.io domain) to prevent issues on local dev
     var l = window.location;
     if (l.hostname.includes('github.io')) {
-      // Store the redirect path
-      var pathSegmentsToKeep = 1;
+      // Auto-detect number of path segments to keep based on base href
+      // For /planning-poker/ -> keep 1 segment
+      // For /planning-poker/pr-3/ -> keep 2 segments
+      var pathSegments = l.pathname.split('/').filter(function(segment) {
+        return segment.length > 0;
+      });
+
+      var pathSegmentsToKeep = 1; // Default for /planning-poker/
+
+      // If path starts with pr-{number}, we're in a PR preview
+      if (pathSegments.length > 1 && pathSegments[1].match(/^pr-\d+$/)) {
+        pathSegmentsToKeep = 2; // Keep /planning-poker/pr-3/
+      }
 
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +

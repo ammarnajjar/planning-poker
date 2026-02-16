@@ -331,13 +331,13 @@ button, a, input, textarea, select {
 
 // iOS PWA safe area support for toolbars
 .mat-toolbar {
-  // Add padding at top for iOS notch/status bar
-  padding-top: env(safe-area-inset-top) !important;
+  // Add padding at top for iOS notch/status bar + extra space
+  padding-top: calc(env(safe-area-inset-top) + 8px) !important;
   // Extend height to account for safe area
-  min-height: calc(64px + env(safe-area-inset-top)) !important;
+  min-height: calc(64px + env(safe-area-inset-top) + 8px) !important;
 
   @media (max-width: 600px) {
-    min-height: calc(56px + env(safe-area-inset-top)) !important;
+    min-height: calc(56px + env(safe-area-inset-top) + 8px) !important;
   }
 }
 

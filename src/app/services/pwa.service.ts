@@ -10,6 +10,9 @@ export class PwaService {
   // Signal to track if the app is installed as PWA
   isInstalled = signal(false);
 
+  // Signal to track notification permission
+  notificationPermission = signal<NotificationPermission>('default');
+
   private swRegistration: ServiceWorkerRegistration | null = null;
   private deferredPrompt: BeforeInstallPromptEvent | null = null;
 
@@ -19,6 +22,9 @@ export class PwaService {
 
     // Listen for install prompt
     this.setupInstallPrompt();
+
+    // Check notification permission
+    this.checkNotificationPermission();
   }
 
   /**
@@ -152,6 +158,84 @@ export class PwaService {
    */
   canInstall(): boolean {
     return this.deferredPrompt !== null;
+  }
+
+  /**
+   * Check current notification permission status
+   */
+  private checkNotificationPermission(): void {
+    if ('Notification' in window) {
+      this.notificationPermission.set(Notification.permission);
+    }
+  }
+
+  /**
+   * Request notification permission from user
+   */
+  async requestNotificationPermission(): Promise<NotificationPermission> {
+    if (!('Notification' in window)) {
+      console.warn('[PWA Service] Notifications not supported');
+      return 'denied';
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      this.notificationPermission.set(permission);
+      console.log('[PWA Service] Notification permission:', permission);
+      return permission;
+    } catch (error) {
+      console.error('[PWA Service] Failed to request notification permission:', error);
+      return 'denied';
+    }
+  }
+
+  /**
+   * Show a desktop notification
+   */
+  async showNotification(title: string, options?: NotificationOptions): Promise<void> {
+    // Check if notifications are supported
+    if (!('Notification' in window)) {
+      console.warn('[PWA Service] Notifications not supported');
+      return;
+    }
+
+    // Check permission
+    if (Notification.permission !== 'granted') {
+      console.warn('[PWA Service] Notification permission not granted');
+      return;
+    }
+
+    // If service worker is available, show notification through it
+    if (this.swRegistration) {
+      try {
+        await this.swRegistration.showNotification(title, {
+          icon: '/icons/icon-192x192.png',
+          badge: '/icons/icon-72x72.png',
+          ...options,
+        });
+        console.log('[PWA Service] Notification shown:', title);
+      } catch (error) {
+        console.error('[PWA Service] Failed to show notification:', error);
+      }
+    } else {
+      // Fallback to direct notification
+      try {
+        new Notification(title, {
+          icon: '/icons/icon-192x192.png',
+          ...options,
+        });
+        console.log('[PWA Service] Notification shown (fallback):', title);
+      } catch (error) {
+        console.error('[PWA Service] Failed to show notification (fallback):', error);
+      }
+    }
+  }
+
+  /**
+   * Check if notifications are supported and enabled
+   */
+  canShowNotifications(): boolean {
+    return 'Notification' in window && Notification.permission === 'granted';
   }
 }
 

@@ -56,6 +56,11 @@ export class PwaService {
               // New service worker available
               console.log('[PWA Service] New version available!');
               this.updateAvailable.set(true);
+
+              // Show update notification
+              if (confirm('A new version of Planning Poker is available. Reload to update?')) {
+                this.applyUpdate();
+              }
             }
           });
         }

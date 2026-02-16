@@ -1,7 +1,8 @@
 // Planning Poker Service Worker
 // Native implementation following Angular's recommendation to use browser APIs directly
 
-const CACHE_VERSION = 'v1.2.3';
+// Increment this version number whenever you deploy to force cache refresh
+const CACHE_VERSION = 'v1.2.4';
 const CACHE_NAME = `planning-poker-${CACHE_VERSION}`;
 
 // Assets to cache on install
@@ -113,16 +114,20 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
+    // Only cache GET requests (Cache API doesn't support POST/PATCH/DELETE)
+    if (networkResponse.ok && request.method === 'GET') {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
   } catch (error) {
     console.log('[Service Worker] Network failed, trying cache:', request.url);
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
+    // Only try cache for GET requests
+    if (request.method === 'GET') {
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
     }
     throw error;
   }

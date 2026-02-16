@@ -287,6 +287,11 @@ export class RoomComponent implements OnInit, OnDestroy {
         await this.supabaseService.joinRoom(roomId, userName, adminPin);
       }
       this.currentUserId = this.supabaseService.getCurrentUserId();
+
+      // Mark initialization as complete after all subscriptions settle
+      setTimeout(() => {
+        this.initializationComplete = true;
+      }, 5000);
     } catch (error) {
       console.error('Failed to initialize room:', error);
       this.router.navigate(['/']);
@@ -304,10 +309,15 @@ export class RoomComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Ignore shortcuts if modifier keys are pressed
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
     // Admin-only shortcuts
     if (this.isAdmin()) {
       switch (event.key.toLowerCase()) {
-        case 'r':
+        case 'v':
           event.preventDefault();
           this.toggleReveal();
           this.vibrate([50]);
@@ -394,11 +404,27 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.vibrate([30]);
   }
 
+  private toggleRevealInProgress = false;
+  private initializationComplete = false;
+
   /**
    * Toggle reveal state
    */
   toggleReveal(): void {
     if (!this.isAdmin()) return;
+
+    if (!this.initializationComplete) {
+      return;
+    }
+
+    if (this.toggleRevealInProgress) {
+      return;
+    }
+
+    this.toggleRevealInProgress = true;
+    setTimeout(() => {
+      this.toggleRevealInProgress = false;
+    }, 1000); // Reset after 1 second
 
     // If hiding votes and discussion mode is active, stop discussion mode
     if (this.roomState().revealed && this.roomState().discussionActive) {

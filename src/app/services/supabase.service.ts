@@ -343,10 +343,15 @@ export class SupabaseService {
       .eq('id', roomId);
 
     if (rooms && rooms.length > 0) {
+      // If voting hasn't started, revealed should always be false in local state
+      // This prevents stale "revealed" state from previous sessions from being displayed
+      const votingStarted = rooms[0].voting_started || false;
+      const revealed = votingStarted ? (rooms[0].revealed || false) : false;
+
       this.roomState.update(state => ({
         ...state,
-        revealed: rooms[0].revealed || false,
-        votingStarted: rooms[0].voting_started || false,
+        revealed,
+        votingStarted,
         adminUserId: rooms[0].admin_user_id || '',
         adminParticipates: rooms[0].admin_participates || false,
         discussionActive: rooms[0].discussion_active || false,
@@ -456,8 +461,16 @@ export class SupabaseService {
         (payload: any) => {
           if (payload.new) {
             const updates: Partial<RoomState> = {};
+
+            // Get voting_started from payload or current state
+            const votingStarted = typeof payload.new['voting_started'] === 'boolean'
+              ? payload.new['voting_started']
+              : this.roomState().votingStarted;
+
+            // If voting hasn't started, revealed should always be false
+            // This prevents stale "revealed" state from previous sessions
             if (typeof payload.new['revealed'] === 'boolean') {
-              updates.revealed = payload.new['revealed'];
+              updates.revealed = votingStarted ? payload.new['revealed'] : false;
             }
             if (typeof payload.new['voting_started'] === 'boolean') {
               updates.votingStarted = payload.new['voting_started'];

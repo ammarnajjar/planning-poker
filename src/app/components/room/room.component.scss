@@ -8,7 +8,6 @@
     font-size: 18px;
     font-weight: 500;
 
-    // Hide title on mobile to save space
     @media (max-width: 600px) {
       display: none;
     }
@@ -36,49 +35,25 @@
     }
   }
 
-  // Connection indicator styling
   .connection-poor {
     color: #ff9800 !important;
-    animation: pulse-warning 2s ease-in-out infinite;
+    animation: pulse 2s ease-in-out infinite;
   }
 
   .connection-offline {
     color: #f44336 !important;
-    animation: pulse-error 1.5s ease-in-out infinite;
+    animation: pulse 1.5s ease-in-out infinite;
   }
 
-  // Idle indicator styling
   .idle-indicator {
     color: #9e9e9e !important;
-    animation: pulse-idle 3s ease-in-out infinite;
+    animation: pulse 3s ease-in-out infinite;
   }
 }
 
-@keyframes pulse-warning {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-@keyframes pulse-error {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
-@keyframes pulse-idle {
-  0%, 100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .room-container {
@@ -89,15 +64,14 @@
   max-width: 600px;
   margin: 0 auto;
   background: #f5f5f5;
-  min-height: calc(100vh - 56px); // Mobile toolbar height
+  min-height: calc(100vh - 56px);
   overflow-y: auto;
   overflow-x: hidden;
 
   @media (min-width: 600px) {
-    min-height: calc(100vh - 64px); // Desktop toolbar height
+    min-height: calc(100vh - 64px);
   }
 
-  // Desktop: wider layout
   @media (min-width: 768px) {
     max-width: 900px;
     padding: 24px;
@@ -109,14 +83,12 @@
   }
 }
 
-// Voting Section - Tinder Style
 .voting-section {
   background: white;
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  // Desktop: more padding
   @media (min-width: 768px) {
     padding: 24px;
   }
@@ -151,7 +123,6 @@
     }
   }
 
-  // Desktop: hide carousel, show grid instead
   @media (min-width: 768px) {
     display: none;
   }
@@ -165,7 +136,6 @@
   min-height: 220px;
 }
 
-// Desktop: Grid view for all cards
 .vote-cards-grid {
   display: none;
 
@@ -219,7 +189,6 @@
     }
   }
 
-  // Desktop grid: smaller cards
   @media (min-width: 768px) {
     width: 100%;
     height: 85px;
@@ -242,7 +211,6 @@
   color: #3f51b5;
   transition: color 0.3s ease;
 
-  // Desktop grid: smaller text
   @media (min-width: 768px) {
     font-size: 32px;
   }
@@ -254,7 +222,6 @@
   gap: 6px;
   margin-bottom: 10px;
 
-  // Desktop: hide indicators when showing grid
   @media (min-width: 768px) {
     display: none;
   }
@@ -289,14 +256,12 @@
   }
 }
 
-// Participants Section
 .participants-section {
   background: white;
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  // Desktop: more padding
   @media (min-width: 768px) {
     padding: 24px;
   }
@@ -310,9 +275,7 @@
   text-align: center;
 }
 
-// Poker Table Container
 .poker-table-container {
-  // Hidden on mobile, shown on tablet+
   display: none;
 
   @media (min-width: 768px) {
@@ -329,7 +292,6 @@
   }
 }
 
-// Poker Table - Racetrack/stadium shaped like real poker tables
 .poker-table {
   position: absolute;
   top: 50%;
@@ -337,29 +299,19 @@
   transform: translate(-50%, -50%);
   width: 63%;
   height: 50%;
-  background:
-    radial-gradient(ellipse at center, #2d6a4f 0%, #1e5128 70%, #0f3d1a 100%);
+  background: radial-gradient(ellipse at center, #2d6a4f 0%, #1e5128 70%, #0f3d1a 100%);
   border-radius: 9999px;
-
-  // Multiple border layers for depth
   border: 4px solid #000000;
   box-shadow:
-    // Black outer border shadow
     0 0 0 8px #1a1a1a,
-    // Brown/tan wood inner border
     0 0 0 20px #8b6f47,
-    // Inner brown shadow
     inset 0 0 0 4px #654321,
-    // Deep inset shadow for felt depth
     inset 0 8px 30px rgba(0, 0, 0, 0.6),
     inset 0 -8px 20px rgba(0, 0, 0, 0.4),
-    // Highlight on top edge
     inset 0 2px 10px rgba(255, 255, 255, 0.05),
-    // Outer drop shadow
     0 15px 40px rgba(0, 0, 0, 0.5),
     0 8px 20px rgba(0, 0, 0, 0.3);
 
-  // Add poker table felt texture
   &::before {
     content: '';
     position: absolute;
@@ -369,24 +321,11 @@
     bottom: 0;
     border-radius: 9999px;
     background-image:
-      repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.03) 2px,
-        rgba(0, 0, 0, 0.03) 4px
-      ),
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.03) 2px,
-        rgba(0, 0, 0, 0.03) 4px
-      );
+      repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px);
     opacity: 0.5;
   }
 
-  // Add betting circle/oval pattern
   &::after {
     content: '';
     position: absolute;
@@ -405,20 +344,13 @@
     height: 45%;
     border: 5px solid #000000;
     box-shadow:
-      // Black outer border shadow
       0 0 0 10px #1a1a1a,
-      // Brown/tan wood inner border
       0 0 0 26px #8b6f47,
-      // Lighter tan highlight
       0 0 0 28px #a68a5c,
-      // Inner brown shadow
       inset 0 0 0 5px #654321,
-      // Deep inset shadow for felt depth
       inset 0 10px 40px rgba(0, 0, 0, 0.6),
       inset 0 -10px 25px rgba(0, 0, 0, 0.4),
-      // Highlight on top edge
       inset 0 3px 15px rgba(255, 255, 255, 0.05),
-      // Outer drop shadow
       0 20px 50px rgba(0, 0, 0, 0.6),
       0 10px 30px rgba(0, 0, 0, 0.4);
 
@@ -432,15 +364,14 @@
     height: 42%;
   }
 
-  // Discussion mode: dim the table background to emphasize highlighted participants
   &.discussion-mode-active {
     &::before {
-      background: rgba(0, 60, 0, 0.4); // Darker semi-transparent overlay
+      background: rgba(0, 60, 0, 0.4);
       transition: background 0.5s ease;
     }
 
     &::after {
-      opacity: 0.05; // Dim the dashed border
+      opacity: 0.05;
       transition: opacity 0.5s ease;
     }
 
@@ -451,7 +382,6 @@
   }
 }
 
-// Table decorations - card suits
 .table-decorations {
   position: absolute;
   width: 100%;
@@ -470,33 +400,23 @@
       font-size: 32px;
     }
 
-    &.suit-top {
-      top: 15%;
+    &.suit-top, &.suit-bottom {
       left: 50%;
       transform: translateX(-50%);
       color: #000;
     }
 
-    &.suit-bottom {
-      bottom: 15%;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #000;
-    }
+    &.suit-top { top: 15%; }
+    &.suit-bottom { bottom: 15%; }
 
-    &.suit-left {
-      left: 10%;
+    &.suit-left, &.suit-right {
       top: 50%;
       transform: translateY(-50%);
       color: #dc143c;
     }
 
-    &.suit-right {
-      right: 10%;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #dc143c;
-    }
+    &.suit-left { left: 10%; }
+    &.suit-right { right: 10%; }
   }
 }
 
@@ -577,6 +497,7 @@
     font-weight: 700;
     font-size: 12px;
     letter-spacing: 1px;
+    animation: pulseIndicator 2s ease-in-out infinite;
 
     @media (min-width: 768px) {
       padding: 6px 16px;
@@ -586,12 +507,11 @@
 
   .discussion-indicator-min {
     background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
-    animation: pulseIndicator 2s ease-in-out infinite;
   }
 
   .discussion-indicator-max {
     background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
-    animation: pulseIndicator 2s ease-in-out infinite 1s;
+    animation-delay: 1s;
   }
 }
 
@@ -615,7 +535,6 @@
   }
 }
 
-// Mobile: Simple grid layout
 .participant-cards-mobile {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -626,10 +545,9 @@
   }
 }
 
-// Participants positioned around table (tablet and desktop only)
 .participants-around-table {
   display: none;
-  background: transparent; // Ensure no background shows as white squares
+  background: transparent;
 
   @media (min-width: 768px) {
     display: block;
@@ -640,7 +558,6 @@
     height: 100%;
   }
 
-  // Force all children to have no backgrounds on desktop poker table
   .participant-card {
     background: none !important;
   }
@@ -657,14 +574,12 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  background: transparent; // Ensure no background on participant cards
+  background: transparent;
 
-  // Mobile: no positioning
   @media (max-width: 767px) {
     position: relative;
   }
 
-  // Tablet+: Calculate position around the ellipse
   @media (min-width: 768px) {
     position: absolute;
 
@@ -680,11 +595,9 @@
     transform: translate(-50%, -50%);
   }
 
-  &.is-you {
-    .participant-name {
-      color: #2196f3;
-      font-weight: 600;
-    }
+  &.is-you .participant-name {
+    color: #2196f3;
+    font-weight: 600;
   }
 
   &.non-participating-admin {
@@ -713,22 +626,40 @@
     }
   }
 
-  // Discussion mode: dim non-selected participants
   &.discussion-dimmed {
     opacity: 0.3;
     filter: grayscale(50%);
     transition: all 0.5s ease;
   }
 
-  // Discussion mode: highlight min voter (low estimate)
-  &.discussion-min {
+  &.discussion-min,
+  &.discussion-max {
     z-index: 10;
 
     .card-flip {
-      box-shadow: 0 0 30px rgba(33, 150, 243, 0.8);
       border-radius: 50%;
       transform: scale(1.15);
-      animation: pulseMinCard 2s ease-in-out infinite;
+    }
+
+    .participant-name {
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      padding: 4px 8px;
+      border-radius: 8px;
+      max-width: 100px !important;
+
+      @media (min-width: 768px) {
+        font-size: 16px !important;
+        padding: 6px 12px;
+        max-width: 120px !important;
+      }
+    }
+  }
+
+  &.discussion-min {
+    .card-flip {
+      box-shadow: 0 0 30px rgba(33, 150, 243, 0.8);
+      animation: pulseCard 2s ease-in-out infinite;
     }
 
     .card-back {
@@ -738,31 +669,15 @@
     }
 
     .participant-name {
-      font-size: 14px !important;
-      font-weight: 700 !important;
       color: #2196f3 !important;
       background: rgba(33, 150, 243, 0.1);
-      padding: 4px 8px;
-      border-radius: 8px;
-      max-width: 100px !important;
-
-      @media (min-width: 768px) {
-        font-size: 16px !important;
-        padding: 6px 12px;
-        max-width: 120px !important;
-      }
     }
   }
 
-  // Discussion mode: highlight max voter (high estimate)
   &.discussion-max {
-    z-index: 10;
-
     .card-flip {
       box-shadow: 0 0 30px rgba(255, 87, 34, 0.8);
-      border-radius: 50%;
-      transform: scale(1.15);
-      animation: pulseMaxCard 2s ease-in-out infinite;
+      animation: pulseCard 2s ease-in-out infinite;
     }
 
     .card-back {
@@ -772,25 +687,13 @@
     }
 
     .participant-name {
-      font-size: 14px !important;
-      font-weight: 700 !important;
       color: #ff5722 !important;
       background: rgba(255, 87, 34, 0.1);
-      padding: 4px 8px;
-      border-radius: 8px;
-      max-width: 100px !important;
-
-      @media (min-width: 768px) {
-        font-size: 16px !important;
-        padding: 6px 12px;
-        max-width: 120px !important;
-      }
     }
   }
 }
 
-// Pulse animation for min voter card (blue)
-@keyframes pulseMinCard {
+@keyframes pulseCard {
   0%, 100% {
     transform: scale(1.15);
     filter: brightness(1);
@@ -801,19 +704,6 @@
   }
 }
 
-// Pulse animation for max voter card (orange/red)
-@keyframes pulseMaxCard {
-  0%, 100% {
-    transform: scale(1.15);
-    filter: brightness(1);
-  }
-  50% {
-    transform: scale(1.18);
-    filter: brightness(1.1);
-  }
-}
-
-// Card placing animation - moves participant slightly toward table center
 @keyframes placeCardOnTable {
   0% {
     transform: translate(-50%, -50%) scale(0.8);
@@ -828,7 +718,6 @@
   }
 }
 
-// Card drop animation - adds bounce effect to the card itself
 @keyframes cardDrop {
   0% {
     transform: translateY(-20px) rotate(5deg);
@@ -844,7 +733,6 @@
   }
 }
 
-// Card throw animation - cards fly from participant position toward table center
 @keyframes throwCardOnTable {
   0% {
     transform: translate(-50%, -80%) scale(0.5) rotate(0deg);
@@ -860,7 +748,6 @@
   }
 }
 
-// Cards placed on table
 .cards-on-table {
   position: absolute;
   top: 0;
@@ -874,21 +761,17 @@
 .table-card {
   position: absolute;
 
-  // Align with participant position (same calculation as participants-around-table)
   $radiusX: 50%;
   $radiusY: 50%;
 
   --angle: calc((360deg / var(--total-cards)) * var(--card-index));
   --x: calc(50% + (#{$radiusX} - 40px) * cos(var(--angle) - 90deg));
   --y: calc(50% + (#{$radiusY} - 40px) * sin(var(--angle) - 90deg));
-
-  // Slight random rotation for natural look
   --card-rotation: calc((var(--card-index) * 7deg) - 10deg);
 
   left: var(--x);
   top: var(--y);
   transform: translate(-50%, -50%) rotate(var(--card-rotation));
-
   animation: throwCardOnTable 0.5s ease-out;
   animation-delay: calc(var(--card-index) * 0.06s);
   animation-fill-mode: both;
@@ -898,11 +781,9 @@
   width: 22px;
   height: 30px;
   background: white;
-  border-radius: 4px; // More rounded corners
+  border-radius: 4px;
   border: 1px solid #e0e0e0;
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -942,7 +823,6 @@
   }
 }
 
-// Discussion badges
 .discussion-badge {
   position: absolute;
   top: -8px;
@@ -973,7 +853,6 @@
   }
 }
 
-// Remove participant button
 .remove-participant-btn {
   position: absolute;
   top: -8px;
@@ -1038,7 +917,6 @@
   width: 70px;
   height: 70px;
   perspective: 1000px;
-  // Ensure flip container is completely invisible - no backgrounds or borders
 }
 
 .card-front,
@@ -1127,7 +1005,6 @@
     transform: rotateY(0deg);
   }
 
-  // Desktop: Animate cards being placed on table
   @media (min-width: 768px) {
     animation: placeCardOnTable 0.6s ease-out;
 
@@ -1161,7 +1038,6 @@
   }
 }
 
-// Admin Controls
 .admin-controls {
   background: white;
   border-radius: 16px;
@@ -1171,7 +1047,6 @@
   flex-direction: column;
   gap: 12px;
 
-  // Desktop: more padding
   @media (min-width: 768px) {
     padding: 24px;
   }
@@ -1207,7 +1082,6 @@
     margin-top: 4px;
   }
 
-  // Desktop: more padding
   @media (min-width: 768px) {
     padding: 16px 24px;
     font-size: 18px;
@@ -1218,7 +1092,6 @@
   }
 }
 
-// Mobile Optimizations
 @media (max-width: 600px) {
   .room-container {
     padding: 8px;
@@ -1262,7 +1135,6 @@
   }
 }
 
-// Dark mode overrides
 :host-context(.dark-theme) {
   .room-container {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -1278,7 +1150,6 @@
     }
   }
 
-  // Voting section
   .voting-section {
     background: #2a2a2a;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -1296,12 +1167,10 @@
     }
   }
 
-  // Card carousel buttons
   .card-carousel .nav-button {
     color: #9fa8da;
   }
 
-  // Card backgrounds for dark mode
   .vote-card-large {
     background: #424242;
     border-color: #616161;
@@ -1330,7 +1199,6 @@
     }
   }
 
-  // Indicator dots
   .indicator-dot {
     background: #616161;
 
@@ -1343,7 +1211,6 @@
     }
   }
 
-  // Participants section
   .participants-section {
     background: #2a2a2a;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -1357,7 +1224,6 @@
     background: transparent;
   }
 
-  // Poker table styling remains similar but slightly darker
   .poker-table {
     background: radial-gradient(ellipse at center, #1d4d3a 0%, #143a26 70%, #0a2415 100%);
   }
@@ -1373,7 +1239,6 @@
     }
   }
 
-  // Participant cards
   .card-front {
     background: #424242;
     border-color: #616161;
@@ -1422,7 +1287,6 @@
     color: #64b5f6;
   }
 
-  // Table cards
   .table-card-inner {
     background: #424242;
     border-color: #616161;
@@ -1436,7 +1300,6 @@
     color: rgba(255, 255, 255, 0.6);
   }
 
-  // Admin controls
   .admin-controls {
     background: #2a2a2a;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);

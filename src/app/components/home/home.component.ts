@@ -15,6 +15,7 @@ import { AdminPinDialogComponent } from '../admin-pin-dialog/admin-pin-dialog.co
 import { SupabaseService } from '../../services/supabase.service';
 import { ThemeService } from '../../services/theme.service';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-home',
@@ -39,6 +40,7 @@ export class HomeComponent {
   showJoinForm = signal(false);
   joinAsAdmin = signal(false);
   joinError = signal(false);
+  version = environment.version;
 
   constructor(
     private readonly router: Router,

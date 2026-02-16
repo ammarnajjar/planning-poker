@@ -198,3 +198,15 @@
     height: 20px;
   }
 }
+
+.version-indicator {
+  margin-top: 16px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 11px;
+  font-family: monospace;
+  color: #666;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

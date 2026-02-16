@@ -25,24 +25,16 @@
     (function(l) {
       // Only run on GitHub Pages (github.io domain) to prevent issues on local dev
       if (l.hostname.includes('github.io') && l.search[1] === '/' ) {
-        console.log('[index.html] Processing redirect');
-        console.log('[index.html] pathname:', l.pathname);
-        console.log('[index.html] search:', l.search);
-
         var decoded = l.search.slice(1).split('&').map(function(s) {
           return s.replace(/~and~/g, '&')
         }).join('?');
 
-        // Remove trailing slash if present before adding decoded path
         var basePath = l.pathname;
         if (basePath.endsWith('/')) {
           basePath = basePath.slice(0, -1);
         }
 
-        var finalUrl = basePath + decoded + l.hash;
-        console.log('[index.html] Final URL:', finalUrl);
-
-        window.history.replaceState(null, null, finalUrl);
+        window.history.replaceState(null, null, basePath + decoded + l.hash);
       }
     }(window.location))
   </script>

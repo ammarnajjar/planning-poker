@@ -1,6 +1,7 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Injectable, signal, WritableSignal, effect } from '@angular/core';
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
+import { NetworkService } from './network.service';
 
 export interface Participant {
   id: string;
@@ -25,10 +26,13 @@ export interface RoomState {
   providedIn: 'root'
 })
 export class SupabaseService {
-  // Constants
-  private readonly HEARTBEAT_INTERVAL_MS = 2000;
+  // Constants - will be dynamically adjusted based on network quality
+  private readonly BASE_HEARTBEAT_INTERVAL_MS = 2000;
   private readonly CLEANUP_INTERVAL_MS = 3000;
   private readonly PARTICIPANT_TIMEOUT_MS = 5000;
+
+  // Dynamic heartbeat interval based on network quality
+  private currentHeartbeatInterval = this.BASE_HEARTBEAT_INTERVAL_MS;
 
   private supabase: SupabaseClient;
   private roomState: WritableSignal<RoomState> = signal<RoomState>({
@@ -61,7 +65,7 @@ export class SupabaseService {
   private userRemovedSignal = signal(false);
   public readonly userRemoved = this.userRemovedSignal.asReadonly();
 
-  constructor() {
+  constructor(private readonly networkService: NetworkService) {
     // Initialize Supabase client without auth persistence
     // We don't use Supabase Auth, so disable it to avoid lock conflicts
     this.supabase = createClient(
@@ -75,6 +79,31 @@ export class SupabaseService {
         }
       }
     );
+
+    // Monitor network quality and adjust polling interval
+    effect(() => {
+      const interval = this.networkService.getRecommendedPollingInterval();
+      const quality = this.networkService.connectionQuality();
+
+      if (this.currentHeartbeatInterval !== interval) {
+        console.log(`[Supabase] Adjusting heartbeat interval to ${interval}ms (${quality} connection)`);
+        this.currentHeartbeatInterval = interval;
+
+        // Restart heartbeat with new interval if currently running
+        if (this.heartbeatInterval) {
+          const roomId = this.roomState().roomId;
+          if (roomId) {
+            // Clear existing intervals
+            clearInterval(this.heartbeatInterval);
+            if (this.cleanupInterval) {
+              clearInterval(this.cleanupInterval);
+            }
+            // Restart with new interval
+            this.startHeartbeat(roomId);
+          }
+        }
+      }
+    });
 
     // Handle page unload/refresh to mark user as offline
     if (typeof window !== 'undefined') {
@@ -587,7 +616,7 @@ export class SupabaseService {
     };
 
     sendHeartbeat(); // Send immediately
-    this.heartbeatInterval = setInterval(sendHeartbeat, this.HEARTBEAT_INTERVAL_MS);
+    this.heartbeatInterval = setInterval(sendHeartbeat, this.currentHeartbeatInterval);
 
     // Clean up stale participants
     this.cleanupInterval = setInterval(() => {

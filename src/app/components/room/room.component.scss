@@ -35,6 +35,35 @@
       padding: 6px 12px;
     }
   }
+
+  // Connection indicator styling
+  .connection-poor {
+    color: #ff9800 !important;
+    animation: pulse-warning 2s ease-in-out infinite;
+  }
+
+  .connection-offline {
+    color: #f44336 !important;
+    animation: pulse-error 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-error {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .room-container {

@@ -12,6 +12,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { Participant, SupabaseService } from "../../services/supabase.service";
 import { PwaService } from "../../services/pwa.service";
 import { ThemeService } from "../../services/theme.service";
+import { NetworkService } from "../../services/network.service";
 
 @Component({
   selector: "app-room",
@@ -174,6 +175,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     private readonly supabaseService: SupabaseService,
     private readonly pwaService: PwaService,
     public readonly themeService: ThemeService,
+    public readonly networkService: NetworkService,
   ) {
     // Handle user removal with effect (100% signal-based, no RxJS)
     effect(() => {

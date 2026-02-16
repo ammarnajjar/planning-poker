@@ -146,6 +146,7 @@ if (navigator.clipboard) { /* use feature */ }
 | Vibration API | ✅ | ⚠️ Android only | ✅ iOS | ✅ | ✅ |
 | Web Share API | ✅ Mobile | ⚠️ Limited | ✅ iOS | ✅ Mobile | ✅ |
 | Desktop Notifications | ✅ | ✅ | ⚠️ Limited | ✅ | ⚠️ Varies |
+| Network Information | ✅ | ⚠️ Limited | ❌ | ✅ | ✅ |
 
 ✅ Full support
 ⚠️ Partial support
@@ -182,6 +183,49 @@ if (navigator.clipboard) { /* use feature */ }
 
 ---
 
+### 5. Network Information API 📶
+
+Adaptive polling based on connection quality for optimal performance.
+
+#### Features
+- **Connection monitoring**: Detects 2G/3G/4G connection types
+- **Adaptive polling**: Automatically adjusts heartbeat frequency
+- **Visual indicator**: Shows connection status when poor/offline
+- **Data saver mode**: Respects user's data saver setting
+
+#### Polling Intervals by Connection Quality
+- **Excellent** (4G, >5 Mbps): 1 second - fast real-time updates
+- **Good** (4G, 3G with low latency): 2 seconds - normal updates
+- **Poor** (3G with high latency, 2G): 5 seconds - reduced bandwidth
+- **Offline**: 10 seconds - minimal polling for reconnection
+- **Data Saver Enabled**: 5 seconds - respects user preference
+
+**Smart Behavior:**
+- Monitors `effectiveType`, `downlink`, and `rtt` (round-trip time)
+- Automatically restarts heartbeat with new interval when connection changes
+- Shows warning icon in toolbar when connection is poor/offline
+- Falls back to standard 2-second polling if API not supported
+
+**Browser Support:**
+- Chrome/Edge: ✅ Full support
+- Firefox: ⚠️ Limited support (effectiveType only)
+- Safari: ❌ Not supported (falls back to good connection)
+
+**Implementation:**
+```typescript
+// Monitor connection quality and adjust polling
+effect(() => {
+  const interval = this.networkService.getRecommendedPollingInterval();
+  const quality = this.networkService.connectionQuality();
+
+  if (this.currentHeartbeatInterval !== interval) {
+    this.restartHeartbeatWithNewInterval(interval);
+  }
+});
+```
+
+---
+
 ## Future Enhancements (Not Yet Implemented)
 
 ### Medium Priority
@@ -199,14 +243,18 @@ if (navigator.clipboard) { /* use feature */ }
 ## Technical Implementation
 
 ### Files Modified
-- [src/app/components/room/room.component.ts](src/app/components/room/room.component.ts) - Keyboard shortcuts, vibration, Web Share
+- [src/app/components/room/room.component.ts](src/app/components/room/room.component.ts) - Keyboard shortcuts, vibration, Web Share, connection indicator
 - [src/app/services/pwa.service.ts](src/app/services/pwa.service.ts) - Desktop notifications
+- [src/app/services/network.service.ts](src/app/services/network.service.ts) - Network quality monitoring
+- [src/app/services/supabase.service.ts](src/app/services/supabase.service.ts) - Adaptive polling based on network
 
 ### Key Methods
 - `handleKeyboardShortcut()` - Keyboard event handler with @HostListener
 - `vibrate()` - Vibration API wrapper with feature detection
 - `shareRoom()` - Web Share API with clipboard fallback
 - `showNotification()` - Desktop notification through Service Worker
+- `getRecommendedPollingInterval()` - Network-based polling interval calculation
+- `updateConnectionInfo()` - Monitor connection quality changes
 
 ---
 

@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { effect } from '@angular/core';
 import { SupabaseService, RoomState } from './supabase.service';
-import { NetworkService } from './network.service';
 
 // Mock Angular's effect function to avoid injection context errors in tests
 vi.mock('@angular/core', async () => {
@@ -44,7 +42,12 @@ const mockSupabase = {
 };
 
 // Mock NetworkService
-const mockNetworkService = {
+interface MockNetworkService {
+  getRecommendedPollingInterval: () => number;
+  connectionQuality: () => string;
+}
+
+const mockNetworkService: MockNetworkService = {
   getRecommendedPollingInterval: vi.fn().mockReturnValue(5000),
   connectionQuality: vi.fn().mockReturnValue('good'),
 };
@@ -57,6 +60,7 @@ describe('SupabaseService', () => {
     vi.clearAllMocks();
 
     // Create service instance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     service = new SupabaseService(mockNetworkService as any);
 
     // Replace the supabase client with our mock
@@ -1145,8 +1149,11 @@ describe('SupabaseService', () => {
 
   describe('Participant Heartbeat', () => {
     it('should have heartbeat constants', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).BASE_HEARTBEAT_INTERVAL_MS).toBe(2000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).CLEANUP_INTERVAL_MS).toBe(3000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).PARTICIPANT_TIMEOUT_MS).toBe(5000);
     });
   });

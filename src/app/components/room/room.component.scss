@@ -46,6 +46,12 @@
     color: #f44336 !important;
     animation: pulse-error 1.5s ease-in-out infinite;
   }
+
+  // Idle indicator styling
+  .idle-indicator {
+    color: #9e9e9e !important;
+    animation: pulse-idle 3s ease-in-out infinite;
+  }
 }
 
 @keyframes pulse-warning {
@@ -63,6 +69,15 @@
   }
   50% {
     opacity: 0.4;
+  }
+}
+
+@keyframes pulse-idle {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
   }
 }
 

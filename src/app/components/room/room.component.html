@@ -4,6 +4,11 @@
   </button>
   <span class="toolbar-title">Planning Poker</span>
   <span class="spacer"></span>
+  @if (idleDetectionService.idleState() === 'idle') {
+    <button mat-icon-button matTooltip="You are idle" class="idle-indicator">
+      <mat-icon>visibility_off</mat-icon>
+    </button>
+  }
   @if (networkService.shouldShowWarning()) {
     <button mat-icon-button
             [matTooltip]="networkService.getConnectionDescription()"

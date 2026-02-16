@@ -13,6 +13,8 @@ import { Participant, SupabaseService } from "../../services/supabase.service";
 import { PwaService } from "../../services/pwa.service";
 import { ThemeService } from "../../services/theme.service";
 import { NetworkService } from "../../services/network.service";
+import { IdleDetectionService } from "../../services/idle-detection.service";
+import { ScreenOrientationService } from "../../services/screen-orientation.service";
 
 @Component({
   selector: "app-room",
@@ -176,6 +178,8 @@ export class RoomComponent implements OnInit, OnDestroy {
     private readonly pwaService: PwaService,
     public readonly themeService: ThemeService,
     public readonly networkService: NetworkService,
+    public readonly idleDetectionService: IdleDetectionService,
+    private readonly screenOrientationService: ScreenOrientationService,
   ) {
     // Handle user removal with effect (100% signal-based, no RxJS)
     effect(() => {
@@ -238,6 +242,14 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     try {
+      // Start idle detection (2 minutes threshold)
+      await this.idleDetectionService.startMonitoring(120);
+
+      // Auto-lock to landscape on mobile for better poker table view
+      if (this.screenOrientationService.isMobileDevice()) {
+        await this.screenOrientationService.autoLockForPokerTable();
+      }
+
       // Get room ID from route
       const roomId = this.route.snapshot.paramMap.get("id");
       if (!roomId) {
@@ -353,6 +365,12 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.supabaseService.leaveRoom();
+
+    // Stop idle detection
+    this.idleDetectionService.stopMonitoring();
+
+    // Cleanup screen orientation (unlock if locked)
+    this.screenOrientationService.cleanup();
   }
 
   /**

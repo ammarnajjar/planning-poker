@@ -147,6 +147,9 @@ if (navigator.clipboard) { /* use feature */ }
 | Web Share API | ✅ Mobile | ⚠️ Limited | ✅ iOS | ✅ Mobile | ✅ |
 | Desktop Notifications | ✅ | ✅ | ⚠️ Limited | ✅ | ⚠️ Varies |
 | Network Information | ✅ | ⚠️ Limited | ❌ | ✅ | ✅ |
+| Page Visibility | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Idle Detection | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Screen Orientation | ✅ Mobile | ✅ Mobile | ⚠️ Limited | ✅ Mobile | ✅ |
 
 ✅ Full support
 ⚠️ Partial support
@@ -226,10 +229,93 @@ effect(() => {
 
 ---
 
+### 6. Page Visibility API ⚡
+
+Battery optimization by reducing polling when tab is hidden.
+
+#### Features
+- **Automatic detection**: Monitors when tab loses/gains focus
+- **Adaptive polling**: Reduces heartbeat frequency by 3x when hidden
+- **Battery saving**: Significant battery improvement on mobile
+- **Seamless transitions**: Automatically restores normal polling when visible
+
+#### Polling Behavior
+- **Visible**: Normal polling (network-adaptive: 1-5s)
+- **Hidden**: 3x slower polling (3-15s depending on network)
+- **Example**: 2s → 6s when tab is hidden
+
+**Smart Behavior:**
+- Monitors `document.hidden` state
+- Combines with Network Information API for optimal intervals
+- Automatically adjusts when switching tabs
+- Preserves real-time updates while saving battery
+
+**Browser Support:**
+- All modern browsers: ✅ Full support
+- IE11+: ✅ Full support
+
+---
+
+### 7. Idle Detection API 💤
+
+Show user status when idle (away from keyboard/screen).
+
+#### Features
+- **Idle detection**: Monitors user activity and screen state
+- **Visual indicator**: Shows "idle" icon in toolbar when away
+- **Configurable threshold**: Default 2 minutes (120 seconds)
+- **Permission-based**: Requires user permission
+
+#### Idle States
+- **Active**: User is interacting with device
+- **Idle**: User inactive for threshold duration OR screen locked
+- **Visual**: Eye-off icon appears in toolbar
+
+**Smart Behavior:**
+- Monitors both user activity and screen state
+- Respects user privacy with explicit permission
+- Helpful for team awareness in large rooms
+- Falls back gracefully if permission denied
+
+**Browser Support:**
+- Chrome/Edge 94+: ✅ Full support
+- Firefox: ❌ Not supported
+- Safari: ❌ Not supported
+
+---
+
+### 8. Screen Orientation API 📱
+
+Automatically lock to landscape for better poker table view on mobile.
+
+#### Features
+- **Auto-lock**: Automatically locks to landscape on mobile devices
+- **Better UX**: Poker table looks better in landscape orientation
+- **Smart detection**: Only activates on mobile (< 768px)
+- **Auto-unlock**: Unlocks when leaving room
+
+#### Orientation Behavior
+- **Mobile + Portrait**: Auto-locks to landscape when entering room
+- **Mobile + Landscape**: No action needed
+- **Desktop**: No orientation lock (not needed)
+- **On leave**: Automatically unlocks orientation
+
+**Smart Behavior:**
+- Only affects mobile devices (tablets and phones)
+- Respects current orientation (no lock if already landscape)
+- Auto-cleanup prevents orientation from staying locked
+- Falls back silently if not supported
+
+**Browser Support:**
+- Chrome/Edge Mobile: ✅ Full support
+- Safari iOS: ⚠️ Limited (requires fullscreen)
+- Firefox Mobile: ✅ Full support
+
+---
+
 ## Future Enhancements (Not Yet Implemented)
 
 ### Medium Priority
-- **Page Visibility API**: Pause heartbeats when tab is hidden (battery saving)
 - **Badge API**: Show vote count on PWA icon
 - **Fullscreen API**: Immersive mode for team displays
 
@@ -243,10 +329,12 @@ effect(() => {
 ## Technical Implementation
 
 ### Files Modified
-- [src/app/components/room/room.component.ts](src/app/components/room/room.component.ts) - Keyboard shortcuts, vibration, Web Share, connection indicator
+- [src/app/components/room/room.component.ts](src/app/components/room/room.component.ts) - Keyboard shortcuts, vibration, Web Share, connection indicator, idle indicator, orientation
 - [src/app/services/pwa.service.ts](src/app/services/pwa.service.ts) - Desktop notifications
 - [src/app/services/network.service.ts](src/app/services/network.service.ts) - Network quality monitoring
-- [src/app/services/supabase.service.ts](src/app/services/supabase.service.ts) - Adaptive polling based on network
+- [src/app/services/supabase.service.ts](src/app/services/supabase.service.ts) - Adaptive polling based on network, page visibility
+- [src/app/services/idle-detection.service.ts](src/app/services/idle-detection.service.ts) - Idle state detection
+- [src/app/services/screen-orientation.service.ts](src/app/services/screen-orientation.service.ts) - Screen orientation management
 
 ### Key Methods
 - `handleKeyboardShortcut()` - Keyboard event handler with @HostListener
@@ -255,6 +343,10 @@ effect(() => {
 - `showNotification()` - Desktop notification through Service Worker
 - `getRecommendedPollingInterval()` - Network-based polling interval calculation
 - `updateConnectionInfo()` - Monitor connection quality changes
+- `setupPageVisibilityMonitoring()` - Monitor tab visibility for battery optimization
+- `startMonitoring()` - Start idle detection with configurable threshold
+- `lockToLandscape()` - Lock screen orientation to landscape
+- `autoLockForPokerTable()` - Auto-lock on mobile devices
 
 ---
 

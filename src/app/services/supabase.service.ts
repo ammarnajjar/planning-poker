@@ -61,6 +61,10 @@ export class SupabaseService {
   private heartbeatInterval?: ReturnType<typeof setInterval>;
   private cleanupInterval?: ReturnType<typeof setInterval>;
 
+  // Page visibility tracking
+  private isPageVisible = true;
+  private visibilityChangeHandler?: () => void;
+
   // Signal for when current user is removed (Angular 21 zoneless compatible)
   private userRemovedSignal = signal(false);
   public readonly userRemoved = this.userRemovedSignal.asReadonly();
@@ -104,6 +108,9 @@ export class SupabaseService {
         }
       }
     });
+
+    // Monitor page visibility for battery optimization
+    this.setupPageVisibilityMonitoring();
 
     // Handle page unload/refresh to mark user as offline
     if (typeof window !== 'undefined') {
@@ -891,6 +898,84 @@ export class SupabaseService {
   }
 
   /**
+   * Setup Page Visibility API monitoring to reduce polling when tab is hidden
+   * This saves battery and reduces unnecessary network traffic
+   */
+  private setupPageVisibilityMonitoring(): void {
+    if (typeof document === 'undefined') return;
+
+    this.isPageVisible = !document.hidden;
+
+    this.visibilityChangeHandler = () => {
+      const wasVisible = this.isPageVisible;
+      this.isPageVisible = !document.hidden;
+
+      if (wasVisible !== this.isPageVisible) {
+        console.log(`[Supabase] Page visibility changed: ${this.isPageVisible ? 'visible' : 'hidden'}`);
+
+        // If page becomes hidden, slow down polling
+        // If page becomes visible, restore normal polling
+        const roomId = this.roomState().roomId;
+        if (roomId && this.heartbeatInterval) {
+          // Adjust interval based on visibility
+          const multiplier = this.isPageVisible ? 1 : 3; // 3x slower when hidden
+          const adjustedInterval = this.currentHeartbeatInterval * multiplier;
+
+          console.log(`[Supabase] ${this.isPageVisible ? 'Restoring' : 'Reducing'} polling rate to ${adjustedInterval}ms`);
+
+          // Restart heartbeat with adjusted interval
+          clearInterval(this.heartbeatInterval);
+          if (this.cleanupInterval) {
+            clearInterval(this.cleanupInterval);
+          }
+
+          // Restart with adjusted interval
+          const sendHeartbeat = async () => {
+            await this.supabase
+              .from('participants')
+              .update({ last_seen: Date.now() })
+              .eq('room_id', roomId)
+              .eq('user_id', this.currentUserId);
+          };
+
+          sendHeartbeat();
+          this.heartbeatInterval = setInterval(sendHeartbeat, adjustedInterval);
+
+          // Cleanup interval stays the same
+          this.cleanupInterval = setInterval(() => {
+            const now = Date.now();
+            const participants = this.roomState().participants;
+            const activeParticipants: Record<string, Participant> = {};
+
+            for (const [id, participant] of Object.entries(participants)) {
+              if (now - participant.lastSeen < this.PARTICIPANT_TIMEOUT_MS) {
+                activeParticipants[id] = participant;
+              }
+            }
+
+            this.roomState.update(state => ({
+              ...state,
+              participants: activeParticipants
+            }));
+          }, this.CLEANUP_INTERVAL_MS);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+  }
+
+  /**
+   * Cleanup page visibility monitoring
+   */
+  private cleanupPageVisibilityMonitoring(): void {
+    if (this.visibilityChangeHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      this.visibilityChangeHandler = undefined;
+    }
+  }
+
+  /**
    * Clean up when leaving room
    */
   async leaveRoom(): Promise<void> {
@@ -903,6 +988,9 @@ export class SupabaseService {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = undefined;
     }
+
+    // Cleanup page visibility monitoring
+    this.cleanupPageVisibilityMonitoring();
 
     const roomId = this.roomState().roomId;
     if (roomId && this.currentUserId) {

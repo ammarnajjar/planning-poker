@@ -90,6 +90,23 @@ When a new version is available:
 
 ## Troubleshooting
 
+### iOS-Specific Issues
+
+#### Status bar overlap (iPhone)
+If you installed the PWA before version 1.3.0-rc.4 and see the app header overlapping with the iPhone status bar:
+1. Delete the PWA from your home screen
+2. Clear Safari cache: Settings → Safari → Clear History and Website Data
+3. Visit the app URL again in Safari
+4. Reinstall using "Add to Home Screen"
+
+**Note:** Meta tag changes (like status bar style) only take effect after deleting and reinstalling the PWA.
+
+#### Status bar not visible in landscape
+This was fixed in version 1.3.0-rc.4. If you still experience this:
+1. Check the version indicator on the home page (should show v1.3.0-rc.4 or later)
+2. If outdated, delete and reinstall the PWA
+3. The status bar should now be visible in both portrait and landscape modes
+
 ### App won't install
 - Ensure you're using a supported browser (Chrome, Edge, Safari)
 - Check that you have enough storage space

@@ -265,6 +265,54 @@ navigator.serviceWorker.getRegistrations().then(r => r[0].unregister());
 
 ---
 
+## Test 11: iOS Status Bar (iPhone/iPad)
+
+### Prerequisites:
+- iPhone or iPad with Safari
+- Version 1.3.0-rc.4 or later
+
+### Portrait Mode Test:
+1. Install PWA on iPhone using "Add to Home Screen"
+2. Open the installed PWA
+3. Check the top of the screen
+
+### Expected Result:
+✅ App header should NOT overlap with status bar (time, battery, notch)
+✅ Status bar should be fully visible above the app header
+✅ Proper spacing on notched devices (iPhone X and newer)
+✅ Normal header height (not too thick)
+
+### Landscape Mode Test:
+1. Rotate iPhone to landscape orientation
+2. Check status bar visibility
+
+### Expected Result:
+✅ Status bar remains visible in landscape mode
+✅ App content doesn't extend behind status bar
+
+### Safe Area Test (Notched Devices):
+1. On iPhone X or newer, observe spacing around notch
+2. Check bottom spacing on devices with home indicator
+
+### Expected Result:
+✅ Content respects safe areas using `env(safe-area-inset-*)`
+✅ No content hidden behind notch or home indicator
+✅ Proper padding at top and bottom
+
+### Debugging:
+If status bar overlaps or is hidden:
+1. Check version: Should show v1.3.0-rc.4 or later on home page
+2. Delete PWA from home screen
+3. Clear Safari cache: Settings → Safari → Clear History and Website Data
+4. Reinstall PWA - meta tag changes only apply on fresh install
+
+### Technical Details:
+- Meta tag: `apple-mobile-web-app-status-bar-style="default"`
+- Viewport: No `viewport-fit=cover` (removed to show status bar)
+- CSS: Uses `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`
+
+---
+
 ## Quick Test Script
 
 ```javascript

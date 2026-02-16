@@ -4,6 +4,47 @@ This document describes the progressive enhancements implemented in Planning Pok
 
 ## Quick Wins Implemented
 
+### 0. iOS PWA Status Bar Fixes 🍎
+
+Fixed iOS PWA display issues for better mobile experience.
+
+#### Problem Solved:
+- App header was overlapping with iPhone status bar (time, battery, notch area)
+- Status bar was hidden in landscape mode
+- Excessive header padding on desktop
+
+#### Solution:
+**Meta Tag Changes** ([src/index.html](src/index.html)):
+```html
+<!-- Changed from "black-translucent" to "default" -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<!-- Removed viewport-fit=cover to show status bar in landscape -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+```
+
+**CSS Safe Area Support**:
+- Added `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`
+- Optimized toolbar heights for all devices
+- Updated [src/styles.scss](src/styles.scss), [src/app/components/home/home.component.scss](src/app/components/home/home.component.scss), [src/app/components/room/room.component.scss](src/app/components/room/room.component.scss)
+
+**Browser Support:**
+- Safari iOS: ✅ Full support (iPhone X and newer with notches)
+- All iOS devices: ✅ Proper status bar positioning
+
+**Result:**
+- ✅ No overlap with status bar in portrait mode
+- ✅ Status bar visible in landscape mode
+- ✅ Normal header height on desktop
+- ✅ Proper spacing on notched devices
+
+**Important Note:** Meta tag changes only take effect after deleting and reinstalling the PWA. Users on older versions must:
+1. Delete PWA from home screen
+2. Clear Safari cache
+3. Reinstall from Safari
+
+---
+
 ### 1. Keyboard Shortcuts ⌨️
 
 Power users can use keyboard shortcuts for faster navigation and actions.
@@ -142,6 +183,7 @@ if (navigator.clipboard) { /* use feature */ }
 
 | Feature | Chrome | Firefox | Safari | Edge | Mobile |
 |---------|--------|---------|--------|------|--------|
+| iOS PWA Status Bar | N/A | N/A | ✅ iOS | N/A | ✅ iOS only |
 | Keyboard Shortcuts | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Vibration API | ✅ | ⚠️ Android only | ✅ iOS | ✅ | ✅ |
 | Web Share API | ✅ Mobile | ⚠️ Limited | ✅ iOS | ✅ Mobile | ✅ |

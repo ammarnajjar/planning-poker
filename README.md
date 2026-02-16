@@ -711,6 +711,29 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
 
+### v1.3.0-rc.4 (February 16, 2026) - iOS PWA Status Bar Fixes
+- 🍎 **iOS PWA Status Bar Fixes**
+  - Fixed app header overlapping with iPhone status bar (time, battery, notch area)
+  - Changed `apple-mobile-web-app-status-bar-style` from "black-translucent" to "default"
+  - Removed `viewport-fit=cover` to ensure status bar visibility in landscape mode
+  - Added CSS safe area support using `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`
+  - Optimized for notched iPhones (iPhone X and newer)
+  - Fixed excessive header padding on desktop
+- 📊 **Dynamic Version Indicator**
+  - Version pulled dynamically from package.json
+  - Displayed on home page for deployment verification
+  - Updated GitHub Actions workflows to include version in environment files
+- 📚 **Documentation**
+  - Comprehensive [PR_DESCRIPTION.md](PR_DESCRIPTION.md): Complete PR overview with all features
+  - Updated [PWA_USER_GUIDE.md](PWA_USER_GUIDE.md): iOS-specific troubleshooting
+  - Updated [TEST_PWA.md](TEST_PWA.md): iOS status bar testing procedures
+  - Updated [PROGRESSIVE_ENHANCEMENTS.md](PROGRESSIVE_ENHANCEMENTS.md): iOS PWA fixes documentation
+
+**Important for iOS users:** Meta tag changes only take effect after deleting and reinstalling the PWA. To get the fix:
+1. Delete PWA from home screen
+2. Clear Safari cache: Settings → Safari → Clear History and Website Data
+3. Reinstall from Safari using "Add to Home Screen"
+
 ### v1.4.0 (February 15, 2026) - Native PWA Implementation
 - 📱 **Native Service Worker** implementation following Angular's recommendation
   - Migrated from deprecated Angular Service Worker to native browser APIs

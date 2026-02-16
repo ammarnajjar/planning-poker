@@ -2,6 +2,18 @@
 
 This repository uses automatic PR preview deployments to GitHub Pages, allowing you to test changes before merging.
 
+## ⚙️ Setup Required
+
+**Important:** Before PR previews will work, you need to update your GitHub Pages settings:
+
+1. Go to your repository **Settings** → **Pages**
+2. Under "Build and deployment":
+   - **Source**: Change from "GitHub Actions" to **"Deploy from a branch"**
+   - **Branch**: Select **"gh-pages"** and **"/ (root)"**
+3. Save the changes
+
+This is required because PR previews use the `gh-pages` branch to deploy multiple versions (main + PR previews) simultaneously.
+
 ## How It Works
 
 ### When a PR is Created or Updated

@@ -711,57 +711,90 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
 
-### v1.3.0-rc.4 (February 16, 2026) - iOS PWA Status Bar Fixes
-- 🍎 **iOS PWA Status Bar Fixes**
-  - Fixed app header overlapping with iPhone status bar (time, battery, notch area)
-  - Changed `apple-mobile-web-app-status-bar-style` from "black-translucent" to "default"
-  - Removed `viewport-fit=cover` to ensure status bar visibility in landscape mode
-  - Added CSS safe area support using `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`
-  - Optimized for notched iPhones (iPhone X and newer)
-  - Fixed excessive header padding on desktop
-- 📊 **Dynamic Version Indicator**
-  - Version pulled dynamically from package.json
-  - Displayed on home page for deployment verification
-  - Updated GitHub Actions workflows to include version in environment files
-- 📚 **Documentation**
-  - Comprehensive [PR_DESCRIPTION.md](PR_DESCRIPTION.md): Complete PR overview with all features
-  - Updated [PWA_USER_GUIDE.md](PWA_USER_GUIDE.md): iOS-specific troubleshooting
-  - Updated [TEST_PWA.md](TEST_PWA.md): iOS status bar testing procedures
-  - Updated [PROGRESSIVE_ENHANCEMENTS.md](PROGRESSIVE_ENHANCEMENTS.md): iOS PWA fixes documentation
+### v1.3.0 (February 16, 2026) - Progressive Enhancements and iOS PWA Fixes
 
-**Important for iOS users:** Meta tag changes only take effect after deleting and reinstalling the PWA. To get the fix:
+Transforms Planning Poker into a full-featured Progressive Web App with comprehensive enhancements.
+
+#### 🍎 iOS PWA Status Bar Fixes
+- Fixed app header overlapping with iPhone status bar (time, battery, notch area)
+- Changed `apple-mobile-web-app-status-bar-style` from "black-translucent" to "default"
+- Removed `viewport-fit=cover` to ensure status bar visibility in landscape mode
+- Added CSS safe area support using `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`
+- Optimized for notched iPhones (iPhone X and newer)
+- Fixed excessive header padding on desktop
+
+**Important for iOS users:** Meta tag changes only take effect after deleting and reinstalling the PWA:
 1. Delete PWA from home screen
 2. Clear Safari cache: Settings → Safari → Clear History and Website Data
 3. Reinstall from Safari using "Add to Home Screen"
 
-### v1.4.0 (February 15, 2026) - Native PWA Implementation
-- 📱 **Native Service Worker** implementation following Angular's recommendation
+#### 📱 Native PWA Implementation
+- **Native Service Worker** implementation following Angular's recommendation
   - Migrated from deprecated Angular Service Worker to native browser APIs
   - Cache-first strategy for static assets (JS, CSS, images, fonts)
   - Network-first strategy for API calls and Supabase
   - Stale-while-revalidate strategy for HTML pages
   - Automatic version detection and cache cleanup
-- ✨ **PWA Update Notifications**
+- **PWA Update Notifications**
   - Visual update banner when new version available
   - "Update Now" or "Later" user control
   - Automatic checks every hour + on page load
-  - Smooth slide-up animation
-- 📦 **PWA Services**
-  - [pwa.service.ts](src/app/services/pwa.service.ts): Service Worker registration and management
-  - [sw.js](public/sw.js): Native Service Worker with smart caching strategies
-  - Update detection and application
-  - Install prompt handling
-  - Installation status tracking
-- 📚 **Documentation**
-  - [TEST_PWA.md](TEST_PWA.md): Comprehensive PWA testing guide for developers
-  - [PWA_USER_GUIDE.md](PWA_USER_GUIDE.md): User-friendly installation/uninstallation guide
-- 🎯 **Better Performance**
-  - Offline support for previously loaded rooms
+- **Offline Support**
+  - Previously loaded content available offline
   - Faster page loads with smart caching
   - Reduced network requests with cache-first strategy
-- 🔮 **Push Notifications Ready**: Service Worker configured for future push notification support
 
-### v1.3.0 (February 15, 2026) - E2E Testing Suite + Bug Fixes
+#### ✨ Progressive Enhancements
+- **Keyboard Shortcuts** ⌨️
+  - Admin: R (reveal), S (start), D (discuss), Z (reset)
+  - Voting: 0-9 (quick vote), ? (unknown)
+  - Universal: C (copy), Shift+C (share), Esc (leave)
+- **Haptic Feedback** 📳
+  - Tactile confirmation for actions on mobile devices
+  - Vote submitted, reveal votes, copy/share patterns
+- **Network Quality Monitoring** 🌐
+  - Real-time online/offline detection
+  - Connection quality indicators (4G, 3G, 2G)
+  - Visual warnings for poor connections
+- **Idle Detection** 😴
+  - Automatically detects when users are idle/away
+  - Visual "idle" indicator in toolbar
+- **Screen Orientation** 📱
+  - Detects portrait/landscape changes
+  - Smooth animations on orientation change
+- **Dark Mode** 🎨
+  - Light/dark/system theme modes
+  - Persistent storage and theme toggle button
+
+#### 📊 Dynamic Version Indicator
+- Version pulled dynamically from package.json
+- Displayed on home page for deployment verification
+- Updated GitHub Actions workflows to include version in environment files
+
+#### 🔄 Infrastructure
+- **PR Preview System**: Automatic preview deployments for every PR
+- **CI/CD Optimizations**: Parallel job execution with dependency caching
+- **404 Handling**: Smart redirect for GitHub Pages SPA routing
+
+#### 🧪 Testing & Quality
+- 1,491 new unit tests (PWA, network, idle, orientation services)
+- 191 new E2E tests for PWA functionality
+- 100% statement coverage maintained
+
+#### 📚 Documentation
+- [PROGRESSIVE_ENHANCEMENTS.md](PROGRESSIVE_ENHANCEMENTS.md): Complete guide to all enhancements
+- [PWA_USER_GUIDE.md](PWA_USER_GUIDE.md): User-friendly installation guide with iOS troubleshooting
+- [TEST_PWA.md](TEST_PWA.md): Comprehensive PWA testing guide
+- [PWA_TESTING_STRATEGY.md](PWA_TESTING_STRATEGY.md): Testing strategies for developers
+- [RELEASE_NOTES_v1.3.0.md](RELEASE_NOTES_v1.3.0.md): Complete release notes
+
+**Stats**: 40 files changed, +5,930 lines, 100% test coverage
+
+See [RELEASE_NOTES_v1.3.0.md](RELEASE_NOTES_v1.3.0.md) for complete details.
+
+---
+
+### v1.2.0 (February 14, 2026) - E2E Testing Suite + Bug Fixes
 - 🧪 **Comprehensive E2E Testing Suite** with Playwright
   - 254 tests across 5 browser configurations (100% pass rate for runnable tests)
   - 239 passing, 15 skipped (3 clipboard tests - headless browser limitation)
@@ -785,7 +818,7 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for complete e2e testing details.
 
-### v1.2.0 (February 14, 2026) - Angular 21 Upgrade
+### v1.1.0 (February 13, 2026) - Angular 21 Upgrade
 - ⬆️ **Upgraded to Angular 21** from Angular 19
   - Leveraging latest Angular 21 features: `linkedSignal()` for reactive state
   - Improved zoneless change detection support
@@ -806,7 +839,7 @@ See [tests/e2e/E2E_TESTING.md](tests/e2e/E2E_TESTING.md) for complete e2e testin
 
 See [TESTING.md](TESTING.md) for complete unit test coverage details.
 
-### v1.1.0 (February 14, 2026)
+### v1.0.0 (February 12, 2026)
 - ✨ Admin participant removal with hover-activated button
 - ✨ Discussion mode to highlight min/max voters for focused conversations
   - Table background dims during discussion mode for better focus

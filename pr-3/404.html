@@ -2,7 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Planning Poker</title>
+  <title>Planning Poker - Redirecting...</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .message {
+      text-align: center;
+    }
+  </style>
   <script>
     // Single Page Apps for GitHub Pages
     // https://github.com/rafgraph/spa-github-pages
@@ -49,5 +64,16 @@
   </script>
 </head>
 <body>
+  <div class="message">
+    <h1>Redirecting...</h1>
+    <p id="debug-info">Processing redirect...</p>
+  </div>
+  <script>
+    // Show debug info in the page itself
+    var debugEl = document.getElementById('debug-info');
+    if (debugEl) {
+      debugEl.innerHTML = 'Current URL: ' + window.location.href + '<br>404.html loaded successfully';
+    }
+  </script>
 </body>
 </html>

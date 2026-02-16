@@ -1,5 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { effect } from '@angular/core';
 import { SupabaseService, RoomState } from './supabase.service';
+import { NetworkService } from './network.service';
+
+// Mock Angular's effect function to avoid injection context errors in tests
+vi.mock('@angular/core', async () => {
+  const actual = await vi.importActual('@angular/core');
+  return {
+    ...actual as object,
+    effect: vi.fn(() => ({ destroy: vi.fn() }))
+  };
+});
 
 // Type for accessing private members in tests
 type SupabaseServicePrivate = SupabaseService & {
@@ -32,6 +43,12 @@ const mockSupabase = {
   channel: vi.fn(),
 };
 
+// Mock NetworkService
+const mockNetworkService = {
+  getRecommendedPollingInterval: vi.fn().mockReturnValue(5000),
+  connectionQuality: vi.fn().mockReturnValue('good'),
+};
+
 describe('SupabaseService', () => {
   let service: SupabaseService;
 
@@ -40,7 +57,7 @@ describe('SupabaseService', () => {
     vi.clearAllMocks();
 
     // Create service instance
-    service = new SupabaseService();
+    service = new SupabaseService(mockNetworkService as any);
 
     // Replace the supabase client with our mock
     (service as SupabaseServicePrivate).supabase = mockSupabase;
@@ -1128,9 +1145,9 @@ describe('SupabaseService', () => {
 
   describe('Participant Heartbeat', () => {
     it('should have heartbeat constants', () => {
-      expect((service as SupabaseServicePrivate).HEARTBEAT_INTERVAL_MS).toBe(2000);
-      expect((service as SupabaseServicePrivate).CLEANUP_INTERVAL_MS).toBe(3000);
-      expect((service as SupabaseServicePrivate).PARTICIPANT_TIMEOUT_MS).toBe(5000);
+      expect((service as any).BASE_HEARTBEAT_INTERVAL_MS).toBe(2000);
+      expect((service as any).CLEANUP_INTERVAL_MS).toBe(3000);
+      expect((service as any).PARTICIPANT_TIMEOUT_MS).toBe(5000);
     });
   });
 
@@ -2389,11 +2406,17 @@ describe('SupabaseService', () => {
         subscribe: mockSubscribe
       });
 
+      // Set voting_started to true first so revealed can be true
+      (service as SupabaseServicePrivate).roomState.update(state => ({
+        ...state,
+        votingStarted: true
+      }));
+
       // Act - Call subscribeToRoom
       (service as SupabaseServicePrivate).subscribeToRoom('TEST123');
 
-      // Simulate subscription callback
-      roomUpdateCallback({ new: { revealed: true } });
+      // Simulate subscription callback with voting_started and revealed
+      roomUpdateCallback({ new: { voting_started: true, revealed: true } });
 
       // Assert
       expect(service.state().revealed).toBe(true);

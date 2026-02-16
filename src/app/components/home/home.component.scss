@@ -13,9 +13,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  min-height: 100vh;
+  min-height: calc(100vh - 56px - env(safe-area-inset-top));
   padding: 16px;
-  padding-top: calc(56px + 16px); // toolbar height + padding
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-size: cover;
   background-position: center;
@@ -24,9 +24,9 @@
 
   @media (min-width: 600px) {
     justify-content: center;
-    min-height: calc(100vh - 64px);
+    min-height: calc(100vh - 64px - env(safe-area-inset-top));
     padding: 24px;
-    padding-top: 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
   }
 }
 
@@ -149,6 +149,28 @@
   }
 }
 
+// Dark mode overrides
+:host-context(.dark-theme) {
+  .info-section {
+    background: #424242;
+    color: rgba(255, 255, 255, 0.87);
+
+    h3 {
+      color: #9fa8da;
+    }
+  }
+
+  .join-error-message {
+    background: rgba(244, 67, 54, 0.2) !important;
+    border-left-color: #ef5350 !important;
+    color: #ffcdd2 !important;
+
+    mat-icon {
+      color: #ef5350 !important;
+    }
+  }
+}
+
 .join-as-admin-toggle {
   margin-top: 8px;
   margin-bottom: 8px;
@@ -175,4 +197,16 @@
     width: 20px;
     height: 20px;
   }
+}
+
+.version-indicator {
+  margin-top: 16px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 11px;
+  font-family: monospace;
+  color: #666;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

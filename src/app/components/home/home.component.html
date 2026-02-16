@@ -1,6 +1,10 @@
 <mat-toolbar color="primary">
   <mat-icon>casino</mat-icon>
   <span class="toolbar-title">Planning Poker</span>
+  <span style="flex: 1"></span>
+  <button mat-icon-button (click)="toggleTheme()" [matTooltip]="'Switch to ' + (themeService.effectiveTheme() === 'light' ? 'dark' : 'light') + ' mode'">
+    <mat-icon>{{ themeService.effectiveTheme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
 </mat-toolbar>
 
 <div class="home-container" [style.background-image]="'url(assets/home-background.svg)'">
@@ -104,5 +108,9 @@
       <li>Votes are hidden until revealed</li>
       <li>Discuss and reach consensus</li>
     </ul>
+  </div>
+
+  <div class="version-indicator">
+    v{{ version }}
   </div>
 </div>

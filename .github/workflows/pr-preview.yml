@@ -1,0 +1,151 @@
+name: PR Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create environment files
+        run: |
+          cat > src/environments/environment.ts << EOF
+          import { version } from '../../package.json';
+
+          export const environment = {
+            production: false,
+            version,
+            supabaseUrl: "${{ secrets.SUPABASE_URL }}",
+            supabaseAnonKey: "${{ secrets.SUPABASE_ANON_KEY }}"
+          };
+          EOF
+          cat > src/environments/environment.prod.ts << EOF
+          import { version } from '../../package.json';
+
+          export const environment = {
+            production: true,
+            version,
+            supabaseUrl: "${{ secrets.SUPABASE_URL }}",
+            supabaseAnonKey: "${{ secrets.SUPABASE_ANON_KEY }}"
+          };
+          EOF
+
+      - name: Build with PR-specific base href
+        run: npm run build:prod -- --base-href=/planning-poker/pr-${{ github.event.pull_request.number }}/
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/planning-poker/browser
+          destination_dir: pr-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://ammarnajjar.github.io/planning-poker/pr-${prNumber}/`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Preview deployment')
+            );
+
+            const commentBody = `## 🚀 Preview deployment ready!
+
+            Your PR preview is available at:
+            **${previewUrl}**
+
+            This preview will be automatically updated when you push new commits.
+
+            ---
+            *Preview deployed from commit ${context.sha.substring(0, 7)}*`;
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody,
+              });
+            }
+
+  cleanup-preview:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Remove PR preview directory
+        run: |
+          if [ -d "pr-${{ github.event.pull_request.number }}" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            git rm -rf pr-${{ github.event.pull_request.number }}
+            git commit -m "Remove PR #${{ github.event.pull_request.number }} preview"
+            git push origin gh-pages
+
+            echo "✅ Removed preview for PR #${{ github.event.pull_request.number }}"
+          else
+            echo "ℹ️ No preview directory found for PR #${{ github.event.pull_request.number }}"
+          fi
+
+      - name: Comment PR about cleanup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `## 🧹 Preview deployment cleaned up
+
+              The preview deployment for this PR has been removed from GitHub Pages.`,
+            });

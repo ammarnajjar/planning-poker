@@ -6,6 +6,65 @@
   box-sizing: border-box;
 }
 
+// Dark mode theme override
+.dark-theme {
+  // Material dark theme colors
+  background: #303030;
+  color: rgba(255, 255, 255, 0.87);
+
+  // Override Material component backgrounds for dark mode
+  --mdc-elevated-card-container-color: #424242;
+  --mat-app-background-color: #303030;
+  --mat-app-text-color: rgba(255, 255, 255, 0.87);
+
+  // Toolbar dark mode
+  --mat-toolbar-container-background-color: #212121;
+  --mat-toolbar-container-text-color: rgba(255, 255, 255, 0.87);
+
+  // Button dark mode
+  --mdc-filled-button-container-color: #5c6bc0;
+  --mdc-filled-button-label-text-color: white;
+
+  // Outlined button - better contrast
+  --mdc-outlined-button-label-text-color: #9fa8da;
+  --mdc-outlined-button-outline-color: rgba(159, 168, 218, 0.5);
+
+  // Text button
+  --mdc-text-button-label-text-color: #9fa8da;
+
+  // Card dark mode
+  --mdc-elevated-card-container-elevation: 0 2px 8px rgba(0, 0, 0, 0.5);
+
+  // Form fields
+  --mat-form-field-container-text-color: rgba(255, 255, 255, 0.87);
+  --mdc-outlined-text-field-label-text-color: rgba(255, 255, 255, 0.6);
+  --mdc-outlined-text-field-input-text-color: rgba(255, 255, 255, 0.87);
+  --mdc-outlined-text-field-input-text-placeholder-color: rgba(255, 255, 255, 0.6);
+  --mdc-outlined-text-field-outline-color: rgba(255, 255, 255, 0.38);
+  --mdc-outlined-text-field-hover-outline-color: rgba(255, 255, 255, 0.87);
+  --mdc-outlined-text-field-focus-outline-color: #9fa8da;
+
+  // Icons
+  --mat-icon-color: rgba(255, 255, 255, 0.87);
+}
+
+// Smooth scrolling
+html {
+  scroll-behavior: smooth;
+}
+
+// Respect reduced motion preferences
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 html, body {
   height: 100%;
   font-family: Roboto, "Helvetica Neue", sans-serif;
@@ -22,6 +81,218 @@ html, body {
 body {
   margin: 0;
   background: #fafafa;
+  color: #000;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// Dark mode styles
+.dark-theme {
+  // Ripple color for all interactive elements
+  --mat-ripple-color: rgba(255, 255, 255, 0.2);
+  --mdc-ripple-color: rgba(255, 255, 255, 0.2);
+  --mdc-ripple-hover-opacity: 0.08;
+  --mdc-ripple-focus-opacity: 0.24;
+  --mdc-ripple-press-opacity: 0.32;
+
+  body {
+    background: #303030;
+    color: rgba(255, 255, 255, 0.87);
+  }
+
+  // Override Material card styles for dark mode
+  .mat-mdc-card {
+    background: #424242 !important;
+    color: rgba(255, 255, 255, 0.87) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  // Card title
+  .mat-mdc-card-title,
+  .mdc-card__title {
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+
+  // Card subtitle needs better contrast - make it much lighter
+  .mat-mdc-card-subtitle,
+  .mdc-card__subtitle,
+  mat-card-subtitle {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  // Dark mode raised button shadows
+  .mat-mdc-raised-button {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+    }
+  }
+
+  // Button ripple effect for dark mode
+  .mat-mdc-button,
+  .mat-mdc-icon-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-outlined-button {
+    .mat-ripple-element,
+    .mat-mdc-button-persistent-ripple::before,
+    .mat-mdc-button-ripple::before {
+      background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    &:hover .mat-mdc-button-persistent-ripple::before {
+      opacity: 0.08 !important;
+    }
+
+    &:focus .mat-mdc-button-persistent-ripple::before {
+      opacity: 0.24 !important;
+    }
+  }
+
+  // Icon button specific ripple (for toolbar buttons)
+  .mat-mdc-icon-button {
+    .mat-ripple-element {
+      background-color: rgba(255, 255, 255, 0.15) !important;
+    }
+  }
+
+  // Outlined button - much better contrast
+  .mat-mdc-outlined-button {
+    color: rgba(255, 255, 255, 0.87) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .mat-icon {
+      color: rgba(255, 255, 255, 0.87) !important;
+    }
+  }
+
+  // Text button
+  .mat-mdc-button:not(.mat-mdc-raised-button):not(.mat-mdc-outlined-button) {
+    color: #9fa8da !important;
+  }
+
+  // Checkbox styling
+  .mat-mdc-checkbox {
+    --mdc-checkbox-unselected-icon-color: rgba(255, 255, 255, 0.7);
+    --mdc-checkbox-unselected-hover-icon-color: rgba(255, 255, 255, 0.87);
+    --mdc-checkbox-selected-icon-color: #9fa8da;
+    --mdc-checkbox-selected-hover-icon-color: #7986cb;
+    --mdc-checkbox-selected-checkmark-color: #fff;
+
+    label {
+      color: rgba(255, 255, 255, 0.87) !important;
+    }
+  }
+
+  // Checkbox border
+  .mdc-checkbox__background {
+    border-color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  // Checkbox when checked
+  .mat-mdc-checkbox-checked .mdc-checkbox__background {
+    border-color: #9fa8da !important;
+    background-color: #9fa8da !important;
+  }
+
+  // Input fields - force light colors
+  input,
+  textarea,
+  .mat-mdc-input-element {
+    color: rgba(255, 255, 255, 0.95) !important;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.6) !important;
+      opacity: 1 !important;
+    }
+  }
+
+  // Form field labels - better visibility and positioning
+  .mat-mdc-form-field-label,
+  .mat-mdc-floating-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  // When not focused and empty, hide the label to avoid overlap with placeholder
+  .mat-mdc-form-field:not(.mat-focused):not(.mat-form-field-should-float) .mat-mdc-floating-label {
+    opacity: 0 !important;
+  }
+
+  // Fix floating label not floating properly
+  .mat-mdc-form-field:not(.mat-focused) .mat-mdc-floating-label {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  // Ensure label floats up when focused or has value
+  .mat-mdc-form-field.mat-focused .mat-mdc-floating-label,
+  .mat-mdc-form-field .mat-mdc-floating-label.mdc-floating-label--float-above {
+    color: rgba(255, 255, 255, 0.7) !important;
+    opacity: 1 !important;
+  }
+
+  // Form field hint text
+  .mat-mdc-form-field-hint {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  // Error messages
+  .mat-mdc-form-field-error {
+    color: #ef5350 !important;
+  }
+
+  // Dialog/Modal styling
+  .mat-mdc-dialog-surface,
+  .mdc-dialog__surface {
+    background: #424242 !important;
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .mat-mdc-dialog-title,
+  .mdc-dialog__title {
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+
+  .mat-mdc-dialog-content,
+  .mdc-dialog__content {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  // Dialog buttons
+  .mat-mdc-dialog-actions {
+    .mat-mdc-button {
+      color: #9fa8da !important;
+    }
+  }
+}
+
+// Snackbar styling for dark mode (must be outside .dark-theme to target overlay)
+.dark-theme {
+  .mat-mdc-snack-bar-container,
+  .mdc-snackbar {
+    --mdc-snackbar-container-color: #424242;
+    --mat-snack-bar-button-color: #9fa8da;
+    --mdc-snackbar-supporting-text-color: rgba(255, 255, 255, 0.87);
+
+    background-color: #424242 !important;
+  }
+
+  .mdc-snackbar__surface {
+    background-color: #424242 !important;
+  }
+
+  .mdc-snackbar__label,
+  .mat-mdc-snack-bar-label,
+  .mat-mdc-simple-snack-bar > span {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .mat-mdc-snack-bar-action,
+  .mat-mdc-button.mat-mdc-snack-bar-action {
+    color: #9fa8da !important;
+  }
 }
 
 // Utility classes
@@ -36,14 +307,54 @@ body {
 // Override Material styles for better mobile experience
 .mat-mdc-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mat-mdc-raised-button {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 
   &:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-1px);
   }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Smooth transitions for interactive elements
+button, a, input, textarea, select {
+  transition: all 0.2s ease;
+}
+
+// iOS PWA safe area support for toolbars
+.mat-toolbar {
+  // Add padding at top for iOS notch/status bar
+  padding-top: env(safe-area-inset-top) !important;
+  // Extend height to account for safe area
+  min-height: calc(64px + env(safe-area-inset-top)) !important;
+
+  @media (max-width: 600px) {
+    min-height: calc(56px + env(safe-area-inset-top)) !important;
+  }
+}
+
+// Fade-in animation
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mat-mdc-card {
+  animation: fadeIn 0.3s ease-out;
 }
 
 // Mobile-first responsive overrides

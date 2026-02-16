@@ -4,34 +4,43 @@
   <meta charset="utf-8">
   <title>Planning Poker</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+  <meta name="description" content="Real-time Planning Poker for agile teams. Estimate user stories collaboratively with your team in a fun, engaging way.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#3f51b5">
   <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <!-- Single Page Apps for GitHub Pages -->
   <!-- https://github.com/rafgraph/spa-github-pages -->
   <script>
     (function(l) {
-      if (l.search[1] === '/' ) {
+      // Only run on GitHub Pages (github.io domain) to prevent issues on local dev
+      if (l.hostname.includes('github.io') && l.search[1] === '/' ) {
         var decoded = l.search.slice(1).split('&').map(function(s) {
           return s.replace(/~and~/g, '&')
         }).join('?');
-        window.history.replaceState(null, null,
-            l.pathname.slice(0, -1) + decoded + l.hash
-        );
+
+        var basePath = l.pathname;
+        if (basePath.endsWith('/')) {
+          basePath = basePath.slice(0, -1);
+        }
+
+        window.history.replaceState(null, null, basePath + decoded + l.hash);
       }
     }(window.location))
   </script>
 </head>
 <body>
   <app-root></app-root>
+  <noscript>Please enable JavaScript to continue using this application.</noscript>
 </body>
 </html>

@@ -43,7 +43,11 @@ A production-ready Planning Poker application built with Angular 21 and Supabase
 - **Share Room**: Copy room URL to clipboard for easy team sharing
 - **Accessibility**: Full keyboard navigation support with ARIA attributes
 - **Custom Favicon & Background**: Expressive Planning Poker themed design
-- **PWA Support**: Web app manifest for installation on mobile devices
+- **Progressive Web App (PWA)**: Installable on desktop and mobile with native Service Worker
+  - Smart caching strategies for optimal performance
+  - Offline support for previously loaded content
+  - Automatic update notifications with user control
+  - Push notification ready (future enhancement)
 - **Modern Stack**: Angular 21 with Standalone Components, Signals, and linkedSignal()
 - **Responsive Design**: Mobile-first UI with Angular Material
 - **GitHub Pages**: Free static hosting with automated deployments
@@ -57,6 +61,10 @@ A production-ready Planning Poker application built with Angular 21 and Supabase
 - **Real-Time Sync**: Supabase (PostgreSQL + Real-time subscriptions)
 - **UI Library**: Angular Material
 - **Styling**: SCSS
+- **PWA**: Native Service Worker (following Angular's recommendation to use browser APIs directly)
+  - Cache-first strategy for static assets
+  - Network-first strategy for API calls
+  - Stale-while-revalidate for HTML pages
 - **Testing**:
   - Unit Tests: Vitest with 100% statement coverage (244 tests)
   - E2E Tests: Playwright with 100% pass rate (239 tests passing, 15 skipped)
@@ -307,7 +315,8 @@ planning-poker/
 │   │   │       ├── admin-pin-dialog.component.ts
 │   │   │       └── admin-pin-dialog.component.html
 │   │   ├── services/
-│   │   │   └── supabase.service.ts
+│   │   │   ├── supabase.service.ts
+│   │   │   └── pwa.service.ts
 │   │   ├── environments/
 │   │   │   ├── environment.ts (created from template)
 │   │   │   ├── environment.prod.ts (created from template)
@@ -325,11 +334,19 @@ planning-poker/
 │   ├── index.html
 │   ├── main.ts
 │   └── styles.scss
+├── public/
+│   ├── sw.js (Native Service Worker)
+│   ├── manifest.webmanifest
+│   └── icons/ (PWA icons: 72x72 to 512x512)
+├── tests/
+│   └── e2e/ (Playwright E2E tests)
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml
 ├── SUPABASE_SETUP.md
 ├── FAVICON.md
+├── TEST_PWA.md
+├── PWA_USER_GUIDE.md
 ├── angular.json
 ├── package.json
 ├── tsconfig.json
@@ -533,6 +550,12 @@ The application uses Angular Signals for reactive state management:
 - **Why No Authentication**: Reduces friction for quick team sessions, no account signup required
 - **Why Room Validation**: Prevents navigation to non-existent rooms, better UX with inline errors
 - **Why Separate Create/Join**: Clear separation of concerns, better security model for room creation
+- **Why Native Service Worker**: Angular's Service Worker is deprecated with limited features; native implementation provides:
+  - Full control over caching strategies
+  - Better performance with custom optimizations
+  - Future-proof (won't be deprecated)
+  - Push notification support
+  - More flexible update mechanisms
 
 ## Mobile Support
 
@@ -550,9 +573,27 @@ The application is fully responsive with mobile-first design:
 - Touch-friendly voting interface
 - Responsive estimation cards (70×70px desktop, 60×60px mobile)
 - Mobile-optimized navigation and spacing
-- PWA support for installation on mobile devices
+- **PWA Installation**:
+  - Install on home screen (Android, iOS, Desktop)
+  - Standalone app window without browser UI
+  - Offline support for basic functionality
+  - Smart caching for instant loading
+  - Automatic update notifications
 - Apple touch icon for iOS home screen
 - Adaptive typography and animations
+
+### Installing the PWA
+
+**Android/Chrome:**
+- Tap menu → "Add to Home screen" or "Install app"
+
+**iOS/Safari:**
+- Tap Share (□↑) → "Add to Home Screen"
+
+**Desktop (Chrome/Edge):**
+- Click install icon (⊕) in address bar
+
+See [PWA_USER_GUIDE.md](PWA_USER_GUIDE.md) for complete installation and uninstallation instructions.
 
 ## Browser Support
 
@@ -669,6 +710,56 @@ The application features custom Planning Poker themed graphics:
 For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
+
+### v1.3.0-rc.4 (February 16, 2026) - iOS PWA Status Bar Fixes
+- 🍎 **iOS PWA Status Bar Fixes**
+  - Fixed app header overlapping with iPhone status bar (time, battery, notch area)
+  - Changed `apple-mobile-web-app-status-bar-style` from "black-translucent" to "default"
+  - Removed `viewport-fit=cover` to ensure status bar visibility in landscape mode
+  - Added CSS safe area support using `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`
+  - Optimized for notched iPhones (iPhone X and newer)
+  - Fixed excessive header padding on desktop
+- 📊 **Dynamic Version Indicator**
+  - Version pulled dynamically from package.json
+  - Displayed on home page for deployment verification
+  - Updated GitHub Actions workflows to include version in environment files
+- 📚 **Documentation**
+  - Comprehensive [PR_DESCRIPTION.md](PR_DESCRIPTION.md): Complete PR overview with all features
+  - Updated [PWA_USER_GUIDE.md](PWA_USER_GUIDE.md): iOS-specific troubleshooting
+  - Updated [TEST_PWA.md](TEST_PWA.md): iOS status bar testing procedures
+  - Updated [PROGRESSIVE_ENHANCEMENTS.md](PROGRESSIVE_ENHANCEMENTS.md): iOS PWA fixes documentation
+
+**Important for iOS users:** Meta tag changes only take effect after deleting and reinstalling the PWA. To get the fix:
+1. Delete PWA from home screen
+2. Clear Safari cache: Settings → Safari → Clear History and Website Data
+3. Reinstall from Safari using "Add to Home Screen"
+
+### v1.4.0 (February 15, 2026) - Native PWA Implementation
+- 📱 **Native Service Worker** implementation following Angular's recommendation
+  - Migrated from deprecated Angular Service Worker to native browser APIs
+  - Cache-first strategy for static assets (JS, CSS, images, fonts)
+  - Network-first strategy for API calls and Supabase
+  - Stale-while-revalidate strategy for HTML pages
+  - Automatic version detection and cache cleanup
+- ✨ **PWA Update Notifications**
+  - Visual update banner when new version available
+  - "Update Now" or "Later" user control
+  - Automatic checks every hour + on page load
+  - Smooth slide-up animation
+- 📦 **PWA Services**
+  - [pwa.service.ts](src/app/services/pwa.service.ts): Service Worker registration and management
+  - [sw.js](public/sw.js): Native Service Worker with smart caching strategies
+  - Update detection and application
+  - Install prompt handling
+  - Installation status tracking
+- 📚 **Documentation**
+  - [TEST_PWA.md](TEST_PWA.md): Comprehensive PWA testing guide for developers
+  - [PWA_USER_GUIDE.md](PWA_USER_GUIDE.md): User-friendly installation/uninstallation guide
+- 🎯 **Better Performance**
+  - Offline support for previously loaded rooms
+  - Faster page loads with smart caching
+  - Reduced network requests with cache-first strategy
+- 🔮 **Push Notifications Ready**: Service Worker configured for future push notification support
 
 ### v1.3.0 (February 15, 2026) - E2E Testing Suite + Bug Fixes
 - 🧪 **Comprehensive E2E Testing Suite** with Playwright

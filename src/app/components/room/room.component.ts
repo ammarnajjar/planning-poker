@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, effect, linkedSignal, OnDestroy, OnInit } from "@angular/core";
+import { Component, computed, effect, HostListener, linkedSignal, OnDestroy, OnInit } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatCheckboxModule } from "@angular/material/checkbox";
@@ -8,8 +8,14 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatSnackBar, MatSnackBarModule } from "@angular/material/snack-bar";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Participant, SupabaseService } from "../../services/supabase.service";
+import { PwaService } from "../../services/pwa.service";
+import { ThemeService } from "../../services/theme.service";
+import { NetworkService } from "../../services/network.service";
+import { IdleDetectionService } from "../../services/idle-detection.service";
+import { ScreenOrientationService } from "../../services/screen-orientation.service";
 
 @Component({
   selector: "app-room",
@@ -24,6 +30,7 @@ import { Participant, SupabaseService } from "../../services/supabase.service";
     MatChipsModule,
     MatDividerModule,
     MatTooltipModule,
+    MatSnackBarModule,
   ],
   templateUrl: "./room.component.html",
   styleUrls: ["./room.component.scss"],
@@ -170,6 +177,12 @@ export class RoomComponent implements OnInit, OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly supabaseService: SupabaseService,
+    private readonly pwaService: PwaService,
+    public readonly themeService: ThemeService,
+    public readonly networkService: NetworkService,
+    public readonly idleDetectionService: IdleDetectionService,
+    private readonly screenOrientationService: ScreenOrientationService,
+    private readonly snackBar: MatSnackBar,
   ) {
     // Handle user removal with effect (100% signal-based, no RxJS)
     effect(() => {
@@ -178,10 +191,68 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.router.navigate(["/"]);
       }
     });
+
+    // Track previous state for notifications
+    let previousVotingStarted = false;
+    let previousRevealed = false;
+    let previousVotedCount = 0;
+
+    // Show notifications for game events when page is not focused
+    effect(() => {
+      const state = this.roomState();
+      const currentVotedCount = this.votedCount();
+      const currentTotalCount = this.totalCount();
+
+      // Only show notifications if page is not visible
+      if (document.hidden && this.pwaService.canShowNotifications()) {
+        // Voting started
+        if (state.votingStarted && !previousVotingStarted) {
+          this.pwaService.showNotification('Voting Started', {
+            body: 'A new voting round has started!',
+            tag: 'voting-started',
+            requireInteraction: false,
+          });
+        }
+
+        // Votes revealed
+        if (state.revealed && !previousRevealed) {
+          this.pwaService.showNotification('Votes Revealed', {
+            body: 'All votes have been revealed!',
+            tag: 'votes-revealed',
+            requireInteraction: false,
+          });
+        }
+
+        // All votes are in (100% voted)
+        if (currentVotedCount === currentTotalCount &&
+            currentTotalCount > 0 &&
+            currentVotedCount > previousVotedCount &&
+            state.votingStarted && !state.revealed) {
+          this.pwaService.showNotification('All Votes In', {
+            body: `All ${currentTotalCount} participants have voted!`,
+            tag: 'all-voted',
+            requireInteraction: false,
+          });
+        }
+      }
+
+      // Update previous state
+      previousVotingStarted = state.votingStarted;
+      previousRevealed = state.revealed;
+      previousVotedCount = currentVotedCount;
+    });
   }
 
   async ngOnInit(): Promise<void> {
     try {
+      // Start idle detection (2 minutes threshold)
+      await this.idleDetectionService.startMonitoring(120);
+
+      // Auto-lock to landscape on mobile for better poker table view
+      if (this.screenOrientationService.isMobileDevice()) {
+        await this.screenOrientationService.autoLockForPokerTable();
+      }
+
       // Get room ID from route
       const roomId = this.route.snapshot.paramMap.get("id");
       if (!roomId) {
@@ -216,14 +287,103 @@ export class RoomComponent implements OnInit, OnDestroy {
         await this.supabaseService.joinRoom(roomId, userName, adminPin);
       }
       this.currentUserId = this.supabaseService.getCurrentUserId();
+
+      // Mark initialization as complete after all subscriptions settle
+      setTimeout(() => {
+        this.initializationComplete = true;
+      }, 5000);
     } catch (error) {
       console.error('Failed to initialize room:', error);
       this.router.navigate(['/']);
     }
   }
 
+  /**
+   * Handle keyboard shortcuts for power users
+   */
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardShortcut(event: KeyboardEvent): void {
+    // Ignore if user is typing in an input field
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    // Ignore shortcuts if modifier keys are pressed
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    // Admin-only shortcuts
+    if (this.isAdmin()) {
+      switch (event.key.toLowerCase()) {
+        case 'v':
+          event.preventDefault();
+          this.toggleReveal();
+          this.vibrate([50]);
+          break;
+        case 's':
+          event.preventDefault();
+          this.startVoting();
+          this.vibrate([50]);
+          break;
+        case 'd':
+          event.preventDefault();
+          if (this.canStartDiscussion()) {
+            this.toggleDiscussion();
+            this.vibrate([50]);
+          }
+          break;
+        case 'z':
+          event.preventDefault();
+          this.resetVotes();
+          this.vibrate([50]);
+          break;
+      }
+    }
+
+    // Voting shortcuts (0-9 for card selection, ? for unknown)
+    if (this.shouldShowVotingCards() && this.isVotingEnabled()) {
+      const numKey = parseInt(event.key);
+      if (!isNaN(numKey) && numKey >= 0 && numKey <= 9) {
+        event.preventDefault();
+        if (numKey < this.cardValues.length) {
+          this.vote(this.cardValues[numKey]);
+          this.vibrate([30]);
+        }
+      } else if (event.key === '?') {
+        event.preventDefault();
+        this.vote('?');
+        this.vibrate([30]);
+      }
+    }
+
+    // Universal shortcuts
+    switch (event.key.toLowerCase()) {
+      case 'c':
+        event.preventDefault();
+        if (event.shiftKey) {
+          this.shareRoom();
+        } else {
+          this.copyRoomId();
+        }
+        this.vibrate([30, 20, 30]);
+        break;
+      case 'escape':
+        event.preventDefault();
+        this.leaveRoom();
+        break;
+    }
+  }
+
   ngOnDestroy(): void {
     this.supabaseService.leaveRoom();
+
+    // Stop idle detection
+    this.idleDetectionService.stopMonitoring();
+
+    // Cleanup screen orientation (unlock if locked)
+    this.screenOrientationService.cleanup();
   }
 
   /**
@@ -239,7 +399,13 @@ export class RoomComponent implements OnInit, OnDestroy {
     if (index !== -1) {
       this.currentCardIndex.set(index);
     }
+
+    // Haptic feedback on vote
+    this.vibrate([30]);
   }
+
+  private toggleRevealInProgress = false;
+  private initializationComplete = false;
 
   /**
    * Toggle reveal state
@@ -247,12 +413,28 @@ export class RoomComponent implements OnInit, OnDestroy {
   toggleReveal(): void {
     if (!this.isAdmin()) return;
 
+    if (!this.initializationComplete) {
+      return;
+    }
+
+    if (this.toggleRevealInProgress) {
+      return;
+    }
+
+    this.toggleRevealInProgress = true;
+    setTimeout(() => {
+      this.toggleRevealInProgress = false;
+    }, 1000); // Reset after 1 second
+
     // If hiding votes and discussion mode is active, stop discussion mode
     if (this.roomState().revealed && this.roomState().discussionActive) {
       this.supabaseService.toggleDiscussion(null, null);
     }
 
     this.supabaseService.toggleReveal();
+
+    // Haptic feedback on reveal
+    this.vibrate([50, 50]);
   }
 
   /**
@@ -326,36 +508,120 @@ export class RoomComponent implements OnInit, OnDestroy {
     if (!this.isAdmin()) return;
     if (userId === this.currentUserId) return; // Can't remove yourself
     this.supabaseService.removeParticipant(userId);
+
+    // Warning vibration pattern
+    this.vibrate([100, 50, 100]);
   }
 
   /**
    * Copy room ID to clipboard
+   * Uses fallback method for iOS Safari compatibility
    */
   async copyRoomId(): Promise<void> {
     const roomId = this.roomState().roomId;
     try {
-      await navigator.clipboard.writeText(roomId);
-      console.log("Room ID copied to clipboard");
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(roomId);
+        this.snackBar.open('Room ID copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+        return;
+      }
     } catch (err) {
-      console.error('Failed to copy room ID:', err);
-      // Fallback: Could show error message or use alternative method
+      console.log('Clipboard API failed, trying fallback:', err);
+    }
+
+    // Fallback for iOS Safari: use document.execCommand with textarea
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = roomId;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        this.snackBar.open('Room ID copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+      } else {
+        this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      }
+    } catch (err) {
+      this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      console.error('All copy methods failed:', err);
     }
   }
 
   /**
-   * Share room URL (copy full URL to clipboard)
+   * Share room URL using Web Share API with clipboard fallback
    */
   async shareRoom(): Promise<void> {
     const roomId = this.roomState().roomId;
     const baseHref = document.querySelector('base')?.getAttribute('href') ?? '/';
     const origin = window.location.origin;
     const roomUrl = `${origin}${baseHref}room/${roomId}`;
+
+    // Try Web Share API first (native share sheet on mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Planning Poker Room',
+          text: `Join my Planning Poker room: ${roomId}`,
+          url: roomUrl,
+        });
+        console.log("Room shared successfully");
+        this.vibrate([30, 20, 30]);
+        return;
+      } catch (err) {
+        // User cancelled or share failed, fall back to clipboard
+        if ((err as Error).name !== 'AbortError') {
+          console.log('Share failed, falling back to clipboard:', err);
+        }
+      }
+    }
+
+    // Fallback to clipboard copy
     try {
-      await navigator.clipboard.writeText(roomUrl);
-      console.log("Room URL copied to clipboard");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(roomUrl);
+        this.snackBar.open('Room URL copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+        return;
+      }
     } catch (err) {
-      console.error('Failed to copy room URL:', err);
-      // Fallback: Could show error message or use alternative method
+      console.log('Clipboard API failed for URL, trying fallback:', err);
+    }
+
+    // iOS Safari fallback
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = roomUrl;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        this.snackBar.open('Room URL copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+      } else {
+        this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      }
+    } catch (err) {
+      this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      console.error('All copy methods failed for URL:', err);
     }
   }
 
@@ -458,5 +724,21 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.previousCard();
       }
     }
+  }
+
+  /**
+   * Trigger vibration feedback (progressive enhancement)
+   */
+  private vibrate(pattern: number | number[]): void {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  }
+
+  /**
+   * Toggle theme
+   */
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

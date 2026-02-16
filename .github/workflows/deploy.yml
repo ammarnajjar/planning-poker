@@ -57,15 +57,21 @@ jobs:
       - name: Create environment files
         run: |
           cat > src/environments/environment.ts << EOF
+          import { version } from '../../package.json';
+
           export const environment = {
             production: false,
+            version,
             supabaseUrl: "${{ secrets.SUPABASE_URL }}",
             supabaseAnonKey: "${{ secrets.SUPABASE_ANON_KEY }}"
           };
           EOF
           cat > src/environments/environment.prod.ts << EOF
+          import { version } from '../../package.json';
+
           export const environment = {
             production: true,
+            version,
             supabaseUrl: "${{ secrets.SUPABASE_URL }}",
             supabaseAnonKey: "${{ secrets.SUPABASE_ANON_KEY }}"
           };
@@ -74,19 +80,10 @@ jobs:
       - name: Build Angular app
         run: npm run build:prod
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to GitHub Pages (root)
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: ./dist/planning-poker/browser
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/planning-poker/browser
+          keep_files: true
+          exclude_assets: 'pr-*'

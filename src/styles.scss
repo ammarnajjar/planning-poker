@@ -87,6 +87,13 @@ body {
 
 // Dark mode styles
 .dark-theme {
+  // Ripple color for all interactive elements
+  --mat-ripple-color: rgba(255, 255, 255, 0.2);
+  --mdc-ripple-color: rgba(255, 255, 255, 0.2);
+  --mdc-ripple-hover-opacity: 0.08;
+  --mdc-ripple-focus-opacity: 0.24;
+  --mdc-ripple-press-opacity: 0.32;
+
   body {
     background: #303030;
     color: rgba(255, 255, 255, 0.87);
@@ -118,6 +125,33 @@ body {
 
     &:hover {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+    }
+  }
+
+  // Button ripple effect for dark mode
+  .mat-mdc-button,
+  .mat-mdc-icon-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-outlined-button {
+    .mat-ripple-element,
+    .mat-mdc-button-persistent-ripple::before,
+    .mat-mdc-button-ripple::before {
+      background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    &:hover .mat-mdc-button-persistent-ripple::before {
+      opacity: 0.08 !important;
+    }
+
+    &:focus .mat-mdc-button-persistent-ripple::before {
+      opacity: 0.24 !important;
+    }
+  }
+
+  // Icon button specific ripple (for toolbar buttons)
+  .mat-mdc-icon-button {
+    .mat-ripple-element {
+      background-color: rgba(255, 255, 255, 0.15) !important;
     }
   }
 
@@ -231,6 +265,33 @@ body {
     .mat-mdc-button {
       color: #9fa8da !important;
     }
+  }
+}
+
+// Snackbar styling for dark mode (must be outside .dark-theme to target overlay)
+.dark-theme {
+  .mat-mdc-snack-bar-container,
+  .mdc-snackbar {
+    --mdc-snackbar-container-color: #424242;
+    --mat-snack-bar-button-color: #9fa8da;
+    --mdc-snackbar-supporting-text-color: rgba(255, 255, 255, 0.87);
+
+    background-color: #424242 !important;
+  }
+
+  .mdc-snackbar__surface {
+    background-color: #424242 !important;
+  }
+
+  .mdc-snackbar__label,
+  .mat-mdc-snack-bar-label,
+  .mat-mdc-simple-snack-bar > span {
+    color: rgba(255, 255, 255, 0.87) !important;
+  }
+
+  .mat-mdc-snack-bar-action,
+  .mat-mdc-button.mat-mdc-snack-bar-action {
+    color: #9fa8da !important;
   }
 }
 

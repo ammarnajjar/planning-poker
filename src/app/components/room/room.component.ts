@@ -8,6 +8,7 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatIconModule } from "@angular/material/icon";
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatSnackBar, MatSnackBarModule } from "@angular/material/snack-bar";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Participant, SupabaseService } from "../../services/supabase.service";
 import { PwaService } from "../../services/pwa.service";
@@ -29,6 +30,7 @@ import { ScreenOrientationService } from "../../services/screen-orientation.serv
     MatChipsModule,
     MatDividerModule,
     MatTooltipModule,
+    MatSnackBarModule,
   ],
   templateUrl: "./room.component.html",
   styleUrls: ["./room.component.scss"],
@@ -180,6 +182,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     public readonly networkService: NetworkService,
     public readonly idleDetectionService: IdleDetectionService,
     private readonly screenOrientationService: ScreenOrientationService,
+    private readonly snackBar: MatSnackBar,
   ) {
     // Handle user removal with effect (100% signal-based, no RxJS)
     effect(() => {
@@ -486,15 +489,46 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   /**
    * Copy room ID to clipboard
+   * Uses fallback method for iOS Safari compatibility
    */
   async copyRoomId(): Promise<void> {
     const roomId = this.roomState().roomId;
     try {
-      await navigator.clipboard.writeText(roomId);
-      console.log("Room ID copied to clipboard");
-      this.vibrate([30, 20, 30]);
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(roomId);
+        this.snackBar.open('Room ID copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+        return;
+      }
     } catch (err) {
-      console.error('Failed to copy room ID:', err);
+      console.log('Clipboard API failed, trying fallback:', err);
+    }
+
+    // Fallback for iOS Safari: use document.execCommand with textarea
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = roomId;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        this.snackBar.open('Room ID copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+      } else {
+        this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      }
+    } catch (err) {
+      this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      console.error('All copy methods failed:', err);
     }
   }
 
@@ -528,11 +562,40 @@ export class RoomComponent implements OnInit, OnDestroy {
 
     // Fallback to clipboard copy
     try {
-      await navigator.clipboard.writeText(roomUrl);
-      console.log("Room URL copied to clipboard");
-      this.vibrate([30, 20, 30]);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(roomUrl);
+        this.snackBar.open('Room URL copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+        return;
+      }
     } catch (err) {
-      console.error('Failed to copy room URL:', err);
+      console.log('Clipboard API failed for URL, trying fallback:', err);
+    }
+
+    // iOS Safari fallback
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = roomUrl;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        this.snackBar.open('Room URL copied!', '', { duration: 2000 });
+        this.vibrate([30, 20, 30]);
+      } else {
+        this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      }
+    } catch (err) {
+      this.snackBar.open('Failed to copy', '', { duration: 2000 });
+      console.error('All copy methods failed for URL:', err);
     }
   }
 

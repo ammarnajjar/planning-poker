@@ -30,6 +30,8 @@ export class ScreenOrientationService {
     this.isSupported.set(
       'screen' in window &&
       'orientation' in screen &&
+      screen.orientation !== null &&
+      screen.orientation !== undefined &&
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'lock' in (screen.orientation as any)
     );
@@ -39,7 +41,9 @@ export class ScreenOrientationService {
    * Update current orientation from screen
    */
   private updateCurrentOrientation(): void {
-    if (!('screen' in window && 'orientation' in screen)) {
+    if (!('screen' in window && 'orientation' in screen) ||
+        !screen.orientation ||
+        !screen.orientation.type) {
       this.currentOrientation.set('unknown');
       return;
     }
@@ -59,7 +63,7 @@ export class ScreenOrientationService {
    * Setup monitoring for orientation changes
    */
   private setupOrientationMonitoring(): void {
-    if (!('screen' in window && 'orientation' in screen)) return;
+    if (!('screen' in window && 'orientation' in screen) || !screen.orientation) return;
 
     this.orientationChangeHandler = () => {
       this.updateCurrentOrientation();

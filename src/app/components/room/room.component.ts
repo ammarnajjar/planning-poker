@@ -11,6 +11,7 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Participant, SupabaseService } from "../../services/supabase.service";
 import { PwaService } from "../../services/pwa.service";
+import { ThemeService } from "../../services/theme.service";
 
 @Component({
   selector: "app-room",
@@ -172,6 +173,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly supabaseService: SupabaseService,
     private readonly pwaService: PwaService,
+    public readonly themeService: ThemeService,
   ) {
     // Handle user removal with effect (100% signal-based, no RxJS)
     effect(() => {
@@ -622,5 +624,12 @@ export class RoomComponent implements OnInit, OnDestroy {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
+  }
+
+  /**
+   * Toggle theme
+   */
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

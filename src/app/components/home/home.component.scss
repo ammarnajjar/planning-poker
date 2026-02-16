@@ -149,6 +149,28 @@
   }
 }
 
+// Dark mode overrides
+:host-context(.dark-theme) {
+  .info-section {
+    background: #424242;
+    color: rgba(255, 255, 255, 0.87);
+
+    h3 {
+      color: #9fa8da;
+    }
+  }
+
+  .join-error-message {
+    background: rgba(244, 67, 54, 0.2) !important;
+    border-left-color: #ef5350 !important;
+    color: #ffcdd2 !important;
+
+    mat-icon {
+      color: #ef5350 !important;
+    }
+  }
+}
+
 .join-as-admin-toggle {
   margin-top: 8px;
   margin-bottom: 8px;

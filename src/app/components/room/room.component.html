@@ -4,6 +4,9 @@
   </button>
   <span class="toolbar-title">Planning Poker</span>
   <span class="spacer"></span>
+  <button mat-icon-button (click)="toggleTheme()" [matTooltip]="'Switch to ' + (themeService.effectiveTheme() === 'light' ? 'dark' : 'light') + ' mode'">
+    <mat-icon>{{ themeService.effectiveTheme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
   <button mat-icon-button (click)="shareRoom()" matTooltip="Share Room URL">
     <mat-icon>share</mat-icon>
   </button>

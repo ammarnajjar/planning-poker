@@ -8,10 +8,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AdminPinDialogComponent } from '../admin-pin-dialog/admin-pin-dialog.component';
 import { SupabaseService } from '../../services/supabase.service';
+import { ThemeService } from '../../services/theme.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -25,7 +27,8 @@ import { firstValueFrom } from 'rxjs';
     MatInputModule,
     MatFormFieldModule,
     MatToolbarModule,
-    MatIconModule
+    MatIconModule,
+    MatTooltipModule
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
@@ -41,7 +44,8 @@ export class HomeComponent {
     private readonly router: Router,
     private readonly dialog: MatDialog,
     private readonly supabaseService: SupabaseService,
-    private readonly snackBar: MatSnackBar
+    private readonly snackBar: MatSnackBar,
+    public readonly themeService: ThemeService
   ) {}
 
   /**
@@ -138,6 +142,13 @@ export class HomeComponent {
   toggleJoinForm(): void {
     this.showJoinForm.update(show => !show);
     this.joinError.set(false); // Clear error when toggling form
+  }
+
+  /**
+   * Toggle theme
+   */
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   /**

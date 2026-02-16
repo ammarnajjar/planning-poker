@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { PwaService } from './services/pwa.service';
+import { ThemeService } from './services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -90,7 +91,10 @@ import { PwaService } from './services/pwa.service';
 export class AppComponent implements OnInit {
   title = 'planning-poker';
 
-  constructor(public pwaService: PwaService) {
+  constructor(
+    public pwaService: PwaService,
+    public themeService: ThemeService
+  ) {
     // Log when PWA is installed
     effect(() => {
       if (this.pwaService.isInstalled()) {

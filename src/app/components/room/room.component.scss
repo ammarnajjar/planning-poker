@@ -1217,3 +1217,189 @@
     max-width: 70px;
   }
 }
+
+// Dark mode overrides
+:host-context(.dark-theme) {
+  .room-container {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  }
+
+  .room-toolbar {
+    background: #1a1a1a !important;
+    color: rgba(255, 255, 255, 0.87) !important;
+
+    .room-id {
+      background: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.95);
+    }
+  }
+
+  // Voting section
+  .voting-section {
+    background: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .vote-status {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .current-selection {
+    color: rgba(255, 255, 255, 0.87);
+
+    strong {
+      color: #9fa8da;
+    }
+  }
+
+  // Card carousel buttons
+  .card-carousel .nav-button {
+    color: #9fa8da;
+  }
+
+  // Card backgrounds for dark mode
+  .vote-card-large {
+    background: #424242;
+    border-color: #616161;
+    color: rgba(255, 255, 255, 0.87);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+    &:hover:not(.disabled) {
+      background: #4e4e4e;
+    }
+
+    &.selected {
+      background: #7986cb !important;
+      border-color: #9fa8da !important;
+      border-width: 3px !important;
+      color: white !important;
+      box-shadow: 0 0 0 3px rgba(159, 168, 218, 0.3), 0 8px 24px rgba(121, 134, 203, 0.5) !important;
+      transform: scale(1.02);
+    }
+  }
+
+  .card-value-large {
+    color: #9fa8da;
+
+    .vote-card-large.selected & {
+      color: white;
+    }
+  }
+
+  // Indicator dots
+  .indicator-dot {
+    background: #616161;
+
+    &.active {
+      background: #9fa8da;
+    }
+
+    &:hover {
+      background: #757575;
+    }
+  }
+
+  // Participants section
+  .participants-section {
+    background: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .section-title {
+    color: rgba(255, 255, 255, 0.87);
+  }
+
+  .poker-table-container {
+    background: transparent;
+  }
+
+  // Poker table styling remains similar but slightly darker
+  .poker-table {
+    background: radial-gradient(ellipse at center, #1d4d3a 0%, #143a26 70%, #0a2415 100%);
+  }
+
+  .table-info {
+    .vote-count {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .vote-label,
+    .waiting-text {
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  // Participant cards
+  .card-front {
+    background: #424242;
+    border-color: #616161;
+
+    .avatar-circle mat-icon {
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+
+  .participant-card.voted:not(.revealed) .card-front {
+    border-color: #66bb6a;
+    background: #2e5d38;
+  }
+
+  .card-back {
+    background: #5c6bc0;
+    border-color: #7986cb;
+
+    .vote-number {
+      color: white;
+    }
+
+    &.warning {
+      background: #3d2f1d;
+      border-color: #ff9800;
+
+      .vote-number {
+        color: #ffb74d;
+      }
+    }
+  }
+
+  .participant-name {
+    color: rgba(255, 255, 255, 0.87);
+
+    .you-badge {
+      color: #64b5f6;
+    }
+
+    .admin-icon {
+      color: #ffb74d;
+    }
+  }
+
+  .participant-card.is-you .participant-name {
+    color: #64b5f6;
+  }
+
+  // Table cards
+  .table-card-inner {
+    background: #424242;
+    border-color: #616161;
+  }
+
+  .table-card-value {
+    color: #9fa8da;
+  }
+
+  .table-card-name {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  // Admin controls
+  .admin-controls {
+    background: #2a2a2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .average-display {
+    background: linear-gradient(135deg, #5c6bc0 0%, #7986cb 100%);
+    color: rgba(255, 255, 255, 0.95);
+  }
+}

@@ -23,6 +23,11 @@
         (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
         l.hash
       );
+    } else {
+      // On local dev, redirect to homepage
+      // For proper SPA routing on local dev, use: ng serve
+      // Or: npx http-server -p 8080 --proxy http://localhost:8080?
+      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/');
     }
   </script>
 </head>

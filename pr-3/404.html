@@ -2,22 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Planning Poker - Redirecting...</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #1a1a1a;
-      color: #fff;
-    }
-    .message {
-      text-align: center;
-    }
-  </style>
+  <title>Planning Poker</title>
   <script>
     // Single Page Apps for GitHub Pages
     // https://github.com/rafgraph/spa-github-pages
@@ -42,38 +27,19 @@
         pathSegmentsToKeep = 2; // Keep /planning-poker/pr-3/
       }
 
-      // Debug logging
-      console.log('[404.html] pathname:', l.pathname);
-      console.log('[404.html] pathSegments:', pathSegments);
-      console.log('[404.html] pathSegmentsToKeep:', pathSegmentsToKeep);
-
-      var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
         l.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/') + '/?/' +
         l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
         (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash;
-
-      console.log('[404.html] Redirecting to:', redirectUrl);
-      l.replace(redirectUrl);
+        l.hash
+      );
     } else {
       // On local dev, redirect to homepage
-      // For proper SPA routing on local dev, use: ng serve
-      // Or: npx http-server -p 8080 --proxy http://localhost:8080?
       l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/');
     }
   </script>
 </head>
 <body>
-  <div class="message">
-    <h1>Redirecting...</h1>
-    <p id="debug-info">Processing redirect...</p>
-  </div>
-  <script>
-    // Show debug info in the page itself
-    var debugEl = document.getElementById('debug-info');
-    if (debugEl) {
-      debugEl.innerHTML = 'Current URL: ' + window.location.href + '<br>404.html loaded successfully';
-    }
-  </script>
 </body>
 </html>

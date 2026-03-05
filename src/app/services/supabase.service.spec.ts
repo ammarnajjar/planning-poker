@@ -1154,7 +1154,7 @@ describe('SupabaseService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any).CLEANUP_INTERVAL_MS).toBe(3000);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((service as any).PARTICIPANT_TIMEOUT_MS).toBe(5000);
+      expect((service as any).PARTICIPANT_TIMEOUT_MS).toBe(15 * 60 * 1000);
     });
   });
 
@@ -1814,7 +1814,7 @@ describe('SupabaseService', () => {
           eq: vi.fn().mockResolvedValue({
             data: [
               { user_id: 'user1', name: 'Alice', vote: '5', last_seen: now - 1000 },
-              { user_id: 'user2', name: 'Bob', vote: '8', last_seen: now - 15000 } // Stale
+              { user_id: 'user2', name: 'Bob', vote: '8', last_seen: now - (16 * 60 * 1000) } // Stale
             ]
           })
         })
@@ -1989,7 +1989,7 @@ describe('SupabaseService', () => {
 
     it('should remove participant when last_seen is too old', () => {
       // Arrange
-      const oldTimestamp = Date.now() - 15000; // 15 seconds ago
+      const oldTimestamp = Date.now() - (16 * 60 * 1000); // 16 minutes ago
       const state = (service as SupabaseServicePrivate).roomState;
       state.update((s: RoomState) => ({
         ...s,
@@ -2090,7 +2090,7 @@ describe('SupabaseService', () => {
       state.update((s: RoomState) => ({
         ...s,
         participants: {
-          user1: { id: 'user1', name: 'Alice', lastSeen: now - 20000 } // Very old - should be removed
+          user1: { id: 'user1', name: 'Alice', lastSeen: now - (31 * 60 * 1000) } // Very old - should be removed
         }
       }));
 

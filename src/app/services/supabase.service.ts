@@ -29,7 +29,7 @@ export class SupabaseService {
   // Constants - will be dynamically adjusted based on network quality
   private readonly BASE_HEARTBEAT_INTERVAL_MS = 2000;
   private readonly CLEANUP_INTERVAL_MS = 3000;
-  private readonly PARTICIPANT_TIMEOUT_MS = 5000;
+  private readonly PARTICIPANT_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
   // Dynamic heartbeat interval based on network quality
   private currentHeartbeatInterval = this.BASE_HEARTBEAT_INTERVAL_MS;
@@ -319,8 +319,8 @@ export class SupabaseService {
       const activeParticipants: Record<string, Participant> = {};
 
       participants.forEach((p: { user_id: string; name: string; vote: string; last_seen: number }) => {
-        // Only include active participants (last_seen within 10 seconds)
-        if (p.last_seen && now - p.last_seen <= 10000) {
+        // Only include active participants (last_seen within timeout)
+        if (p.last_seen && now - p.last_seen <= this.PARTICIPANT_TIMEOUT_MS) {
           activeParticipants[p.user_id] = {
             id: p.user_id,
             name: p.name,
@@ -534,7 +534,7 @@ export class SupabaseService {
       // Check if participant is stale or marked as offline
       const isStale = !participant.last_seen ||
                       participant.last_seen === 0 ||
-                      now - participant.last_seen > 10000;
+                      now - participant.last_seen > this.PARTICIPANT_TIMEOUT_MS;
 
       if (isStale) {
         // Remove from state

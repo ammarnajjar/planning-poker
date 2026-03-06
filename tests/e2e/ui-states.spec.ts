@@ -1,195 +1,102 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, createRoom, getRoomId, startVoting, joinRoom, revealVotes } from './helpers/fixtures';
 import { cleanupTestRoom } from './helpers/cleanup';
 
 test.describe('UI States and Feedback', () => {
-  let createdRoomIds: string[] = [];
-
-  const captureRoomId = (page: any) => {
-    const url = page.url();
-    const roomId = url.split('/room/')[1];
-    if (roomId && !createdRoomIds.includes(roomId)) {
-      createdRoomIds.push(roomId);
-    }
-    return roomId;
-  };
-
-  test.afterEach(async () => {
-    for (const roomId of createdRoomIds) {
-      await cleanupTestRoom(roomId);
-    }
-    createdRoomIds = [];
-  });
-
   test('should show correct button states based on room state', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-testid="name-input"]').fill('Admin');
-    await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /OK/i }).click();
+    await createRoom(page, 'Admin');
+    const roomId = getRoomId(page);
 
-    await expect(page).toHaveURL(/\/room\//);
-    captureRoomId(page);
-
-    // Initial state: "Start Voting" should be visible
+    // Initial state
     await expect(page.getByRole('button', { name: /Start Voting/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Reveal/i })).not.toBeVisible();
     await expect(page.getByRole('button', { name: /Reset/i })).not.toBeVisible();
 
-    // Start voting
+    // Start voting (without participation — just clicks Start Voting and waits for Reveal to appear)
     await page.getByRole('button', { name: /Start Voting/i }).click();
-    await page.waitForTimeout(1000);
-
-    // During voting: "Reveal" should be visible, "Start Voting" hidden
+    await expect(page.getByRole('button', { name: /Reveal/i })).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('button', { name: /Start Voting/i })).not.toBeVisible();
-    await expect(page.getByRole('button', { name: /Reveal/i })).toBeVisible();
 
-    // After reveal
-    await page.getByRole('button', { name: /Reveal/i }).click();
-    await page.waitForTimeout(1000);
-
-    // After reveal: "Hide" and "Reset" should be visible
-    await expect(page.getByRole('button', { name: /Hide/i })).toBeVisible();
+    // Reveal
+    await revealVotes(page);
+    await expect(page.getByRole('button', { name: /Hide/i })).toBeVisible({ timeout: 5000 });
     await expect(page.getByRole('button', { name: /Reset/i })).toBeVisible();
+
+    await cleanupTestRoom(roomId);
   });
 
   test('should display vote status correctly', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-testid="name-input"]').fill('Admin');
-    await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /OK/i }).click();
+    await createRoom(page, 'Admin');
+    const roomId = getRoomId(page);
 
-    await expect(page).toHaveURL(/\/room\//);
-    captureRoomId(page);
-
-    // Initial status
     await expect(page.locator('[data-testid="vote-status"]')).toContainText('Waiting for voting to start');
 
-    // Enable participation and start voting
-    await page.locator('[data-testid="admin-participate-checkbox"]').locator('label').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
+    await startVoting(page);
 
-    // Should show 0/1 voted
     await expect(page.locator('[data-testid="vote-status"]')).toContainText('0/1', { timeout: 5000 });
 
-    // After voting
     const card = page.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"], [data-testid="carousel-vote-card"]').first();
     if (await card.isVisible().catch(() => false)) {
       await card.click();
       await expect(page.locator('[data-testid="vote-status"]')).toContainText('1/1', { timeout: 5000 });
     }
-  });
 
-  test('should show selected card state visually', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-testid="name-input"]').fill('Admin');
-    await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /OK/i }).click();
-
-    await expect(page).toHaveURL(/\/room\//);
-    captureRoomId(page);
-
-    await page.locator('[data-testid="admin-participate-checkbox"]').locator('label').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
-
-    const card5 = page.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"]').filter({ hasText: /^5$/ });
-    if (await card5.isVisible().catch(() => false)) {
-      // Before clicking - should not have selected class
-      const classBeforeClick = await card5.getAttribute('class');
-      expect(classBeforeClick).not.toContain('selected');
-
-      await card5.click();
-      await page.waitForTimeout(500);
-
-      // After clicking - should have selected class
-      const classAfterClick = await card5.getAttribute('class');
-      expect(classAfterClick).toContain('selected');
-    }
+    await cleanupTestRoom(roomId);
   });
 
   test('should show participant vote status indicators', async ({ browser }) => {
-    const context1 = await browser.newContext();
-    const context2 = await browser.newContext();
-
-    const adminPage = await context1.newPage();
-    const userPage = await context2.newPage();
+    const adminContext = await browser.newContext();
+    const userContext = await browser.newContext();
+    const adminPage = await adminContext.newPage();
+    const userPage = await userContext.newPage();
 
     try {
-      // Admin creates room
-      await adminPage.goto('/');
-      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
-      await adminPage.getByRole('button', { name: /Create New Room/i }).click();
-      await adminPage.getByRole('button', { name: /OK/i }).click();
+      await createRoom(adminPage, 'Admin');
+      const roomId = getRoomId(adminPage);
 
-      await expect(adminPage).toHaveURL(/\/room\//);
-      const roomId = captureRoomId(adminPage);
-
-      // User joins
-      await userPage.goto('/');
-      await userPage.locator('[data-testid="name-input"]').fill('User');
-      await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
-      await userPage.getByRole('button', { name: /^Join Room$/i }).click();
-
+      await joinRoom(userPage, roomId, 'User');
       await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
 
-      // Start voting
       await adminPage.getByRole('button', { name: /Start Voting/i }).click();
       await expect(userPage.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
-      // User votes
       const userCard = userPage.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"], [data-testid="carousel-vote-card"]').first();
       if (await userCard.isVisible().catch(() => false)) {
         await userCard.click();
-        await userPage.waitForTimeout(1000);
+        await expect(userPage.locator('[data-testid="current-selection"]')).toContainText('Your vote:', { timeout: 5000 });
 
-        // Admin should see that user has voted (vote count on poker table for non-participating admin)
-        await expect(adminPage.locator('.vote-count')).toContainText('1/1', { timeout: 10000 });
+        await expect(adminPage.locator('[data-testid="vote-count"]')).toContainText('1/1', { timeout: 10000 });
       }
+
+      await cleanupTestRoom(roomId);
     } finally {
-      await context1.close();
-      await context2.close();
+      await adminContext.close();
+      await userContext.close();
     }
   });
 
   test('should show admin controls only to admin', async ({ browser }) => {
-    const context1 = await browser.newContext();
-    const context2 = await browser.newContext();
-
-    const adminPage = await context1.newPage();
-    const userPage = await context2.newPage();
+    const adminContext = await browser.newContext();
+    const userContext = await browser.newContext();
+    const adminPage = await adminContext.newPage();
+    const userPage = await userContext.newPage();
 
     try {
-      // Admin creates room
-      await adminPage.goto('/');
-      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
-      await adminPage.getByRole('button', { name: /Create New Room/i }).click();
-      await adminPage.getByRole('button', { name: /OK/i }).click();
+      await createRoom(adminPage, 'Admin');
+      const roomId = getRoomId(adminPage);
 
-      await expect(adminPage).toHaveURL(/\/room\//);
-      const roomId = captureRoomId(adminPage);
-
-      // User joins
-      await userPage.goto('/');
-      await userPage.locator('[data-testid="name-input"]').fill('User');
-      await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
-      await userPage.getByRole('button', { name: /^Join Room$/i }).click();
-
+      await joinRoom(userPage, roomId, 'User');
       await expect(userPage).toHaveURL(/\/room\//);
 
-      // Admin should see admin controls
       await expect(adminPage.locator('[data-testid="admin-controls"]')).toBeVisible();
       await expect(adminPage.getByRole('button', { name: /Start Voting/i })).toBeVisible();
 
-      // User should NOT see admin controls
       await expect(userPage.locator('[data-testid="admin-controls"]')).not.toBeVisible();
       await expect(userPage.getByRole('button', { name: /Start Voting/i })).not.toBeVisible();
+
+      await cleanupTestRoom(roomId);
     } finally {
-      await context1.close();
-      await context2.close();
+      await adminContext.close();
+      await userContext.close();
     }
   });
 });

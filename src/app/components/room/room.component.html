@@ -150,14 +150,14 @@
         <div class="table-center">
           <div class="table-info">
             @if (roomState().discussionActive) {
-              <div class="discussion-title">Discussion Mode</div>
+              <div class="discussion-title" data-testid="discussion-title">Discussion Mode</div>
               <div class="discussion-subtitle">
-                <span class="discussion-indicator-min">LOW</span>
+                <span class="discussion-indicator-min" data-testid="discussion-indicator-min">LOW</span>
                 vs
-                <span class="discussion-indicator-max">HIGH</span>
+                <span class="discussion-indicator-max" data-testid="discussion-indicator-max">HIGH</span>
               </div>
             } @else if (roomState().votingStarted) {
-              <div class="vote-count">{{ votedCount() }}/{{ totalCount() }}</div>
+              <div class="vote-count" data-testid="vote-count">{{ votedCount() }}/{{ totalCount() }}</div>
               <div class="vote-label">voted</div>
             } @else {
               <div class="waiting-text">Waiting to start...</div>

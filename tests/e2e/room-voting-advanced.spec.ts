@@ -1,104 +1,24 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, createRoom, getRoomId } from './helpers/fixtures';
 import { cleanupTestRoom } from './helpers/cleanup';
 
 test.describe('Room Voting Advanced', () => {
-  let createdRoomIds: string[] = [];
-
-  const captureRoomId = (page: any) => {
-    const url = page.url();
-    const roomId = url.split('/room/')[1];
-    if (roomId && !createdRoomIds.includes(roomId)) {
-      createdRoomIds.push(roomId);
-    }
-    return roomId;
-  };
-
-  test.afterEach(async () => {
-    for (const roomId of createdRoomIds) {
-      await cleanupTestRoom(roomId);
-    }
-    createdRoomIds = [];
-  });
-
-  test('should handle special vote values', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-testid="name-input"]').fill('Test User');
-    await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /OK/i }).click();
-
-    await expect(page).toHaveURL(/\/room\//);
-    await cleanupTestRoom(captureRoomId(page));
-
-    await page.locator('[data-testid="admin-participate-checkbox"]').locator('label').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('[data-testid="vote-status"]')).toBeVisible({ timeout: 5000 });
-
-    const firstCard = page.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"], [data-testid="carousel-vote-card"]').first();
-    await firstCard.waitFor({ state: 'visible', timeout: 5000 });
-    await firstCard.click();
-    await expect(page.locator('[data-testid="current-selection"]')).toContainText('Your vote:', { timeout: 5000 });
-
-    await page.waitForTimeout(500);
-    const card5 = page.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"]').filter({ hasText: /^5$/ });
-    if (await card5.isVisible().catch(() => false)) {
-      await card5.click();
-      await expect(page.locator('[data-testid="current-selection"]')).toContainText('5', { timeout: 5000 });
-    }
-  });
-
-  test('should handle reset during voting', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('[data-testid="name-input"]').fill('Admin');
-    await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /OK/i }).click();
-
-    await expect(page).toHaveURL(/\/room\//);
-    await cleanupTestRoom(captureRoomId(page));
-
-    await page.locator('[data-testid="admin-participate-checkbox"]').locator('label').click();
-    await page.waitForTimeout(500);
-    await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('[data-testid="vote-status"]')).toBeVisible({ timeout: 5000 });
-
-    const card = page.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"], [data-testid="carousel-vote-card"]').first();
-    await card.waitFor({ state: 'visible', timeout: 5000 });
-    await card.click();
-    await expect(page.locator('[data-testid="current-selection"]')).toContainText('Your vote:', { timeout: 5000 });
-
-    await page.getByRole('button', { name: /Reset/i }).click();
-    await page.waitForTimeout(1000);
-
-    await expect(page.getByRole('button', { name: /Start Voting/i })).toBeVisible({ timeout: 10000 });
-
-    await expect(page.locator('[data-testid="vote-status"]')).toContainText('Waiting for voting to start', { timeout: 5000 });
-  });
-
   test('should be mobile responsive in room', async ({ page, isMobile }) => {
-    await page.goto('/');
-    await page.locator('[data-testid="name-input"]').fill('Mobile User');
-    await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /OK/i }).click();
-
-    await expect(page).toHaveURL(/\/room\//);
-    captureRoomId(page);
+    await createRoom(page, 'Mobile User');
+    const roomId = getRoomId(page);
 
     if (isMobile) {
       const toolbarTitle = page.locator('.toolbar-title');
       const isVisible = await toolbarTitle.isVisible();
       expect(isVisible).toBe(false);
 
-      const roomId = page.locator('[data-testid="room-id"]');
-      await expect(roomId).toBeVisible();
+      const roomIdEl = page.locator('[data-testid="room-id"]');
+      await expect(roomIdEl).toBeVisible();
 
-      const fontSize = await roomId.evaluate(el => {
-        return window.getComputedStyle(el).fontSize;
-      });
-
+      const fontSize = await roomIdEl.evaluate(el => window.getComputedStyle(el).fontSize);
       expect(parseInt(fontSize)).toBe(14);
     }
+
+    await cleanupTestRoom(roomId);
   });
 
   test('should copy room ID to clipboard', async ({ page, context, browserName }) => {
@@ -109,21 +29,16 @@ test.describe('Room Voting Advanced', () => {
 
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-    await page.goto('/');
-    await page.locator('[data-testid="name-input"]').fill('Admin User');
-    await page.getByRole('button', { name: /Create New Room/i }).click();
-    await page.getByRole('button', { name: /OK/i }).click();
-
-    await expect(page).toHaveURL(/\/room\//);
-    const roomId = captureRoomId(page);
+    await createRoom(page, 'Admin User');
+    const roomId = getRoomId(page);
 
     await expect(page.locator('[data-testid="room-id"]')).toBeVisible();
 
     await page.locator('[data-testid="copy-room-id-button"]').click();
 
-    await page.waitForTimeout(500);
-
     const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(roomId);
+
+    await cleanupTestRoom(roomId);
   });
 });

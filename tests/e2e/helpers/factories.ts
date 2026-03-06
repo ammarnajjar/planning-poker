@@ -77,7 +77,7 @@ export const Validators = {
   },
 
   isValidVote: (vote: string): boolean => {
-    return VotingCards.VALUES.includes(vote);
+    return (VotingCards.VALUES as readonly string[]).includes(vote);
   },
 
   isValidPIN: (pin: string): boolean => {
@@ -110,13 +110,16 @@ export const Selectors = {
     shareButton: '[data-testid="share-room-button"]',
     adminControls: '[data-testid="admin-controls"]',
     voteStatus: '[data-testid="vote-status"]',
-    voteCount: '.vote-count',
+    voteCount: '[data-testid="vote-count"]',
     participationCheckbox: '[data-testid="admin-participate-checkbox"]',
     discussButton: '[data-testid="discuss-button"]',
     endDiscussionButton: '[data-testid="discuss-button"]',
     removeParticipantButton: '[data-testid="remove-participant-button"]',
     votingSection: '[data-testid="voting-section"]',
     currentSelection: '[data-testid="current-selection"]',
+    discussionTitle: '[data-testid="discussion-title"]',
+    discussionIndicatorMin: '[data-testid="discussion-indicator-min"]',
+    discussionIndicatorMax: '[data-testid="discussion-indicator-max"]',
   },
   dialog: {
     pinInput: 'input[type="password"]',

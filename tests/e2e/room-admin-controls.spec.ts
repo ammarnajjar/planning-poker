@@ -22,20 +22,20 @@ test.describe('Room Admin Controls', () => {
 
   test('should display admin controls for room creator @smoke', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Admin User');
+    await page.locator('[data-testid="name-input"]').fill('Admin User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
     await cleanupTestRoom(captureRoomId(page));
 
-    await expect(page.locator('mat-checkbox').getByText('I want to participate')).toBeVisible();
+    await expect(page.locator('[data-testid="admin-participate-checkbox"]')).toBeVisible();
     await expect(page.getByRole('button', { name: /Start Voting/i })).toBeVisible();
   });
 
   test('should toggle admin participation @smoke', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Admin');
+    await page.locator('[data-testid="name-input"]').fill('Admin');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
@@ -43,46 +43,47 @@ test.describe('Room Admin Controls', () => {
     await cleanupTestRoom(captureRoomId(page));
 
     // Check the participation checkbox
-    const participationCheckbox = page.locator('mat-checkbox').getByText('I want to participate');
+    const participationCheckbox = page.locator('[data-testid="admin-participate-checkbox"]');
     await expect(participationCheckbox).toBeVisible();
-    await participationCheckbox.click();
+    await participationCheckbox.locator('label').click();
     await page.waitForTimeout(1000);
 
     // Start voting and verify admin can vote
     await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
     // Admin should see voting cards (confirms participation is enabled)
-    const voteCards = page.locator('.vote-cards-grid .vote-card-large, .card-carousel .vote-card-large');
-    await expect(voteCards.first()).toBeVisible();
+    // On desktop: cards in a grid; on mobile: cards in a carousel (may be off-screen individually)
+    const voteCards = page.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"], [data-testid="carousel-vote-card"]');
+    await expect(voteCards.first()).toBeAttached({ timeout: 5000 });
 
     // Verify vote status shows 1 participant
-    await expect(page.locator('.vote-status')).toContainText('0/1', { timeout: 5000 });
+    await expect(page.locator('[data-testid="vote-status"]')).toContainText('0/1', { timeout: 5000 });
   });
 
   test('should have share room button', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
     await cleanupTestRoom(captureRoomId(page));
 
-    const shareButton = page.locator('button[mattooltip="Share Room URL"]');
+    const shareButton = page.locator('[data-testid="share-room-button"]');
     await expect(shareButton).toBeVisible();
   });
 
   test('should show participants list', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
     await cleanupTestRoom(captureRoomId(page));
 
-    await expect(page.locator('.section-title')).toContainText('Participants');
-    await expect(page.locator('.participant-name').first()).toBeVisible();
+    await expect(page.locator('[data-testid="participants-title"]')).toContainText('Participants');
+    await expect(page.locator('[data-testid="participant-name"]').first()).toBeVisible();
   });
 });

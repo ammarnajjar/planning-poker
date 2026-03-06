@@ -22,14 +22,14 @@ test.describe('Room Validation', () => {
 
   test('should reject empty room ID when joining', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Join Existing Room/i }).click();
 
     // Try to join without entering room ID
     const joinButton = page.getByRole('button', { name: /^Join Room$/i });
 
     // Room ID input should be required
-    const roomIdInput = page.locator('input[placeholder="Enter room ID"]');
+    const roomIdInput = page.locator('[data-testid="room-id-input"]');
     await expect(roomIdInput).toBeVisible();
 
     // Join button might be disabled or form validation prevents submission
@@ -42,7 +42,7 @@ test.describe('Room Validation', () => {
 
   test('should handle room ID case sensitivity', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Admin');
+    await page.locator('[data-testid="name-input"]').fill('Admin');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
@@ -60,7 +60,7 @@ test.describe('Room Validation', () => {
     // Create 3 rooms and verify they all have unique IDs
     for (let i = 0; i < 3; i++) {
       await page.goto('/');
-      await page.locator('input[placeholder="Enter your name"]').fill(`User ${i}`);
+      await page.locator('[data-testid="name-input"]').fill(`User ${i}`);
       await page.getByRole('button', { name: /Create New Room/i }).click();
       await page.getByRole('button', { name: /OK/i }).click();
 
@@ -83,7 +83,7 @@ test.describe('Room Validation', () => {
     const createButton = page.getByRole('button', { name: /Create New Room/i });
 
     // Name input should be empty
-    const nameInput = page.locator('input[placeholder="Enter your name"]');
+    const nameInput = page.locator('[data-testid="name-input"]');
     await expect(nameInput).toBeVisible();
     await expect(nameInput).toHaveValue('');
 
@@ -96,10 +96,10 @@ test.describe('Room Validation', () => {
 
   test('should accept valid room ID format', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Join Existing Room/i }).click();
 
-    const roomIdInput = page.locator('input[placeholder="Enter room ID"]');
+    const roomIdInput = page.locator('[data-testid="room-id-input"]');
 
     // Valid formats should be accepted
     await roomIdInput.fill('ABC123');
@@ -117,7 +117,7 @@ test.describe('Room Validation', () => {
     try {
       // Admin creates room
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
       await adminPage.getByRole('button', { name: /OK/i }).click();
 
@@ -126,10 +126,10 @@ test.describe('Room Validation', () => {
 
       // User tries to join with whitespace
       await userPage.goto('/');
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User');
+      await userPage.locator('[data-testid="name-input"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
 
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(`  ${roomId}  `);
+      await userPage.locator('[data-testid="room-id-input"]').fill(`  ${roomId}  `);
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
 
       // Should successfully join despite whitespace

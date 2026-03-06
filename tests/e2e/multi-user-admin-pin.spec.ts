@@ -32,7 +32,7 @@ test.describe('Multi-User Admin PIN Tests', () => {
     try {
       // Admin creates room with PIN
       await admin1Page.goto('/');
-      await admin1Page.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await admin1Page.locator('[data-testid="name-input"]').fill('Admin');
       await admin1Page.getByRole('button', { name: /Create New Room/i }).click();
 
       // Set admin PIN in dialog
@@ -45,9 +45,9 @@ test.describe('Multi-User Admin PIN Tests', () => {
 
       // Another user joins with correct PIN (becomes same admin user)
       await admin2Page.goto('/');
-      await admin2Page.locator('input[placeholder="Enter your name"]').fill('AdminFromAnotherDevice');
+      await admin2Page.locator('[data-testid="name-input"]').fill('AdminFromAnotherDevice');
       await admin2Page.getByRole('button', { name: /Join Existing Room/i }).click();
-      await admin2Page.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await admin2Page.locator('[data-testid="room-id-input"]').fill(roomId);
 
       // Check "Join as admin" checkbox
       const joinAsAdminCheckbox = admin2Page.locator('mat-checkbox').filter({ hasText: 'Join as admin' });
@@ -65,8 +65,8 @@ test.describe('Multi-User Admin PIN Tests', () => {
 
       // Both pages control the same admin user, so participant count stays (1)
       // The name should be updated to the new name
-      await expect(admin2Page.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
-      await expect(admin2Page.locator('.participant-name').first()).toContainText('AdminFromAnotherDevice', { timeout: 10000 });
+      await expect(admin2Page.locator('[data-testid="participants-title"]')).toContainText('Participants (1)', { timeout: 10000 });
+      await expect(admin2Page.locator('[data-testid="participant-name"]').first()).toContainText('AdminFromAnotherDevice', { timeout: 10000 });
 
       // Both browser contexts should have admin controls (Start Voting button)
       await expect(admin1Page.getByRole('button', { name: /Start Voting/i })).toBeVisible();
@@ -94,7 +94,7 @@ test.describe('Multi-User Admin PIN Tests', () => {
     try {
       // Admin creates room with PIN
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
 
       // Set admin PIN in dialog
@@ -107,9 +107,9 @@ test.describe('Multi-User Admin PIN Tests', () => {
 
       // User tries to join with incorrect PIN
       await userPage.goto('/');
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User');
+      await userPage.locator('[data-testid="name-input"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
 
       // Check "Join as admin" checkbox
       const joinAsAdminCheckbox = userPage.locator('mat-checkbox').filter({ hasText: 'Join as admin' });
@@ -129,7 +129,7 @@ test.describe('Multi-User Admin PIN Tests', () => {
       await expect(userPage.getByRole('button', { name: /Create New Room/i })).toBeVisible();
 
       // Admin should be alone in the room
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (1)', { timeout: 10000 });
     } finally {
       await context1.close();
       await context2.close();
@@ -146,7 +146,7 @@ test.describe('Multi-User Admin PIN Tests', () => {
     try {
       // Admin creates room with PIN
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
 
       // Set admin PIN in dialog
@@ -159,9 +159,9 @@ test.describe('Multi-User Admin PIN Tests', () => {
 
       // User joins WITHOUT checking "Join as admin" checkbox
       await userPage.goto('/');
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User');
+      await userPage.locator('[data-testid="name-input"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
 
       // Do NOT check "Join as admin" checkbox
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
@@ -170,8 +170,8 @@ test.describe('Multi-User Admin PIN Tests', () => {
       await expect(userPage).toHaveURL(/\/room\//);
 
       // Both should see each other
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
-      await expect(userPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(userPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
 
       // Only admin should have admin controls (Start Voting button)
       await expect(adminPage.getByRole('button', { name: /Start Voting/i })).toBeVisible();
@@ -192,7 +192,7 @@ test.describe('Multi-User Admin PIN Tests', () => {
     try {
       // Admin creates room with PIN
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
 
       // Set admin PIN in dialog
@@ -204,13 +204,13 @@ test.describe('Multi-User Admin PIN Tests', () => {
       const roomId = captureRoomId(adminPage);
 
       // Wait for room to be fully initialized
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (1)', { timeout: 10000 });
 
       // User tries to join as admin but cancels
       await userPage.goto('/');
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User');
+      await userPage.locator('[data-testid="name-input"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
 
       // Check "Join as admin" checkbox
       const joinAsAdminCheckbox = userPage.locator('mat-checkbox').filter({ hasText: 'Join as admin' });
@@ -231,7 +231,7 @@ test.describe('Multi-User Admin PIN Tests', () => {
       await expect(userPage).toHaveURL('/');
 
       // Admin should be alone in the room
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (1)', { timeout: 10000 });
     } finally {
       await context1.close();
       await context2.close();

@@ -22,7 +22,7 @@ test.describe('Room Creation and Navigation', () => {
 
   test('should create room and navigate to room page @smoke', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
@@ -36,14 +36,14 @@ test.describe('Room Creation and Navigation', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
     const roomId = captureRoomId(page);
 
-    const copyButton = page.locator('button[mattooltip="Copy Room ID"]');
+    const copyButton = page.locator('[data-testid="copy-room-id-button"]');
     await copyButton.click();
 
     await page.waitForTimeout(500);
@@ -53,14 +53,14 @@ test.describe('Room Creation and Navigation', () => {
 
   test('should leave room and return to home @smoke', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
     await cleanupTestRoom(captureRoomId(page));
 
-    const leaveButton = page.locator('button[mattooltip="Leave Room"]');
+    const leaveButton = page.locator('[data-testid="leave-room-button"]');
     await leaveButton.click();
 
     await expect(page).toHaveURL('/');

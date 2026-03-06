@@ -32,7 +32,7 @@ test.describe('Multi-User Removal Tests', () => {
     try {
       // Admin creates room
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
       await adminPage.getByRole('button', { name: /OK/i }).click();
 
@@ -41,12 +41,12 @@ test.describe('Multi-User Removal Tests', () => {
 
       // User joins
       await userPage.goto('/');
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User');
+      await userPage.locator('[data-testid="name-input"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
 
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
 
       // Admin hovers over user's participant card and clicks remove button
       // Target the desktop/tablet layout around the poker table (visible cards only)
@@ -57,7 +57,7 @@ test.describe('Multi-User Removal Tests', () => {
       await participantCard.hover();
 
       // Wait for button to be visible after hover
-      const removeButton = participantCard.locator('.remove-participant-btn');
+      const removeButton = participantCard.locator('[data-testid="remove-participant-button"]');
       await expect(removeButton).toBeVisible({ timeout: 10000 });
 
       // Click the remove button
@@ -65,7 +65,7 @@ test.describe('Multi-User Removal Tests', () => {
 
       // Admin should see participant count decrease to 1 (via DELETE real-time event)
       // Check this first as admin's real-time connection is more reliable
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 20000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (1)', { timeout: 20000 });
 
       // User should also be redirected to home page (via userRemoved signal)
       // This depends on DELETE real-time event reaching the user's browser
@@ -95,7 +95,7 @@ test.describe('Multi-User Removal Tests', () => {
     try {
       // Admin creates room
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
       await adminPage.getByRole('button', { name: /OK/i }).click();
 
@@ -104,28 +104,28 @@ test.describe('Multi-User Removal Tests', () => {
 
       // User 1 joins
       await user1Page.goto('/');
-      await user1Page.locator('input[placeholder="Enter your name"]').fill('User1');
+      await user1Page.locator('[data-testid="name-input"]').fill('User1');
       await user1Page.getByRole('button', { name: /Join Existing Room/i }).click();
-      await user1Page.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await user1Page.locator('[data-testid="room-id-input"]').fill(roomId);
       await user1Page.getByRole('button', { name: /^Join Room$/i }).click();
 
       // User 2 joins
       await user2Page.goto('/');
-      await user2Page.locator('input[placeholder="Enter your name"]').fill('User2');
+      await user2Page.locator('[data-testid="name-input"]').fill('User2');
       await user2Page.getByRole('button', { name: /Join Existing Room/i }).click();
-      await user2Page.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await user2Page.locator('[data-testid="room-id-input"]').fill(roomId);
       await user2Page.getByRole('button', { name: /^Join Room$/i }).click();
 
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (3)', { timeout: 10000 });
-      await expect(user1Page.locator('.section-title')).toContainText('Participants (3)', { timeout: 10000 });
-      await expect(user2Page.locator('.section-title')).toContainText('Participants (3)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (3)', { timeout: 10000 });
+      await expect(user1Page.locator('[data-testid="participants-title"]')).toContainText('Participants (3)', { timeout: 10000 });
+      await expect(user2Page.locator('[data-testid="participants-title"]')).toContainText('Participants (3)', { timeout: 10000 });
 
       // Admin removes User1 - target desktop/tablet layout cards
       const user1Card = adminPage.locator('.participants-around-table .participant-card').filter({ hasText: 'User1' }).first();
       await expect(user1Card).toBeVisible({ timeout: 10000 });
       await user1Card.hover();
 
-      const removeButton = user1Card.locator('.remove-participant-btn');
+      const removeButton = user1Card.locator('[data-testid="remove-participant-button"]');
       await expect(removeButton).toBeVisible({ timeout: 10000 });
       await removeButton.click();
 
@@ -136,8 +136,8 @@ test.describe('Multi-User Removal Tests', () => {
       await expect(user1Page).toHaveURL('/', { timeout: 10000 });
 
       // Admin and User2 should see participant count decrease to 2
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
-      await expect(user2Page.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(user2Page.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
 
       // User2 should no longer see User1 in the participants list
       await expect(user2Page.locator('.participant-card').filter({ hasText: 'User1' })).toHaveCount(0, { timeout: 10000 });
@@ -158,7 +158,7 @@ test.describe('Multi-User Removal Tests', () => {
     try {
       // Admin creates room
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
       await adminPage.getByRole('button', { name: /OK/i }).click();
 
@@ -167,22 +167,22 @@ test.describe('Multi-User Removal Tests', () => {
 
       // User joins
       await userPage.goto('/');
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User');
+      await userPage.locator('[data-testid="name-input"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
 
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
 
       // Verify the remove button is not on the admin's card (which has "You" badge)
       // Note: There are 2 participant cards in DOM (desktop + mobile views), so we check both
       const adminCards = adminPage.locator('.participant-card').filter({ hasText: '(You)' });
-      const adminCardRemoveButtons = adminCards.locator('.remove-participant-btn');
+      const adminCardRemoveButtons = adminCards.locator('[data-testid="remove-participant-button"]');
       await expect(adminCardRemoveButtons).toHaveCount(0, { timeout: 10000 });
 
       // Admin should see remove buttons only for other users (not themselves)
       const otherUserCards = adminPage.locator('.participant-card').filter({ hasNotText: '(You)' });
-      const otherUserRemoveButtons = otherUserCards.locator('.remove-participant-btn');
+      const otherUserRemoveButtons = otherUserCards.locator('[data-testid="remove-participant-button"]');
       // Should have at least 1 remove button (could be 2 if both desktop and mobile views are rendered)
       await expect(otherUserRemoveButtons.first()).toBeAttached();
     } finally {
@@ -201,7 +201,7 @@ test.describe('Multi-User Removal Tests', () => {
     try {
       // Admin creates room
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
       await adminPage.getByRole('button', { name: /OK/i }).click();
 
@@ -210,15 +210,15 @@ test.describe('Multi-User Removal Tests', () => {
 
       // User joins
       await userPage.goto('/');
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User');
+      await userPage.locator('[data-testid="name-input"]').fill('User');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
 
-      await expect(userPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(userPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
 
       // Non-admin user should not see any remove buttons
-      const userRemoveButtons = userPage.locator('.remove-participant-btn');
+      const userRemoveButtons = userPage.locator('[data-testid="remove-participant-button"]');
       await expect(userRemoveButtons).toHaveCount(0);
     } finally {
       await context1.close();

@@ -1,8 +1,8 @@
 <mat-toolbar color="primary">
-  <mat-icon>casino</mat-icon>
+  <mat-icon data-testid="app-logo-icon">casino</mat-icon>
   <span class="toolbar-title">Planning Poker</span>
   <span style="flex: 1"></span>
-  <button mat-icon-button (click)="toggleTheme()" [matTooltip]="'Switch to ' + (themeService.effectiveTheme() === 'light' ? 'dark' : 'light') + ' mode'">
+  <button mat-icon-button (click)="toggleTheme()" [matTooltip]="'Switch to ' + (themeService.effectiveTheme() === 'light' ? 'dark' : 'light') + ' mode'" data-testid="theme-toggle">
     <mat-icon>{{ themeService.effectiveTheme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
   </button>
 </mat-toolbar>
@@ -23,6 +23,7 @@
             [(ngModel)]="userName"
             placeholder="Enter your name"
             (keyup.enter)="createRoom()"
+            data-testid="name-input"
           >
           <mat-icon matPrefix>person</mat-icon>
         </mat-form-field>
@@ -35,6 +36,7 @@
               [(ngModel)]="roomId"
               placeholder="Enter room ID"
               (keyup.enter)="joinRoom()"
+              data-testid="room-id-input"
             >
             <mat-icon matPrefix>meeting_room</mat-icon>
           </mat-form-field>
@@ -43,6 +45,7 @@
             <mat-checkbox
               [(ngModel)]="joinAsAdmin"
               color="primary"
+              data-testid="join-as-admin-checkbox"
             >
               Join as admin (requires PIN)
             </mat-checkbox>
@@ -58,6 +61,7 @@
           color="primary"
           (click)="createRoom()"
           class="action-button"
+          data-testid="create-room-button"
         >
           <mat-icon>add</mat-icon>
           Create New Room
@@ -67,6 +71,7 @@
           color="primary"
           (click)="toggleJoinForm()"
           class="action-button"
+          data-testid="show-join-form-button"
         >
           <mat-icon>login</mat-icon>
           Join Existing Room
@@ -77,6 +82,7 @@
           color="primary"
           (click)="joinRoom()"
           class="action-button"
+          data-testid="join-room-button"
         >
           <mat-icon>login</mat-icon>
           Join Room
@@ -85,6 +91,7 @@
           mat-stroked-button
           (click)="toggleJoinForm()"
           class="action-button"
+          data-testid="back-button"
         >
           <mat-icon>arrow_back</mat-icon>
           Back
@@ -93,14 +100,14 @@
     </mat-card-actions>
 
     @if (joinError()) {
-      <div class="join-error-message">
+      <div class="join-error-message" data-testid="join-error">
         <mat-icon>warning</mat-icon>
         <span>Joining failed. Please check the Room ID and try again.</span>
       </div>
     }
   </mat-card>
 
-  <div class="info-section">
+  <div class="info-section" data-testid="info-section">
     <h3>How it works</h3>
     <ul>
       <li>Create a room and share the Room ID with your team</li>

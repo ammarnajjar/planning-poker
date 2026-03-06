@@ -1,11 +1,11 @@
 <mat-toolbar color="primary" class="room-toolbar">
-  <button mat-icon-button (click)="leaveRoom()" matTooltip="Leave Room">
+  <button mat-icon-button (click)="leaveRoom()" matTooltip="Leave Room" data-testid="leave-room-button">
     <mat-icon>arrow_back</mat-icon>
   </button>
   <span class="toolbar-title">Planning Poker</span>
   <span class="spacer"></span>
   @if (idleDetectionService.idleState() === 'idle') {
-    <button mat-icon-button matTooltip="You are idle" class="idle-indicator">
+    <button mat-icon-button matTooltip="You are idle" class="idle-indicator" data-testid="idle-indicator">
       <mat-icon>visibility_off</mat-icon>
     </button>
   }
@@ -13,53 +13,56 @@
     <button mat-icon-button
             [matTooltip]="networkService.getConnectionDescription()"
             [class.connection-offline]="networkService.connectionQuality() === 'offline'"
-            [class.connection-poor]="networkService.connectionQuality() === 'poor'">
+            [class.connection-poor]="networkService.connectionQuality() === 'poor'"
+            data-testid="network-warning">
       <mat-icon>{{ networkService.connectionQuality() === 'offline' ? 'cloud_off' : 'signal_cellular_alt_1_bar' }}</mat-icon>
     </button>
   }
-  <button mat-icon-button (click)="toggleTheme()" [matTooltip]="'Switch to ' + (themeService.effectiveTheme() === 'light' ? 'dark' : 'light') + ' mode'">
+  <button mat-icon-button (click)="toggleTheme()" [matTooltip]="'Switch to ' + (themeService.effectiveTheme() === 'light' ? 'dark' : 'light') + ' mode'" data-testid="theme-toggle">
     <mat-icon>{{ themeService.effectiveTheme() === 'light' ? 'dark_mode' : 'light_mode' }}</mat-icon>
   </button>
-  <button mat-icon-button (click)="shareRoom()" matTooltip="Share Room URL">
+  <button mat-icon-button (click)="shareRoom()" matTooltip="Share Room URL" data-testid="share-room-button">
     <mat-icon>share</mat-icon>
   </button>
-  <button mat-icon-button (click)="copyRoomId()" matTooltip="Copy Room ID">
+  <button mat-icon-button (click)="copyRoomId()" matTooltip="Copy Room ID" data-testid="copy-room-id-button">
     <mat-icon>content_copy</mat-icon>
   </button>
-  <span class="room-id">{{ roomState().roomId }}</span>
+  <span class="room-id" data-testid="room-id">{{ roomState().roomId }}</span>
 </mat-toolbar>
 
 <div class="room-container">
   <!-- Admin Controls (shown first for admin) -->
   @if (isAdmin()) {
-    <div class="admin-controls">
+    <div class="admin-controls" data-testid="admin-controls">
       <mat-checkbox
         [checked]="roomState().adminParticipates"
         (change)="toggleAdminParticipation()"
-        color="primary">
+        color="primary"
+        data-testid="admin-participate-checkbox">
         I want to participate
       </mat-checkbox>
 
       <div class="control-buttons">
         @if (!roomState().votingStarted) {
-          <button mat-raised-button color="primary" (click)="startVoting()">
+          <button mat-raised-button color="primary" (click)="startVoting()" data-testid="start-voting-button">
             <mat-icon>play_arrow</mat-icon>
             Start Voting
           </button>
         } @else {
-          <button mat-raised-button color="accent" (click)="toggleReveal()">
+          <button mat-raised-button color="accent" (click)="toggleReveal()" data-testid="reveal-button">
             <mat-icon>{{ roomState().revealed ? 'visibility_off' : 'visibility' }}</mat-icon>
             {{ roomState().revealed ? 'Hide' : 'Reveal' }}
           </button>
           @if (canStartDiscussion()) {
             <button mat-raised-button
                     [color]="roomState().discussionActive ? 'warn' : 'primary'"
-                    (click)="toggleDiscussion()">
+                    (click)="toggleDiscussion()"
+                    data-testid="discuss-button">
               <mat-icon>{{ roomState().discussionActive ? 'stop_circle' : 'forum' }}</mat-icon>
               {{ roomState().discussionActive ? 'End Discussion' : 'Discuss' }}
             </button>
           }
-          <button mat-raised-button (click)="resetVotes()">
+          <button mat-raised-button (click)="resetVotes()" data-testid="reset-button">
             <mat-icon>refresh</mat-icon>
             Reset
           </button>
@@ -76,13 +79,13 @@
   }
 
   <!-- Participants Section -->
-  <div class="participants-section">
-    <h3 class="section-title">Participants ({{ participants().length }})</h3>
+  <div class="participants-section" data-testid="participants-section">
+    <h3 class="section-title" data-testid="participants-title">Participants ({{ participants().length }})</h3>
 
     <!-- Mobile: Simple Grid Layout -->
     <div class="participant-cards-mobile">
       @for (participant of participants(); track participant.id) {
-        <div class="participant-card"
+        <div class="participant-card" data-testid="participant-card"
              [class.voted]="hasVoted(participant)"
              [class.revealed]="roomState().revealed"
              [class.is-you]="participant.id === currentUserId"
@@ -114,12 +117,12 @@
           }
 
           @if (isAdmin() && participant.id !== currentUserId) {
-            <button mat-icon-button class="remove-participant-btn" (click)="removeParticipant(participant.id)" matTooltip="Remove participant">
+            <button mat-icon-button class="remove-participant-btn" (click)="removeParticipant(participant.id)" matTooltip="Remove participant" data-testid="remove-participant-button">
               <mat-icon>close</mat-icon>
             </button>
           }
 
-          <div class="participant-name">
+          <div class="participant-name" data-testid="participant-name">
             {{ participant.name }}
             @if (participant.id === currentUserId) {
               <span class="you-badge">(You)</span>
@@ -184,7 +187,7 @@
       <!-- Participants positioned around table -->
       <div class="participants-around-table">
         @for (participant of participants(); track participant.id; let i = $index) {
-          <div class="participant-card"
+          <div class="participant-card" data-testid="participant-card"
                [style.--participant-index]="i"
                [style.--total-participants]="participants().length"
                [class.voted]="hasVoted(participant)"
@@ -218,12 +221,12 @@
             }
 
             @if (isAdmin() && participant.id !== currentUserId) {
-              <button mat-icon-button class="remove-participant-btn" (click)="removeParticipant(participant.id)" matTooltip="Remove participant">
+              <button mat-icon-button class="remove-participant-btn" (click)="removeParticipant(participant.id)" matTooltip="Remove participant" data-testid="remove-participant-button">
                 <mat-icon>close</mat-icon>
               </button>
             }
 
-            <div class="participant-name">
+            <div class="participant-name" data-testid="participant-name">
               {{ participant.name }}
               @if (participant.id === currentUserId) {
                 <span class="you-badge">(You)</span>
@@ -240,8 +243,8 @@
 
   <!-- Voting Section - Tinder Style (for non-admin or admin who participates) -->
   @if (shouldShowVotingCards()) {
-    <div class="voting-section">
-        <div class="vote-status">
+    <div class="voting-section" data-testid="voting-section">
+        <div class="vote-status" data-testid="vote-status">
           @if (roomState().revealed) {
             Votes revealed - Voting locked
           } @else if (roomState().votingStarted) {
@@ -252,13 +255,14 @@
         </div>
 
         <!-- Desktop: Grid of all cards -->
-        <div class="vote-cards-grid">
+        <div class="vote-cards-grid" data-testid="vote-cards-grid">
           @for (value of cardValues; track value) {
             <div class="vote-card-large"
                  role="button"
                  tabindex="0"
                  [class.selected]="isCardSelected(value)"
                  [class.disabled]="!isVotingEnabled()"
+                 [attr.data-testid]="'vote-card-' + value"
                  (click)="vote(value)"
                  (keyup.enter)="vote(value)"
                  (keyup.space)="vote(value)">
@@ -268,8 +272,8 @@
         </div>
 
         <!-- Mobile: Swipeable Card -->
-        <div class="card-carousel">
-          <button mat-icon-button class="nav-button prev" (click)="previousCard()" [disabled]="currentCardIndex() === 0">
+        <div class="card-carousel" data-testid="card-carousel">
+          <button mat-icon-button class="nav-button prev" (click)="previousCard()" [disabled]="currentCardIndex() === 0" data-testid="prev-card-button">
             <mat-icon>chevron_left</mat-icon>
           </button>
 
@@ -281,6 +285,7 @@
                  tabindex="0"
                  [class.selected]="isCardSelected(cardValues[currentCardIndex()])"
                  [class.disabled]="!isVotingEnabled()"
+                 data-testid="carousel-vote-card"
                  (click)="vote(cardValues[currentCardIndex()])"
                  (keyup.enter)="vote(cardValues[currentCardIndex()])"
                  (keyup.space)="vote(cardValues[currentCardIndex()])">
@@ -288,7 +293,7 @@
             </div>
           </div>
 
-          <button mat-icon-button class="nav-button next" (click)="nextCard()" [disabled]="currentCardIndex() === cardValues.length - 1">
+          <button mat-icon-button class="nav-button next" (click)="nextCard()" [disabled]="currentCardIndex() === cardValues.length - 1" data-testid="next-card-button">
             <mat-icon>chevron_right</mat-icon>
           </button>
         </div>
@@ -306,7 +311,7 @@
           }
         </div>
 
-        <div class="current-selection">
+        <div class="current-selection" data-testid="current-selection">
           Your vote: <strong>{{ myVote() || '?' }}</strong>
         </div>
       </div>

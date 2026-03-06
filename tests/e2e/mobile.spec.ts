@@ -55,7 +55,7 @@ test.describe('Mobile-Specific Features', () => {
   test('should not zoom on input focus', async ({ page }) => {
     await page.goto('/');
 
-    const nameInput = page.locator('input[placeholder="Enter your name"]');
+    const nameInput = page.locator('[data-testid="name-input"]');
 
     // Get computed font size
     const fontSize = await nameInput.evaluate(el => {
@@ -82,7 +82,7 @@ test.describe('Mobile-Specific Features', () => {
   test('should have proper touch targets in room', async ({ page }) => {
     // Create room
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
+    await page.locator('[data-testid="name-input"]').fill('Mobile User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
@@ -90,15 +90,15 @@ test.describe('Mobile-Specific Features', () => {
     captureRoomId(page);
 
     // Enable admin participation to see voting cards
-    const participateCheckbox = page.locator('mat-checkbox').getByText('I want to participate');
-    await participateCheckbox.click();
+    const participateCheckbox = page.locator('[data-testid="admin-participate-checkbox"]');
+    await participateCheckbox.locator('label').click();
 
     // Start voting
     await page.getByRole('button', { name: /Start Voting/i }).click();
 
     // On mobile, cards are in a carousel (.card-carousel), not grid (.vote-cards-grid)
     // Check for card in the visible carousel container
-    const card = page.locator('.card-carousel .vote-card-large');
+    const card = page.locator('[data-testid="carousel-vote-card"]');
     await expect(card).toBeVisible();
     const cardBox = await card.boundingBox();
 
@@ -123,7 +123,7 @@ test.describe('Mobile-Specific Features', () => {
   test('should hide toolbar title on mobile in room', async ({ page }) => {
     // Create room
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
+    await page.locator('[data-testid="name-input"]').fill('Mobile User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
@@ -154,7 +154,7 @@ test.describe('Mobile-Specific Features', () => {
   // High Priority Coverage - Carousel Navigation
   test('should navigate carousel with next/previous buttons', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
+    await page.locator('[data-testid="name-input"]').fill('Mobile User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
@@ -162,9 +162,9 @@ test.describe('Mobile-Specific Features', () => {
     const roomId = page.url().split('/room/')[1];
 
     // Enable participation and start voting
-    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).locator('label').click();
     await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
     // Check if carousel is visible (mobile view)
     const carousel = page.locator('.card-carousel');
@@ -197,16 +197,16 @@ test.describe('Mobile-Specific Features', () => {
 
   test('should navigate carousel with indicator dots', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Mobile User');
+    await page.locator('[data-testid="name-input"]').fill('Mobile User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
     const roomId = page.url().split('/room/')[1];
 
-    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).locator('label').click();
     await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
     const indicators = page.locator('.carousel-indicators .indicator-dot');
     if (await indicators.first().isVisible().catch(() => false)) {
@@ -230,16 +230,16 @@ test.describe('Mobile-Specific Features', () => {
   // High Priority Coverage - Accessibility
   test('should have proper ARIA labels for voting cards', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
     await expect(page).toHaveURL(/\/room\//);
     const roomId = page.url().split('/room/')[1];
 
-    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+    await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).locator('label').click();
     await page.getByRole('button', { name: /Start Voting/i }).click();
-    await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
     // Voting cards should have role="button"
     const cards = page.locator('[role="button"].vote-card-large');

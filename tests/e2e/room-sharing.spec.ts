@@ -26,7 +26,7 @@ test.describe('Room Sharing', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
     await page.getByRole('button', { name: /Create New Room/i }).click();
     await page.getByRole('button', { name: /OK/i }).click();
 
@@ -34,9 +34,9 @@ test.describe('Room Sharing', () => {
     const roomId = captureRoomId(page);
 
     // Wait for room to be fully loaded
-    await expect(page.locator('.room-id')).toContainText(roomId);
+    await expect(page.locator('[data-testid="room-id"]')).toContainText(roomId);
 
-    const shareButton = page.locator('button[mattooltip="Share Room URL"]');
+    const shareButton = page.locator('[data-testid="share-room-button"]');
     await shareButton.click();
 
     await page.waitForTimeout(500);
@@ -58,7 +58,7 @@ test.describe('Room Sharing', () => {
     try {
       // Admin creates room
       await adminPage.goto('/');
-      await adminPage.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await adminPage.locator('[data-testid="name-input"]').fill('Admin');
       await adminPage.getByRole('button', { name: /Create New Room/i }).click();
       await adminPage.getByRole('button', { name: /OK/i }).click();
 
@@ -67,7 +67,7 @@ test.describe('Room Sharing', () => {
       const roomId = captureRoomId(adminPage);
 
       // Wait for admin to be in room
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (1)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (1)', { timeout: 10000 });
 
       // User navigates to the shared URL directly (without username in state)
       await userPage.goto(roomUrl);
@@ -76,14 +76,14 @@ test.describe('Room Sharing', () => {
       await expect(userPage).toHaveURL('/', { timeout: 5000 });
 
       // User can then enter their name and join the room
-      await userPage.locator('input[placeholder="Enter your name"]').fill('User 2');
+      await userPage.locator('[data-testid="name-input"]').fill('User 2');
       await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('input[placeholder="Enter room ID"]').fill(roomId);
+      await userPage.locator('[data-testid="room-id-input"]').fill(roomId);
       await userPage.getByRole('button', { name: /^Join Room$/i }).click();
 
       // Both should see 2 participants
-      await expect(adminPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
-      await expect(userPage.locator('.section-title')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
+      await expect(userPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
     } finally {
       await context1.close();
       await context2.close();
@@ -92,7 +92,7 @@ test.describe('Room Sharing', () => {
 
   test('should show room not found for invalid room ID in URL', async ({ page }) => {
     await page.goto('/');
-    await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+    await page.locator('[data-testid="name-input"]').fill('Test User');
 
     // Try to navigate to non-existent room
     await page.goto('/room/INVALID123');

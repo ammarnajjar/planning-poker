@@ -28,11 +28,11 @@ test.describe('Multi-User Edge Cases Tests', () => {
 
     try {
       await page.goto('/');
-      await page.locator('input[placeholder="Enter your name"]').fill('Test User');
+      await page.locator('[data-testid="name-input"]').fill('Test User');
       await page.getByRole('button', { name: /Join Existing Room/i }).click();
 
       // Try to join a room that doesn't exist
-      await page.locator('input[placeholder="Enter room ID"]').fill('NONEXIST');
+      await page.locator('[data-testid="room-id-input"]').fill('NONEXIST');
       await page.getByRole('button', { name: /^Join Room$/i }).click();
 
       // Should stay on home page or show error
@@ -54,7 +54,7 @@ test.describe('Multi-User Edge Cases Tests', () => {
     try {
       // Create room and start voting
       await page.goto('/');
-      await page.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await page.locator('[data-testid="name-input"]').fill('Admin');
       await page.getByRole('button', { name: /Create New Room/i }).click();
       await page.getByRole('button', { name: /OK/i }).click();
 
@@ -62,14 +62,14 @@ test.describe('Multi-User Edge Cases Tests', () => {
       const roomUrl = page.url();
       const roomId = captureRoomId(page);
 
-      await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+      await page.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).locator('label').click();
       await page.getByRole('button', { name: /Start Voting/i }).click();
-      await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
       // Vote
-      const card = page.locator('.vote-cards-grid .vote-card-large, .card-carousel .vote-card-large').first();
+      const card = page.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"], [data-testid="carousel-vote-card"]').first();
       await card.click();
-      await expect(page.locator('.current-selection')).toContainText('Your vote:', { timeout: 5000 });
+      await expect(page.locator('[data-testid="current-selection"]')).toContainText('Your vote:', { timeout: 5000 });
 
       // Refresh the page
       await page.reload();
@@ -78,10 +78,10 @@ test.describe('Multi-User Edge Cases Tests', () => {
       await expect(page).toHaveURL(roomUrl);
 
       // Voting section should still be visible
-      await expect(page.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
       // User should still be marked as voted
-      await expect(page.locator('.current-selection')).toContainText('Your vote:', { timeout: 5000 });
+      await expect(page.locator('[data-testid="current-selection"]')).toContainText('Your vote:', { timeout: 5000 });
 
       await cleanupTestRoom(roomId);
     } finally {
@@ -98,7 +98,7 @@ test.describe('Multi-User Edge Cases Tests', () => {
     try {
       // Create room in first tab
       await tab1.goto('/');
-      await tab1.locator('input[placeholder="Enter your name"]').fill('Admin');
+      await tab1.locator('[data-testid="name-input"]').fill('Admin');
       await tab1.getByRole('button', { name: /Create New Room/i }).click();
       await tab1.getByRole('button', { name: /OK/i }).click();
 
@@ -111,20 +111,20 @@ test.describe('Multi-User Edge Cases Tests', () => {
       await expect(tab2).toHaveURL(roomUrl);
 
       // Start voting in first tab
-      await tab1.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).click();
+      await tab1.locator('mat-checkbox').filter({ hasText: 'I want to participate' }).locator('label').click();
       await tab1.getByRole('button', { name: /Start Voting/i }).click();
-      await expect(tab1.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+      await expect(tab1.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
       // Second tab should also show voting
-      await expect(tab2.locator('.voting-section')).toBeVisible({ timeout: 10000 });
+      await expect(tab2.locator('[data-testid="voting-section"]')).toBeVisible({ timeout: 10000 });
 
       // Vote in first tab
-      const card1 = tab1.locator('.vote-cards-grid .vote-card-large, .card-carousel .vote-card-large').first();
+      const card1 = tab1.locator('[data-testid="vote-cards-grid"] [data-testid^="vote-card-"], [data-testid="carousel-vote-card"]').first();
       await card1.click();
-      await expect(tab1.locator('.current-selection')).toContainText('Your vote:', { timeout: 5000 });
+      await expect(tab1.locator('[data-testid="current-selection"]')).toContainText('Your vote:', { timeout: 5000 });
 
       // Second tab should also show the vote
-      await expect(tab2.locator('.current-selection')).toContainText('Your vote:', { timeout: 10000 });
+      await expect(tab2.locator('[data-testid="current-selection"]')).toContainText('Your vote:', { timeout: 10000 });
 
       await cleanupTestRoom(roomId);
     } finally {

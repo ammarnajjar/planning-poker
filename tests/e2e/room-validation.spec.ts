@@ -1,5 +1,4 @@
-import { test, expect, createRoom, getRoomId } from './helpers/fixtures';
-import { cleanupTestRoom } from './helpers/cleanup';
+import { test, expect, getRoomId } from './helpers/fixtures';
 
 test.describe('Room Validation', () => {
   test('should reject empty room ID when joining', async ({ page }) => {
@@ -16,14 +15,11 @@ test.describe('Room Validation', () => {
     await expect(page).toHaveURL('/');
   });
 
-  test('should handle room ID case sensitivity', async ({ page }) => {
-    await createRoom(page, 'Admin');
-    const roomId = getRoomId(page);
+  test('should handle room ID case sensitivity', async ({ adminRoom }) => {
+    const { roomId } = adminRoom;
 
     expect(roomId).toMatch(/^[A-Z0-9]+$/);
     expect(roomId.length).toBeGreaterThan(0);
-
-    await cleanupTestRoom(roomId);
   });
 
   test('should generate unique room IDs', async ({ page }) => {
@@ -50,9 +46,7 @@ test.describe('Room Validation', () => {
   test('should validate user name is required', async ({ page }) => {
     await page.goto('/');
 
-    const nameInput = page.locator('[data-testid="name-input"]');
-    await expect(nameInput).toHaveValue('');
-
+    await expect(page.locator('[data-testid="name-input"]')).toHaveValue('');
     await page.getByRole('button', { name: /Create New Room/i }).click();
 
     await expect(page).toHaveURL('/');
@@ -68,28 +62,25 @@ test.describe('Room Validation', () => {
     expect(await roomIdInput.inputValue()).toBe('ABC123');
   });
 
-  test('should trim whitespace from room ID input', async ({ browser }) => {
-    const context1 = await browser.newContext();
-    const context2 = await browser.newContext();
-    const adminPage = await context1.newPage();
-    const userPage = await context2.newPage();
+  test('should trim whitespace from room ID input', async ({ twoUserRoom }) => {
+    const { adminPage } = twoUserRoom;
+    const roomId = getRoomId(adminPage);
+
+    // userPage is already in the room via the fixture — verify join worked despite potential whitespace handling
+    // by testing a fresh join with whitespace from a third context
+    const freshContext = await adminPage.context().browser()!.newContext();
+    const freshPage = await freshContext.newPage();
 
     try {
-      await createRoom(adminPage, 'Admin');
-      const roomId = getRoomId(adminPage);
+      await freshPage.goto('/');
+      await freshPage.locator('[data-testid="name-input"]').fill('User2');
+      await freshPage.getByRole('button', { name: /Join Existing Room/i }).click();
+      await freshPage.locator('[data-testid="room-id-input"]').fill(`  ${roomId}  `);
+      await freshPage.getByRole('button', { name: /^Join Room$/i }).click();
 
-      await userPage.goto('/');
-      await userPage.locator('[data-testid="name-input"]').fill('User');
-      await userPage.getByRole('button', { name: /Join Existing Room/i }).click();
-      await userPage.locator('[data-testid="room-id-input"]').fill(`  ${roomId}  `);
-      await userPage.getByRole('button', { name: /^Join Room$/i }).click();
-
-      await expect(userPage).toHaveURL(/\/room\//, { timeout: 10000 });
-
-      await cleanupTestRoom(roomId);
+      await expect(freshPage).toHaveURL(/\/room\//, { timeout: 10000 });
     } finally {
-      await context1.close();
-      await context2.close();
+      await freshContext.close();
     }
   });
 });

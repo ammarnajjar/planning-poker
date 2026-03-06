@@ -18,6 +18,16 @@ export interface TwoUserRoomFixture {
   userContext: BrowserContext;
 }
 
+export interface ThreeUserRoomFixture {
+  adminPage: Page;
+  user1Page: Page;
+  user2Page: Page;
+  roomId: string;
+  adminContext: BrowserContext;
+  user1Context: BrowserContext;
+  user2Context: BrowserContext;
+}
+
 // ---------------------------------------------------------------------------
 // Fixture extensions
 // ---------------------------------------------------------------------------
@@ -27,6 +37,8 @@ type Fixtures = {
   adminRoom: RoomFixture;
   /** Pre-created room with two participants (admin + one user). Cleaned up after each test. */
   twoUserRoom: TwoUserRoomFixture;
+  /** Pre-created room with three participants (admin + two users). Cleaned up after each test. */
+  threeUserRoom: ThreeUserRoomFixture;
 };
 
 export const test = base.extend<Fixtures>({
@@ -53,6 +65,29 @@ export const test = base.extend<Fixtures>({
 
     await adminContext.close();
     await userContext.close();
+    await cleanupTestRoom(roomId);
+  },
+
+  threeUserRoom: async ({ browser }, use) => {
+    const adminContext = await browser.newContext();
+    const user1Context = await browser.newContext();
+    const user2Context = await browser.newContext();
+    const adminPage = await adminContext.newPage();
+    const user1Page = await user1Context.newPage();
+    const user2Page = await user2Context.newPage();
+
+    await createRoom(adminPage, 'Admin');
+    const roomId = getRoomId(adminPage);
+
+    await joinRoom(user1Page, roomId, 'User1');
+    await joinRoom(user2Page, roomId, 'User2');
+    await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (3)', { timeout: 10000 });
+
+    await use({ adminPage, user1Page, user2Page, roomId, adminContext, user1Context, user2Context });
+
+    await adminContext.close();
+    await user1Context.close();
+    await user2Context.close();
     await cleanupTestRoom(roomId);
   },
 });
@@ -132,4 +167,27 @@ export async function revealVotes(page: Page): Promise<void> {
     await page.getByRole('button', { name: /Reveal/i }).click();
     await expect(page.locator('[data-testid="vote-status"]')).toContainText('Votes revealed', { timeout: 2000 });
   }).toPass({ timeout: 15000 });
+}
+
+/**
+ * Wait for Service Worker to be registered and active.
+ * Replaces waitForTimeout(2000) in PWA tests.
+ */
+export async function waitForServiceWorker(page: Page): Promise<void> {
+  await page.waitForFunction(async () => {
+    if (!('serviceWorker' in navigator)) return true; // skip if not supported
+    const reg = await navigator.serviceWorker.getRegistration();
+    return reg?.active?.state === 'activated';
+  }, { timeout: 10000 });
+}
+
+/**
+ * Wait for at least one planning-poker cache to exist.
+ * Replaces waitForTimeout(2000) after page load in PWA caching tests.
+ */
+export async function waitForCache(page: Page): Promise<void> {
+  await page.waitForFunction(async () => {
+    const keys = await caches.keys();
+    return keys.some(k => k.startsWith('planning-poker-'));
+  }, { timeout: 10000 });
 }

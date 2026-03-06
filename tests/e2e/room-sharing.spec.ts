@@ -1,4 +1,4 @@
-import { test, expect, createRoom, joinRoom, getRoomId } from './helpers/fixtures';
+import { test, expect, createRoom, getRoomId, joinRoom } from './helpers/fixtures';
 import { cleanupTestRoom } from './helpers/cleanup';
 
 test.describe('Room Sharing', () => {
@@ -11,7 +11,6 @@ test.describe('Room Sharing', () => {
     const roomId = getRoomId(page);
 
     await expect(page.locator('[data-testid="room-id"]')).toContainText(roomId);
-
     await page.locator('[data-testid="share-room-button"]').click();
 
     const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
@@ -22,32 +21,25 @@ test.describe('Room Sharing', () => {
     await cleanupTestRoom(roomId);
   });
 
-  test('should redirect to home when visiting shared URL without username', async ({ browser }) => {
-    const context1 = await browser.newContext();
-    const context2 = await browser.newContext();
-    const adminPage = await context1.newPage();
-    const userPage = await context2.newPage();
+  test('should redirect to home when visiting shared URL without username', async ({ twoUserRoom }) => {
+    const { adminPage } = twoUserRoom;
+    const roomUrl = adminPage.url();
+    const roomId = getRoomId(adminPage);
+
+    // A fresh context simulates a new user visiting the shared URL directly
+    const freshContext = await adminPage.context().browser()!.newContext();
+    const freshPage = await freshContext.newPage();
 
     try {
-      await createRoom(adminPage, 'Admin');
-      const roomUrl = adminPage.url();
-      const roomId = getRoomId(adminPage);
+      await freshPage.goto(roomUrl);
+      await expect(freshPage).toHaveURL('/', { timeout: 5000 });
 
-      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (1)', { timeout: 10000 });
+      await joinRoom(freshPage, roomId, 'User 2');
 
-      // Direct URL visit without username in state → redirect to home
-      await userPage.goto(roomUrl);
-      await expect(userPage).toHaveURL('/', { timeout: 5000 });
-
-      await joinRoom(userPage, roomId, 'User 2');
-
-      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
-      await expect(userPage.locator('[data-testid="participants-title"]')).toContainText('Participants (2)', { timeout: 10000 });
-
-      await cleanupTestRoom(roomId);
+      await expect(adminPage.locator('[data-testid="participants-title"]')).toContainText('Participants (3)', { timeout: 10000 });
+      await expect(freshPage.locator('[data-testid="participants-title"]')).toContainText('Participants (3)', { timeout: 10000 });
     } finally {
-      await context1.close();
-      await context2.close();
+      await freshContext.close();
     }
   });
 

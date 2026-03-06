@@ -711,6 +711,13 @@ For more details on the favicon design, see [FAVICON.md](FAVICON.md).
 
 ## Recent Updates
 
+### v1.3.1 (March 6, 2026) - Dependency Updates and Presence Stability
+
+- **Participant timeout extended to 15 minutes** — users who briefly lose connectivity or switch tabs are no longer dropped from the room prematurely
+- All dependencies updated to latest: Angular 21.2.1, @supabase/supabase-js 2.98.0, eslint 10, angular-eslint 21.3.0, typescript-eslint 8.56.1
+
+---
+
 ### v1.3.0 (February 16, 2026) - Progressive Enhancements and iOS PWA Fixes
 
 Transforms Planning Poker into a full-featured Progressive Web App with comprehensive enhancements.

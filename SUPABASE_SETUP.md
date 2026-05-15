@@ -62,6 +62,14 @@ CREATE POLICY "Allow all operations on participants" ON participants
   USING (true)
   WITH CHECK (true);
 
+-- Grant Data API access to the anon role.
+-- Required from May 30 2026 (new projects) / Oct 30 2026 (all projects):
+-- Supabase no longer grants public-schema table access to roles by default.
+-- This app uses only the anon role (no Supabase Auth), so anon needs full DML.
+-- RLS policies above still control which rows are accessible.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.rooms        TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.participants TO anon;
+
 -- Enable realtime for both tables
 ALTER PUBLICATION supabase_realtime ADD TABLE rooms;
 ALTER PUBLICATION supabase_realtime ADD TABLE participants;
